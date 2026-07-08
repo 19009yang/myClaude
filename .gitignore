@@ -6,6 +6,7 @@ dist/
 wheels/
 *.egg-info
 .clangd/
+CLAUDE.md
 
 # 敏感信息
 .env
