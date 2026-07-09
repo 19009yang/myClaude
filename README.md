@@ -9,19 +9,19 @@
 - **🧠 记忆管理** — 短期对话上下文 + 长期记忆自动提取，上下文接近上限时自动摘要压缩
 - **🔧 工具调用** — 内置 7 种工具（read/search/bash/ls/edit/grep/write），支持 LLM function calling
 - **🛡️ 安全校验** — 分级拦截策略（blocked/confirm/pass），YAML 配置，防止危险操作
-- **🔄 工作流编排** — Node/Flow 模式，支持条件分支和重试机制，用 `>>` 语法链式定义节点
+- **🔄 工作流编排** — Node/Flow 模式，支持条件分支、指数退避重试与节点回退，用 `>>` 语法链式定义 DAG
 - **🧩 技能系统** — Markdown frontmatter 格式的 Skill 文件，支持动态加载与激活
-- **🤖 Agent 示例** — 带记忆与工具的对话机器人、搜索摘要工作流
+- **🤖 Agent 示例** — 带记忆与工具的对话机器人、搜索摘要工作流、论文研究助手（搜索→下载→解析→选题→写作→渲染）
 - **📄 PDF 处理** — 基于 PyMuPDF 的 PDF 文本与图片提取
 
 ## 📁 项目结构
 
 ```
 learn/
-├── core/               # 核心模块
+├── core/               # 核心模块（框架层）
 │   ├── llm.py          # LLM 调用封装（文本生成 + 工具调用模式）
 │   ├── memory.py       # 记忆管理（对话历史 + 长期记忆 + 自动压缩）
-│   ├── node.py         # 工作流编排（Node/Flow）
+│   ├── node.py         # 工作流编排（Node/Flow + 重试 + 回退 + RetryableError）
 │   └── chat_memory/    # 记忆存储目录
 ├── tools/              # 工具系统
 │   ├── builtins/       # 内置工具实现
@@ -32,6 +32,8 @@ learn/
 │   │   ├── ls.py       # 目录列表
 │   │   ├── grep.py     # 内容搜索
 │   │   ├── search.py   # 网络搜索（DuckDuckGo）
+│   │   ├── paper_search.py  # 论文搜索与下载（arxiv API + PDF 批量下载）
+│   │   ├── latex_render.py  # LaTeX 渲染为 PDF（自动检测编译器）
 │   │   └── tool_def.py # Tool 定义与注册
 │   ├── executor.py     # 工具执行器（解析 + 执行 + 安全校验）
 │   ├── guard.py        # 安全校验器
@@ -41,9 +43,12 @@ learn/
 │       ├── hello/              # 示例技能
 │       ├── content-research-writer/  # 内容调研与写作技能
 │       └── pdf-image-text-extractor/ # PDF 文本与图片提取技能
-├── Agent/              # Agent 应用示例
-│   ├── chatBot_with_memory/  # 带记忆和工具的对话机器人
-│   └── workflow/              # 搜索摘要工作流示例
+├── Agent/              # Agent 应用（基于框架搭建的实际应用）
+│   ├── chatBot_with_memory/    # 带记忆和工具的对话机器人
+│   ├── workflow/                # 搜索摘要工作流示例
+│   └── ResearchAssistant/       # 论文研究助手（完整工作流应用）
+│       ├── main.py              # 工作流节点定义与 DAG 编排
+│       └── prompts.py           # LLM Prompt 模板与格式化函数
 ├── pdf/                # PDF 处理示例
 │   ├── transformer_zh_cn.pdf # Transformer 论文中文翻译
 │   ├── transformer_zh_cn.txt # 提取的文本结果
@@ -76,6 +81,9 @@ python Agent/chatBot_with_memory/main.py
 
 # 搜索摘要工作流
 python Agent/workflow/main.py
+
+# 论文研究助手（搜索→下载→解析→选题→写作→渲染）
+python Agent/ResearchAssistant/main.py
 ```
 
 ## 🧩 核心模块说明
@@ -100,30 +108,33 @@ messages = memory.build_context(system_prompt="你是一个助手")
 
 ### Node / Flow — 工作流编排
 
-`core/node.py` 实现了简洁的 DAG 工作流：
+`core/node.py` 实现了简洁的 DAG 工作流，支持条件分支、指数退避重试和节点回退：
 
 - **Node**：每个节点实现 `exec(payload)` 返回 `(action, next_payload)`
-- **Flow**：按 action 路由到下一个节点，支持重试机制
+- **Flow**：按 action 路由到下一个节点，构成有向无环图（DAG）
 - **链式语法**：用 `>>` 和 `-` 操作符定义节点关系
+- **重试机制**：`max_retries` + `wait` 实现指数退避（`wait × 2^cur_try`），仅对 `RetryableError` 触发重试
+- **回退机制**：`fallback_action` 指定重试耗尽后的回退路径，沿 DAG 跳回前序节点而非崩溃终止
+- **RetryableError**：可重试异常，用于区分瞬态错误（网络超时）与永久错误（用户取消）
 
 ```python
-from core import Node, Flow
+from core import Node, Flow, RetryableError
 
-class MyNode(Node):
+class SearchNode(Node):
     def exec(self, payload):
-        result = do_something(payload)
-        if success:
-            return "next", result
-        return "retry", payload
+        try:
+            result = search(payload["query"])
+        except Exception as e:
+            raise RetryableError(f"搜索失败: {e}")  # 瞬态错误 → 触发重试
+        return "next", result
 
-node_a = MyNode()
-node_b = AnotherNode()
+# 重试耗尽后回退到 InputNode（重新输入关键词）
+search = SearchNode(max_retries=5, wait=2, fallback_action="fallback")
+input_node - "search" >> search
+search - "fallback" >> input_node  # 回退路径
 
-node_a - "next" >> node_b  # action 为 "next" 时流转到 node_b
-node_a - "retry" >> node_a  # action 为 "retry" 时重试自身
-
-flow = Flow(node_a)
-flow.run(initial_payload)
+flow = Flow(input_node)
+flow.run({})
 ```
 
 ### LLM — 大模型调用
@@ -146,6 +157,9 @@ flow.run(initial_payload)
 | `grep` | 搜索文件内容，支持正则、glob 过滤、上下文行 |
 | `bash` | 执行终端命令 |
 | `search` | DuckDuckGo 网络搜索 |
+| `paper_search.py` | 论文搜索与下载（arxiv API + PDF 批量下载） |
+| `latex_render.py` | LaTeX 渲染为 PDF（自动检测编译器） |
+
 
 ```python
 from tools import get_tools, execute_tool
@@ -189,10 +203,77 @@ description: 示例技能
 
 在带工具的对话机器人中，可通过 `activate_skill(name)` 工具动态激活技能，获取其完整操作指南后按步骤执行。
 
+## 🧪 框架应用 — ResearchAssistant
+
+`Agent/ResearchAssistant` 是基于本框架的 Node/Flow 工作流引擎搭建的**论文研究助手**，完整展示了框架能力的实际应用：从 DAG 编排、指数退避重试、节点回退，到 LLM 调用、工具集成、人机交互审批，全部使用框架原生能力实现。
+
+### 工作流 DAG
+
+```
+InputNode ──search──→ SearchNode ──select──→ SelectNode ──download──→ DownloadNode ──parse──→ ParseNode ──topic──→ TopicNode ──review──→ ReviewGateNode ──write──→ WritingNode ──render──→ RenderNode ──end──→ EndNode
+     ↑                     │                     ↑                       │
+     └───fallback_search───┘                     └───fallback_download───┘
+```
+
+- **搜索失败回退**：SearchNode 重试 5 次耗尽 → 回退到 InputNode，提示用户换关键词重新搜索
+- **下载失败回退**：DownloadNode 重试 5 次耗尽 → 回退到 SelectNode，重新筛选推荐论文 ID
+- **用户主动回退**：ReviewGateNode 中输入 `back` → 回退到 TopicNode 重新提出写作主题
+
+### 节点一览
+
+| 节点 | 职责 | 框架能力 |
+|------|------|---------|
+| InputNode | 提示用户输入搜索关键词 | DAG 起始节点，接收回退 payload 提示换关键词 |
+| SearchNode | 调用 arxiv API 搜索论文 | `RetryableError` + `max_retries=5` + `fallback_action` |
+| SelectNode | LLM 分析搜索结果，推荐论文 ID | `call_llm` 调用 + JSON 解析降级 |
+| DownloadNode | 逐篇下载 PDF（失败单篇重试 5 次） | `RetryableError` + 逐篇指数退避 + `fallback_action` |
+| ParseNode | 解析 PDF 为文本 | `RetryableError` + `max_retries=5` |
+| TopicNode | LLM 阅读论文，提出写作主题 | `call_llm` 调用 + JSON 解析降级 |
+| ReviewGateNode | 展示主题建议，用户选择/回退 | 人机交互审批点，支持 `back` 回退 |
+| WritingNode | LLM 生成 LaTeX 论文 | `call_llm` 调用 + LaTeX 内容清理 |
+| RenderNode | LaTeX 编译为 PDF | `RetryableError` + 区分瞬态/永久错误 |
+| EndNode | 输出最终报告 | 终止节点 |
+
+### 依赖的框架工具
+
+ResearchAssistant 使用了两个新增的内置工具：
+
+- **`paper_search.py`** — arxiv 论文搜索与 PDF 批量下载，基于 httpx 实现，支持搜索参数（关键词、排序、分页）和逐篇下载
+- **`latex_render.py`** — LaTeX 源码编译为 PDF，自动检测系统编译器（MiKTeX / TeX Live），运行两遍 pdflatex 确保引用正确
+
+### 运行
+
+```bash
+python Agent/ResearchAssistant/main.py
+```
+
+交互示例：
+```
+📚 研究助手工作流
+流程: 输入关键词 → 搜索论文 → 选择下载 → 解析论文 → 提出主题 → 评审 → 写作 → 渲染PDF
+支持: 重试(指数退避) + 回退(搜索失败→重新输入, 下载失败→重新筛选)
+输入 'quit' 或 'exit' 退出
+
+👤 输入研究主题关键词（输入 quit/exit退出）: large language model
+🔍 正在搜索论文: large language model
+  ✅ 找到 10 篇论文
+📋 分析搜索结果，推荐论文...
+  是否确认下载以上论文？(y/修改/n): y
+📥 下载 3 篇论文...
+📖 解析 3 篇论文...
+💡 分析论文内容，提出写作主题...
+📝 写作主题建议
+  👤 你的选择: 1
+✍️ 撰写论文: ...
+🖨️ 渲染 LaTeX 为 PDF...
+✅ PDF 渲染成功
+```
+
 ## 📋 依赖
 
 - Python ≥ 3.13
 - openai — LLM API 调用（OpenAI 格式）
+- httpx — HTTP 客户端（arxiv API 调用与 PDF 下载）
 - python-dotenv — 环境变量管理
 - ddgs — DuckDuckGo 搜索
 - pyyaml — YAML 解析
