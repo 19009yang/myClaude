@@ -68,7 +68,7 @@ WRITING_USER_PROMPT = """请基于以下信息撰写一篇学术论文的 LaTeX 
 2. 包含摘要、引言、主体部分、结论、参考文献
 3. 正确引用参考论文
 4. 输出纯 LaTeX 代码，不要有任何额外解释文字
-5. LaTeX 代码必须以 \\documentclass 开头，以 \\end{document} 结尾"""
+5. LaTeX 代码必须以 \\documentclass 开头，以 \\end{{document}} 结尾"""
 
 
 # ── 格式化辅助函数 ──

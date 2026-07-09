@@ -2,7 +2,7 @@
 
 论文搜索 → 挑选下载 → 解析论文 → 提出写作主题 → 用户评审 → LaTeX写作 → PDF渲染 → 结束
 
-使用 Node/Flow DAG 编排。
+使用 Node/Flow DAG 编排，支持重试（指数退避）和回退（重试耗尽后跳回前序节点）。
 """
 
 from __future__ import annotations
@@ -10,12 +10,18 @@ from __future__ import annotations
 import json
 import re
 import sys
+import time
 from pathlib import Path
 from typing import Any, Tuple
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from core import Node, Flow, shared, call_llm
+from core.node import RetryableError
 import importlib.util
-from tools import get_tools, ToolExecutor, SafetyGuard, search_papers, download_papers, render_latex
+from tools import get_tools, ToolExecutor, SafetyGuard
+from tools.skill_loader import get_default_registry
+from tools.builtins.paper_search import search_papers
+from tools.builtins.paper_search import download_papers
+from tools.builtins.latex_render import render_latex
 
 from Agent.ResearchAssistant.prompts import (
     SELECT_SYSTEM_PROMPT, SELECT_USER_PROMPT,
@@ -32,8 +38,37 @@ from Agent.ResearchAssistant.prompts import (
 # ──────────────────────────────────────────────
 
 
+class InputNode(Node):
+    """起始节点：提示用户输入搜索关键词。
+    若是从 SearchNode 回退而来（payload 中有 fallback hint），提示换关键词。
+    """
+
+    def exec(self, payload: Any) -> Tuple[str, Any]:
+        # 判断是否为回退场景
+        fallback_hint = payload.get("fallback_hint", "")
+
+        if fallback_hint:
+            print(f"\n  ⚠️ {fallback_hint}")
+            print("  请换一个关键词或检查网络后重试。")
+
+        user_query = input("\n👤 输入研究主题关键词（输入 quit/exit 退出）: ").strip()
+
+        if user_query.lower() in ("quit", "exit", "q"):
+            print("\n再见！")
+            return "done", None
+
+        if not user_query:
+            print("  ⚠️ 请输入有效的研究主题")
+            # 回到自身重新输入
+            return "re_input", {"fallback_hint": "关键词不能为空"}
+
+        return "search", {"query": user_query}
+
+
 class SearchNode(Node):
-    """搜索论文：调用 search_papers 工具"""
+    """搜索论文：调用 search_papers 工具。搜索失败（网络超时等）抛出 RetryableError 可自动重试。
+    重试耗尽后通过 fallback_action 回退到 InputNode（重新输入关键词）。
+    """
 
     def exec(self, payload: Any) -> Tuple[str, Any]:
         query = payload.get("query", "")
@@ -44,8 +79,9 @@ class SearchNode(Node):
         try:
             papers = search_papers(query, max_results=10)
         except Exception as exc:
+            # 网络超时、HTTP 错误等瞬态失败 → 可重试
             print(f"  ❌ 搜索失败: {exc}")
-            return "error", {"error": f"搜索失败: {exc}"}
+            raise RetryableError(f"搜索关键词 '{query}' 失败: {exc}")
 
         print(f"  ✅ 找到 {len(papers)} 篇论文")
         for i, p in enumerate(papers[:5], 1):
@@ -128,31 +164,52 @@ class SelectNode(Node):
 
 
 class DownloadNode(Node):
-    """下载选定论文的 PDF"""
+    """下载选定论文的 PDF。对每篇失败论文逐篇重试（最多 per_paper_retries 次），全部失败时抛出 RetryableError。
+    重试耗尽后通过 fallback_action 回退到 SelectNode（重新筛选论文）。
+    """
+
+    PER_PAPER_RETRIES = 5  # 逐篇下载重试次数
 
     def exec(self, payload: Any) -> Tuple[str, Any]:
         selected_ids = payload.get("selected_ids", [])
         query = payload.get("query", "")
+        papers = payload.get("papers", [])
 
         if not selected_ids:
             return "error", {"error": "无论文 ID 需下载"}
 
         print(f"\n📥 下载 {len(selected_ids)} 篇论文...")
         save_dir = str(Path.cwd() / "papers")
-        result = download_papers(selected_ids, save_dir=save_dir)
 
+        # 逐篇下载，失败则重试
         downloaded = {}
         failed_ids = []
-        for aid, info in result.items():
-            if info["status"] == "success":
-                downloaded[aid] = info["path"]
-                print(f"  ✅ {aid} → {info['path']}")
-            else:
+
+        for aid in selected_ids:
+            success = False
+            for attempt in range(self.PER_PAPER_RETRIES):
+                # 每次重试重新调用 download_papers（仅下载当前这篇）
+                result = download_papers(aid, save_dir=save_dir)
+                info = result[aid]
+                if info["status"] == "success":
+                    downloaded[aid] = info["path"]
+                    print(f"  ✅ {aid} → {info['path']}")
+                    success = True
+                    break
+                else:
+                    if attempt < self.PER_PAPER_RETRIES - 1:
+                        delay = 2 * (2 ** attempt)  # 指数退避: 2, 4, 8, 16s
+                        print(f"  ❌ {aid} 下载失败（第 {attempt + 1}/{self.PER_PAPER_RETRIES} 次），{delay}s 后重试... 原因: {info['path'][:80]}")
+                        time.sleep(delay)
+                    else:
+                        print(f"  ❌ {aid} 下载失败（已重试 {self.PER_PAPER_RETRIES} 次）: {info['path'][:80]}")
+
+            if not success:
                 failed_ids.append(aid)
-                print(f"  ❌ {aid}: {info['path']}")
 
         if not downloaded:
-            return "error", {"error": "所有论文下载失败"}
+            # 所有论文下载失败 → 触发节点级重试，耗尽后回退到 SelectNode
+            raise RetryableError(f"所有 {len(selected_ids)} 篇论文下载失败")
 
         if failed_ids:
             print(f"  ⚠️ {len(failed_ids)} 篇下载失败，继续处理成功部分")
@@ -160,12 +217,14 @@ class DownloadNode(Node):
         return "parse", {
             "query": query,
             "downloaded": downloaded,
-            "papers": payload.get("papers", []),
+            "papers": papers,
         }
 
 
 class ParseNode(Node):
-    """解析下载的 PDF 为文本"""
+    """解析下载的 PDF 为文本。所有论文解析失败时抛出 RetryableError 可自动重试。
+    无回退目标，重试耗尽后走 ErrorNode。
+    """
 
     # 动态加载 pdf_text_extractor（目录名含连字符，无法直接 import）
     _pdf_extractor = None
@@ -216,7 +275,8 @@ class ParseNode(Node):
                 print(f"    ❌ 解析异常: {exc}")
 
         if not parsed_papers:
-            return "error", {"error": "所有论文解析失败"}
+            # 所有论文解析失败 → 触发节点级重试
+            raise RetryableError("所有论文解析失败")
 
         print(f"  ✅ 成功解析 {len(parsed_papers)} 篇论文")
 
@@ -407,7 +467,9 @@ class WritingNode(Node):
 
 
 class RenderNode(Node):
-    """LaTeX 渲染为 PDF"""
+    """LaTeX 渲染为 PDF。渲染失败（编译超时等瞬态问题）时抛出 RetryableError 可自动重试。
+    无回退目标，重试耗尽后走 ErrorNode。
+    """
 
     def exec(self, payload: Any) -> Tuple[str, Any]:
         latex_content = payload.get("latex_content", "")
@@ -436,15 +498,24 @@ class RenderNode(Node):
                 "render_success": True,
             }
         else:
-            print(f"  ❌ PDF 渲染失败: {result.get('error', '')[:100]}")
-            print(f"  📄 .tex 文件已保存: {result.get('tex_path', '')}")
-            return "end", {
-                "pdf_path": "",
-                "tex_path": result.get("tex_path", ""),
-                "chosen_topic": chosen_topic,
-                "render_success": False,
-                "render_error": result.get("error", ""),
-            }
+            error_msg = result.get("error", "")
+            # 区分瞬态错误（编译超时）和永久性错误（缺少编译器）
+            # 缺少编译器是不可重试的，编译超时/失败可重试
+            if "未检测到 LaTeX 编译器" in error_msg:
+                # 不可重试 —— 直接返回失败结果
+                print(f"  ❌ PDF 渲染失败: {error_msg[:100]}")
+                print(f"  📄 .tex 文件已保存: {result.get('tex_path', '')}")
+                return "end", {
+                    "pdf_path": "",
+                    "tex_path": result.get("tex_path", ""),
+                    "chosen_topic": chosen_topic,
+                    "render_success": False,
+                    "render_error": error_msg,
+                }
+            else:
+                # 编译超时、编译失败等瞬态问题 → 可重试
+                print(f"  ❌ PDF 渲染失败: {error_msg[:100]}")
+                raise RetryableError(f"PDF 渲染失败: {error_msg}")
 
 
 class EndNode(Node):
@@ -495,7 +566,8 @@ def run_research_assistant() -> None:
     print("=" * 60)
     print("📚 研究助手工作流")
     print("=" * 60)
-    print("流程: 搜索论文 → 选择下载 → 解析论文 → 提出主题 → 评审 → 写作 → 渲染PDF")
+    print("流程: 输入关键词 → 搜索论文 → 选择下载 → 解析论文 → 提出主题 → 评审 → 写作 → 渲染PDF")
+    print("支持: 重试(指数退避) + 回退(搜索失败→重新输入, 下载失败→重新筛选)")
     print("输入 'quit' 或 'exit' 退出\n")
 
     shared.clear()
@@ -503,46 +575,56 @@ def run_research_assistant() -> None:
     shared["tool_executor"] = ToolExecutor(guard=shared["guard"])
 
     # 构建 DAG
-    search = SearchNode()
+    # - 易失败节点: max_retries=5, wait=2（指数退避）
+    # - SearchNode 回退到 InputNode（重新输入关键词）
+    # - DownloadNode 回退到 SelectNode（重新筛选论文）
+    # - ParseNode/RenderNode 无回退，重试耗尽走 ErrorNode
+    input_node = InputNode()
+    search = SearchNode(max_retries=5, wait=2, fallback_action="fallback_search")
     select = SelectNode()
-    download = DownloadNode()
-    parse = ParseNode()
+    download = DownloadNode(max_retries=5, wait=2, fallback_action="fallback_download")
+    parse = ParseNode(max_retries=5, wait=2)
     topic = TopicNode()
     review_gate = ReviewGateNode()
     writing = WritingNode()
-    render = RenderNode()
+    render = RenderNode(max_retries=5, wait=2)
     end = EndNode()
     error = ErrorNode()
 
-    # 连接
+    # ── DAG 连接 ──
+    # 主流程
+    input_node - "search" >> search
     search - "select" >> select
-    search - "error" >> error
     select - "download" >> download
     download - "parse" >> parse
-    download - "error" >> error
     parse - "topic" >> topic
-    parse - "error" >> error
     topic - "review" >> review_gate
-    topic - "error" >> error
     review_gate - "write" >> writing
-    review_gate - "back_to_topic" >> topic
     writing - "render" >> render
     render - "end" >> end
+
+    # 回退路径
+    input_node - "re_input" >> input_node          # 空关键词 → 重新输入
+    search - "fallback_search" >> input_node       # 搜索重试耗尽 → 重新输入关键词
+    download - "fallback_download" >> select        # 下载重试耗尽 → 重新筛选论文
+
+    # 错误路径
+    search - "error" >> error
+    select - "error" >> error
+    download - "error" >> error
+    parse - "error" >> error
+    topic - "error" >> error
     render - "render_error" >> end
+
+    # 用户主动回退
+    review_gate - "back_to_topic" >> topic
+
+    # 终止路径
+    input_node - "done" >> end
     error - "done" >> end
 
-    user_query = input("👤 输入研究主题关键词: ").strip()
-
-    if user_query.lower() in ("quit", "exit", "q"):
-        print("\n再见！")
-        return
-
-    if not user_query:
-        print("请输入有效的研究主题")
-        return
-
-    flow = Flow(search)
-    flow.run({"query": user_query})
+    flow = Flow(input_node)
+    flow.run({})
 
 
 if __name__ == "__main__":
