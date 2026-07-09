@@ -15,12 +15,13 @@
 
 from .read import read_file
 from .search import search
-from .tool_def import Tool, get_builtin_tools
+from .tool_def import Tool, get_builtin_tools, activate_skill
 from .bash import bash
 from .ls import ls
 from .edit import edit_file
 from .grep import grep
 from .write import write_file
+
 
 __all__ = [
     # 工具函数
@@ -31,6 +32,7 @@ __all__ = [
     "edit_file",
     "grep",
     "write_file",
+    "activate_skill",
     # 工具定义
     "Tool",
     "get_builtin_tools",

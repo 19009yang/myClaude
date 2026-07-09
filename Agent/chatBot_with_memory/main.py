@@ -1,26 +1,37 @@
 from __future__ import annotations
 from typing import Any,Dict,Tuple
 from tools import get_tools, ToolExecutor, SafetyGuard
-from core import call_llm_chat, call_llm, Node, Flow, shared, Memory
+from tools.skill_loader import get_default_registry
+from core import  call_llm, Node, Flow, shared, Memory
 
 """
-带有长期记忆和工具调用的对话机器人工作流程
+带有长期记忆和工具调用的对话机器人工作流程(带skill激活功能)
 """
+
+_registry = get_default_registry()
+_skill_summaries = _registry.skill_summaries_text()
 
 SYSTEM_PROMPT = """
-你是一个具备工具调用和长期记忆能力的智能助手。
+你是一个具备工具调用、SKill加载和长期记忆能力的智能助手。
 
 ## 可用工具
 - search: 搜索最新信息、新闻、产品发布时间等
 - read / grep / ls: 读取和检索本地文件与代码
 - bash: 执行终端命令
 - write: 写入或创建文件
+- activate_skill: 激活一个 Skill，获取其完整操作指南
 
 ## 工具使用策略
 - 涉及最新信息、事实核验时，优先调用 search，基于搜索结果回答
 - 涉及本地文件/代码时，优先使用 read/grep/ls/bash
 - 工具调用失败时，尝试换一种方式或直接告知用户原因
 
+## Skill 系统
+当用户的需求匹配某个 Skill 的功能时，你应该调用 activate_skill(name) 激活该 Skill。
+激活后你会收到该 Skill 的完整操作指南（包含任务目标、操作步骤、注意事项等），请严格按照指南中的步骤执行。
+如果不确定用户需求是否匹配某个 Skill，可以先查看下方 Skill 摘要列表再做判断。
+
+""" + (_skill_summaries + "\n" if _skill_summaries else "") + """
 ## 安全约束
 你不得主动执行以下操作：递归删除大量文件、修改系统目录、提权操作、向外发送用户数据。
 如果用户要求执行可能有害的操作，先警告风险并确认意图后再操作。
@@ -88,9 +99,10 @@ class OutputNode(Node):
 def run_chat() -> None:
     """运行对话循环"""
     print("=" * 60)
-    print("🤖 Chatbot with Memory")
+    print("🤖 Chatbot")
     print("=" * 60)
-    print("可用工具: read, search, bash, ls, grep, write等")
+    print("工具调用: 可调用 search/read/grep/ls/bash/write等工具")
+    print("技能激活: 可调用 activate_skill(name) 激活 Skill，获取完整操作指南")
     print("记忆管理: 短期上下文 + 长期记忆 (自动压缩)")
     print("安全防护: 危险命令自动拦截，高风险操作需确认")
     print("输入 'quit' 或 'exit' 退出\n")

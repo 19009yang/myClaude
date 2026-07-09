@@ -52,10 +52,51 @@ class SkillRegistry:
             for name, (meta, _, _) in self._skills.items()
         ]
 
+    # 模块式获取skill内容和元数据
     def get_skill(self, name: str) -> str | None:
         """返回指定 skill 的正文内容，不存在则返回 None"""
         entry = self._skills.get(name)
         return entry[1] if entry else None
+    
+    def get_skill_metadata(self, name: str) -> dict | None:
+        """返回指定 skill 的元数据，不存在则返回 None"""
+        entry = self._skills.get(name)
+        return entry[0] if entry else None
+    
+    def get_skill_full(self, name: str) -> tuple[dict, str] | None:
+        """返回指定 skill 的 (metadata, content)，不存在则返回 None"""
+        entry = self._skills.get(name)
+        return (entry[0], entry[1]) if entry else None
+    
+    def search_skills(self, keyword: str) -> list[dict]:
+        """按关键字搜索 skill 的 name 和 description，返回匹配的 skill 列表"""
+        keyword_lower = keyword.lower()
+        results = []
+        for name, (meta, _, _) in self._skills.items():
+            if (
+                keyword_lower in name.lower()
+                or keyword_lower in meta.get("description", "").lower()
+            ):
+                results.append({"name": name, "description": meta.get("description", "")})
+        return results
+
+    # def skill_summaries_text(self)-> str:
+    #     """返回所有 skill 的格式化文本，便于 LLM 处理"""
+    #     summaries = []
+    #     for name, (meta, _, _) in self._skills.items():
+    #         description = meta.get("description", "")
+    #         summaries.append(f"- {name}: {description}")
+    #     return "\n".join(summaries)
+    
+    def skill_summaries_text(self) -> str:
+      """返回格式化的 Skill 摘要文本，用于拼入 system prompt"""
+      skills = self.list_skills()
+      if not skills:
+          return ""
+      lines = ["可用 Skill 列表："]
+      for s in skills:
+          lines.append(f"  - {s['name']}: {s['description']}")
+      return "\n".join(lines)
 
 
 # 默认单例，供外部直接使用
@@ -91,3 +132,6 @@ if __name__ == "__main__":
             print(content[:500])
         else:
             print(f"  Skill '{name}' not found")
+    
+    print("-"*60)
+    print(registry.skill_summaries_text())

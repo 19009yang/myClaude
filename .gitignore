@@ -7,6 +7,7 @@ wheels/
 *.egg-info
 .clangd/
 CLAUDE.md
+.claude/
 
 # 敏感信息
 .env
@@ -24,3 +25,4 @@ Agent/chatBot_with_tool
 caculator/
 markdown/
 tests/
+writing/

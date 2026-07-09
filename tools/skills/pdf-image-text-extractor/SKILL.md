@@ -66,7 +66,7 @@ pip install pymupdf>=1.23.0
    - 获取 PDF 文件的本地路径
 
 2. **调用脚本提取文字**
-   - 执行命令：`python scripts/pdf_text_extractor.py <pdf_file_path>`
+   - 执行命令：`python tools/skills/pdf-image-text-extractor/scripts/pdf_text_extractor.py <pdf_file_path>`
    - 脚本会自动提取所有页面的文本
    - 尽量保留原文的段落结构和标题层级
 
@@ -133,7 +133,7 @@ pip install pymupdf>=1.23.0
 
 **智能体处理**：
 1. 确认 PDF 文件路径
-2. 执行脚本：`python scripts/pdf_text_extractor.py ./document.pdf`
+2. 执行脚本：`python tools/skills/pdf-image-text-extractor/scripts/pdf_text_extractor.py ./document.pdf`
 3. 获取提取结果，包含 10 页内容
 4. 生成 Markdown 文件：`./extracted_from_pdf.md`
 

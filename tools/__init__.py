@@ -17,6 +17,7 @@
 from .builtins import get_builtin_tools, Tool
 from .executor import ToolExecutor, ToolResult, ToolCall
 from .guard import SafetyGuard, GuardResult
+from .skill_loader import get_default_registry, SkillRegistry
 
 __all__ = [
     "Tool",
@@ -28,6 +29,8 @@ __all__ = [
     "get_builtin_tools",
     "get_tools",
     "execute_tool",
+    "get_default_registry",
+    "SkillRegistry",
 ]
 
 _guard = SafetyGuard()
