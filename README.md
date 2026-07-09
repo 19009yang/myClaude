@@ -1,6 +1,8 @@
 # Learn — LLM Agent 实验项目
 
-一个基于 Python 的 LLM Agent 实验项目，包含对话记忆管理、工具调用安全校验、工作流编排等核心能力的实现。项目从零构建了一个类 Claude Code 的智能助手框架，适合学习 Agent 开发的核心概念。
+一个基于 Python 的 LLM Agent 实验项目，包含对话记忆管理、工具调用安全校验、工作流编排、技能系统等核心能力的实现。项目从零构建了一个类 Claude Code 的智能助手框架，适合学习 Agent 开发的核心概念。
+
+> ⚠️ **注意**：当前 Agent 仅支持 **OpenAI 格式的 API**，需配置兼容 OpenAI API 规范的 LLM 服务端（如 OpenAI、DeepSeek 等）。
 
 ## ✨ 核心特性
 
@@ -8,7 +10,9 @@
 - **🔧 工具调用** — 内置 7 种工具（read/search/bash/ls/edit/grep/write），支持 LLM function calling
 - **🛡️ 安全校验** — 分级拦截策略（blocked/confirm/pass），YAML 配置，防止危险操作
 - **🔄 工作流编排** — Node/Flow 模式，支持条件分支和重试机制，用 `>>` 语法链式定义节点
+- **🧩 技能系统** — Markdown frontmatter 格式的 Skill 文件，支持动态加载与激活
 - **🤖 Agent 示例** — 带记忆与工具的对话机器人、搜索摘要工作流
+- **📄 PDF 处理** — 基于 PyMuPDF 的 PDF 文本与图片提取
 
 ## 📁 项目结构
 
@@ -32,11 +36,19 @@ learn/
 │   ├── executor.py     # 工具执行器（解析 + 执行 + 安全校验）
 │   ├── guard.py        # 安全校验器
 │   ├── safety_policy.yaml  # 安全策略配置
-│   ├── skill_loader.py # Skill 加载器（frontmatter 解析）
+│   ├── skill_loader.py # Skill 加载器（frontmatter 解析 + 注册表）
 │   └── skills/         # 自定义 Skill 目录
+│       ├── hello/              # 示例技能
+│       ├── content-research-writer/  # 内容调研与写作技能
+│       └── pdf-image-text-extractor/ # PDF 文本与图片提取技能
 ├── Agent/              # Agent 应用示例
 │   ├── chatBot_with_memory/  # 带记忆和工具的对话机器人
 │   └── workflow/              # 搜索摘要工作流示例
+├── pdf/                # PDF 处理示例
+│   ├── transformer_zh_cn.pdf # Transformer 论文中文翻译
+│   ├── transformer_zh_cn.txt # 提取的文本结果
+│   ├── extract_result.json   # 提取结构化结果
+│   └── images/               # 提取的图片
 ├── main.py             # 入口文件
 └── pyproject.toml      # 项目配置
 ```
@@ -50,9 +62,9 @@ learn/
 uv sync
 
 # 配置 LLM API（在 core/ 目录下创建 .env 文件）
-# 需要配置以下环境变量：
+# 当前 Agent 仅支持 OpenAI 格式的 API，需配置以下环境变量：
 # LLM_API_KEY=your_api_key
-# LLM_BASE_URL=your_base_url
+# LLM_BASE_URL=your_base_url       # 如 https://api.openai.com/v1 或 DeepSeek 等
 # LLM_MODEL_NAME=your_model_name
 ```
 
@@ -157,7 +169,7 @@ result = execute_tool("ls", {"path": "."})
 
 ### Skill — 技能系统
 
-`tools/skill_loader.py` 支持加载 Markdown frontmatter 格式的技能文件：
+`tools/skill_loader.py` 支持加载 Markdown frontmatter 格式的技能文件，并提供注册表（SkillRegistry）管理技能的注册、摘要生成与激活：
 
 ```markdown
 ---
@@ -167,14 +179,25 @@ description: 示例技能
 技能正文内容...
 ```
 
+当前内置三个示例技能：
+
+| Skill | 说明 |
+|-------|------|
+| `hello` | 最简示例技能，演示 frontmatter 格式 |
+| `content-research-writer` | 内容调研与写作技能，按步骤调研并生成文章 |
+| `pdf-image-text-extractor` | PDF 文本与图片提取技能，基于 PyMuPDF |
+
+在带工具的对话机器人中，可通过 `activate_skill(name)` 工具动态激活技能，获取其完整操作指南后按步骤执行。
+
 ## 📋 依赖
 
 - Python ≥ 3.13
-- openai — LLM API 调用
+- openai — LLM API 调用（OpenAI 格式）
 - python-dotenv — 环境变量管理
 - ddgs — DuckDuckGo 搜索
 - pyyaml — YAML 解析
 - chardet — 编码检测
+- pymupdf — PDF 文本与图片提取
 
 ## 📝 License
 
