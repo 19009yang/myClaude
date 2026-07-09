@@ -21,6 +21,8 @@ from .ls import ls
 from .edit import edit_file
 from .grep import grep
 from .write import write_file
+from .paper_search import search_papers, download_papers
+from .latex_render import render_latex
 
 
 __all__ = [
@@ -33,6 +35,9 @@ __all__ = [
     "grep",
     "write_file",
     "activate_skill",
+    "search_papers",
+    "download_papers",
+    "render_latex",
     # 工具定义
     "Tool",
     "get_builtin_tools",

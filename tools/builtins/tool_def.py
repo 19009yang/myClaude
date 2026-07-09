@@ -64,11 +64,13 @@ def get_builtin_tools() -> List[Tool]:
     from .edit import edit_file
     from .grep import grep
     from .write import write_file
+    from .paper_search import search_papers, download_papers
+    from .latex_render import render_latex
 
     return [
         Tool(
             name="read",
-            description="Read file contents. Use offset/limit for large files.",
+            description="读取文件内容。对于大文件，使用 offset/limit 参数。",
             parameters={
                 "type": "object",
                 "properties": {
@@ -82,7 +84,7 @@ def get_builtin_tools() -> List[Tool]:
         ),
         Tool(
             name="search",
-            description="Search the web using DuckDuckGo.",
+            description="使用 DuckDuckGo 搜索查询，返回搜索结果列表。",
             parameters={
                 "type": "object",
                 "properties": {
@@ -95,7 +97,7 @@ def get_builtin_tools() -> List[Tool]:
         ),
         Tool(
             name="ls",
-            description="List directory contents.",
+            description="列出指定目录下的文件和子目录。",
             parameters={
                 "type": "object",
                 "properties": {
@@ -109,7 +111,7 @@ def get_builtin_tools() -> List[Tool]:
         ),
         Tool(
             name="bash",
-            description="Execute bash commands in a safe environment.",
+            description="执行 Bash 命令。",
             parameters={
                 "type": "object",
                 "properties": {
@@ -122,7 +124,7 @@ def get_builtin_tools() -> List[Tool]:
         ),
         Tool(
             name="edit",
-            description="Edit a file by replacing text.",
+            description="编辑文件内容，替换指定文本。",
             parameters={
                 "type": "object",
                 "properties": {
@@ -137,7 +139,7 @@ def get_builtin_tools() -> List[Tool]:
         ),
         Tool(
             name="grep",
-            description="Search for a pattern in file contents. Supports regex, literal, glob filtering, and context lines.",
+            description="搜索文件内容，支持正则表达式和上下文行。",
             parameters={
                 "type": "object",
                 "properties": {
@@ -156,7 +158,7 @@ def get_builtin_tools() -> List[Tool]:
         ),
         Tool(
             name="write",
-            description="Write content to a file.",
+            description="向指定文件写入内容，支持覆盖或追加模式。",
             parameters={
                 "type": "object",
                 "properties": {
@@ -179,5 +181,51 @@ def get_builtin_tools() -> List[Tool]:
                 "required": ["name"],
             },
             fn=activate_skill,
+        ),
+        Tool(
+            name="search_papers",
+            description="在 arxiv 检索论文，返回搜索结果列表。支持标题、作者、分类、摘要等搜索语法。",
+            parameters={
+                "type": "object",
+                "properties": {
+                    "query": {"type": "string", "description": "搜索关键词，支持 arxiv 查询语法（ti:/au:/cat:/abs: 及 AND/OR 组合）"},
+                    "max_results": {"type": "integer", "description": "最大返回条数（默认 10）"},
+                    "sort_by": {"type": "string", "description": "排序依据: relevance / lastUpdatedDate / submittedDate"},
+                    "sort_order": {"type": "string", "description": "排序方向: ascending / descending"},
+                    "start": {"type": "integer", "description": "结果偏移量，用于分页（默认 0）"},
+                },
+                "required": ["query"],
+            },
+            fn=search_papers,
+        ),
+        Tool(
+            name="download_papers",
+            description="下载指定论文的 PDF，支持单个或批量下载。",
+            parameters={
+                "type": "object",
+                "properties": {
+                    "arxiv_ids": {
+                        "oneOf": [{"type": "string"}, {"type": "array", "items": {"type": "string"}}],
+                        "description": "单个 arxiv ID 或 ID 列表，如 '2301.00123' 或 ['2301.00123', '2301.00456']",
+                    },
+                    "save_dir": {"type": "string", "description": "PDF 保存目录，默认为当前目录下的 papers/"},
+                },
+                "required": ["arxiv_ids"],
+            },
+            fn=download_papers,
+        ),
+        Tool(
+            name="render_latex",
+            description="将 LaTeX 源码编译为 PDF。输入完整的 LaTeX 代码，输出编译结果和 PDF 文件路径。",
+            parameters={
+                "type": "object",
+                "properties": {
+                    "tex_content": {"type": "string", "description": "完整的 LaTeX 源码（须包含 \\documentclass 到 \\end{document}）"},
+                    "output_dir": {"type": "string", "description": "输出目录，默认为当前目录下的 output/"},
+                    "filename": {"type": "string", "description": "输出文件名（不含扩展名），默认 paper"},
+                },
+                "required": ["tex_content"],
+            },
+            fn=render_latex,
         ),
     ]
