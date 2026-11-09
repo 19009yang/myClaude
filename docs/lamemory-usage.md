@@ -1,8 +1,8 @@
-# LaMemory v0.1 使用与验证
+# LaMemory 使用与验证
 
 日期：2026-11-09
 
-当前已实现 M0/M1 的单机运行时，检索模式为 `keyword`。支持事实、偏好、事件、用户/会话范围、原始证据、版本更正、待裁决冲突、遗忘抑制、持久化提取任务和上下文预算。主题摘要、用户概览、经验学习、embedding 和完整对照评测仍属后续工作。DeepSeek `deepseek-flash` 已通过真实记忆 smoke，记录见 [real-smoke.json](../benchmarks/lamemory/results/real-smoke.json)。
+当前已实现 M0–M3 的单机运行时，检索模式为 `keyword`。除事实、偏好、事件、原始证据、版本、遗忘、持久化任务和预算外，支持用户概览、项目/手动主题摘要、增量失效、离线整理和有反馈验证的程序经验。M2/M3 的启用方式及接口见 [开发交付](lamemory-m2-m3.md)。embedding 和完整对照评测仍属后续工作。此前 DeepSeek `deepseek-flash` 真实记忆 smoke 的范围为 M0/M1，记录见 [real-smoke.json](../benchmarks/lamemory/results/real-smoke.json)。
 
 ## 启动聊天
 
@@ -65,7 +65,7 @@ python -m core.lamemory --user local-user search "开发回答"
 python -m core.lamemory --user local-user inspect lam_example
 ```
 
-任务默认最多尝试三次（包含首次），错误保存在 `last_error`，耗尽后 failed。`retry` 对原 job 复位，不创建新的幂等键。`flush` 等待本次目标会话的任务快照，返回 complete/failed/timeout 和剩余数量；complete 才代表该范围的提取已完成且查询可见。维护命令不会自动遍历其他会话。
+任务默认最多尝试三次（包含首次），错误保存在 `last_error`，耗尽后 failed。`retry` 对原 job 复位，不创建新的幂等键。`flush` 等待本次目标会话的任务快照及用户级摘要任务，并追踪消费期间新增的摘要代次，返回 complete/failed/timeout 和剩余数量；complete 才代表该范围的提取和分层刷新已完成。维护命令不会消费其他会话的事实/经验提取任务，用户级摘要任务可跨会话维护。
 
 ## 旧文件迁移与回滚
 
@@ -91,4 +91,4 @@ python -m benchmarks.lamemory.smoke --real --output benchmarks/lamemory/results/
 
 所有测试和 smoke 都使用临时数据库及合成消息，不读取 `core/chat_memory/`。真实 smoke 使用环境中的模型配置；缺少配置时以退出码 2 和 blocked 状态报告，不能当作通过。带来源的小型关键词验证集位于 `tests/lamemory/fixtures/retrieval.json`，包含 20 条事实/偏好/事件及 3 个无答案查询。
 
-离线与真实 smoke 结果见 [验证记录](../benchmarks/lamemory/README.md)。真实 smoke 通过表示该配置的基础调用和记忆流程可用，没有形成模型准确率结论或完整对照评测分数。M2 的主题摘要、用户概览、来源版本传播和增量整理，以及 M3 的经验候选与反馈晋升均未实现。
+离线与真实 smoke 结果见 [验证记录](../benchmarks/lamemory/README.md)。此前真实 smoke 通过表示该配置的 M0/M1 基础调用和记忆流程可用。M2/M3 本次通过离线行为测试，覆盖摘要失效、反馈晋升及撤销；尚未形成真实模型的摘要质量、经验迁移收益或完整对照评测结论。

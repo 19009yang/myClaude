@@ -10,6 +10,8 @@ from .extraction import normalize_time, validate_batch, validate_candidate
 from .models import FlushResult, MemoryItem, SearchHit, WriteResult
 from .retrieval import normalized, rank
 from .store import SQLiteStore, utc_now
+from .hierarchy import Hierarchy
+from .procedural import ProceduralMemory
 
 
 def new_id(prefix):
@@ -24,6 +26,8 @@ class LaMemoryService:
         self.session_id = self._identity(session_id or new_id("session_"))
         self.provider = provider
         self.db = SQLiteStore(self.config.database_path)
+        self.hierarchy = Hierarchy(self)
+        self.procedural = ProceduralMemory(self)
         self.last_context = None
         self._retrieval_cache = None
         self._processing = False
@@ -100,13 +104,27 @@ class LaMemoryService:
             self.db.execute("UPDATE lamemory_turns SET committed_at=? WHERE user_id=? AND session_id=? AND turn_id=?",
                             (utc_now(), self.user_id, self.session_id, turn))
             self.db.execute("INSERT INTO lamemory_jobs VALUES (?,?,?,?,? ,?,'pending',0,?,NULL,?)",
-                            (job_id, self.user_id, self.session_id, turn, "extract", key, time.time(), "{}"))
+                            (job_id, self.user_id, self.session_id, turn, "extract", key, time.time(), json.dumps({"project_id": self.config.project_id})))
+            if self.config.auto_learn_experiences:
+                self._enqueue_job("experience", f"experience:{self.session_id}:{turn}",
+                                  {"project_id": self.config.project_id}, turn_id=turn)
         return job_id
+
+    def _enqueue_job(self, kind, key, payload, *, turn_id=None):
+        """调用方持有事务；维护任务不伪造用户消息。"""
+        turn = turn_id or "__lamemory_maintenance__"
+        if turn_id is None:
+            self.db.execute("INSERT OR IGNORE INTO lamemory_turns VALUES (?,?,?,?)",
+                            (self.user_id, self.session_id, turn, utc_now()))
+        self.db.execute("INSERT OR IGNORE INTO lamemory_jobs VALUES (?,?,?,?,?,?,'pending',0,?,NULL,?)",
+                        (new_id("job_"), self.user_id, self.session_id, turn, kind, key, time.time(), json.dumps(payload)))
+        return self.db.one("SELECT job_id FROM lamemory_jobs WHERE user_id=? AND idempotency_key=?", (self.user_id, key))["job_id"]
 
     def _visible(self, item):
         return item and item["user_id"] == self.user_id and (
             item["scope_kind"] == "user" and item["scope_key"] == self.user_id or
-            item["scope_kind"] == "session" and item["scope_key"] == self.session_id)
+            item["scope_kind"] == "session" and item["scope_key"] == self.session_id or
+            item["scope_kind"] == "project" and item["scope_key"] == self.config.project_id)
 
     def _row(self, memory_id):
         row = self.db.one("SELECT * FROM lamemory_items WHERE memory_id=? AND user_id=?", (memory_id, self.user_id))
@@ -134,6 +152,7 @@ class LaMemoryService:
                                        "occurred_at": occurred_at, "correction": correction}, self.config)
         with self.db.connection:
             result = self._save(candidate, origin)
+            self.hierarchy.enqueue_dirty()
         self._retrieval_cache = None
         return result
 
@@ -142,7 +161,7 @@ class LaMemoryService:
         sources = candidate["source_message_ids"]
         self._check_sources(sources)
         scope = candidate["scope_kind"]
-        scope_key = self.user_id if scope == "user" else self.session_id
+        scope_key = {"user": self.user_id, "session": self.session_id, "project": self.config.project_id}[scope]
         digest = hashlib.sha256(normalized(candidate["content"]).encode()).hexdigest()
         slot = candidate["slot_key"]
         params = (self.user_id, scope, scope_key)
@@ -227,6 +246,7 @@ class LaMemoryService:
             if old["status"] == "pending":
                 raise ValueError("待裁决记录请先忘记，再通过当前有效记录 ID 更正")
             result = self._save(candidate, "explicit", replaces=old)
+            self.hierarchy.enqueue_dirty()
         return result
 
     def forget(self, memory_id):
@@ -246,6 +266,7 @@ class LaMemoryService:
                 self.db.execute("UPDATE lamemory_items SET status='deleted',updated_at=? WHERE user_id=? AND memory_id=?",
                                 (utc_now(), self.user_id, row["memory_id"]))
             self._invalidate_views()
+            self.hierarchy.enqueue_dirty()
         return {"status": "forgotten", "memory_id": memory_id, "raw_messages_retained": True}
 
     def inspect(self, memory_id):
@@ -269,8 +290,7 @@ class LaMemoryService:
 
     def search(self, query, filters=None, top_k=None):
         """在可信身份限定后执行关键词排序，默认仅返回 active 记录。"""
-        if not isinstance(query, str) or len(query) > self.config.max_content_chars:
-            raise ValueError("查询必须为限长字符串")
+        self._validate_query(query)
         if not query.strip():
             return []
         filters = filters or {}
@@ -283,8 +303,8 @@ class LaMemoryService:
         status = filters.get("status", "active")
         if status not in {"active", "pending", "deleted", "superseded"}:
             raise ValueError("无效的状态过滤条件")
-        rows = self.db.rows("SELECT * FROM lamemory_items WHERE user_id=? AND status=? AND ((scope_kind='user' AND scope_key=?) OR (scope_kind='session' AND scope_key=?))",
-                            (self.user_id, status, self.user_id, self.session_id))
+        rows = self.db.rows("SELECT * FROM lamemory_items WHERE user_id=? AND status=? AND ((scope_kind='user' AND scope_key=?) OR (scope_kind='session' AND scope_key=?) OR (scope_kind='project' AND scope_key=?))",
+                            (self.user_id, status, self.user_id, self.session_id, self.config.project_id))
         items = []
         after = normalize_time(filters.get("occurred_after"))
         before = normalize_time(filters.get("occurred_before"))
@@ -299,6 +319,59 @@ class LaMemoryService:
             items.append(self._item(row))
         return [SearchHit(item, score, reason) for item, score, reason in rank(query, items)[:limit]]
 
+    def _validate_query(self, query):
+        if not isinstance(query, str) or len(query) > self.config.max_content_chars:
+            raise ValueError("查询必须为限长字符串")
+
+    def define_topic(self, topic_key, memory_ids=None, *, project=False):
+        if project and self.config.project_id is None:
+            raise ValueError("项目主题需要配置 project_id")
+        return self.hierarchy.define("topic", topic_key, memory_ids=memory_ids,
+                                     project_id=self.config.project_id if project else None)
+
+    def refresh_summaries(self):
+        return self.hierarchy.refresh()
+
+    def inspect_summary(self, summary_id):
+        return self.hierarchy.inspect(summary_id)
+
+    def search_summaries(self, query):
+        self._validate_query(query)
+        return self.hierarchy.search(query)
+
+    def capture_experience(self, turn_id=None):
+        return self.procedural.capture(turn_id)
+
+    def propose_experience(self, task_type, conditions, steps, result_basis, source_message_ids, *, scope_kind="user"):
+        return self.procedural.propose(dict(task_type=task_type, conditions=conditions, steps=steps,
+                                           result_basis=result_basis, source_message_ids=source_message_ids), scope_kind=scope_kind)
+
+    def experience_feedback(self, experience_id, outcome, source_message_ids, *, evidence_kind="user", evidence=""):
+        """可信宿主提交用户反馈或实际测试结果；不把模型自评计为成功。"""
+        return self.procedural.feedback(experience_id, outcome, source_message_ids, evidence_kind=evidence_kind, evidence=evidence)
+
+    def inspect_experience(self, experience_id):
+        return self.procedural.inspect(experience_id)
+
+    def list_experiences(self, status=None):
+        return self.procedural.list(status)
+
+    def revoke_experience(self, experience_id):
+        return self.procedural.revoke(experience_id)
+
+    def replace_experience(self, experience_id, task_type, conditions, steps, result_basis, source_message_ids):
+        old = self.procedural._row(experience_id)
+        return self.procedural.propose(dict(task_type=task_type, conditions=conditions, steps=steps,
+                                           result_basis=result_basis, source_message_ids=source_message_ids),
+                                       scope_kind=old["scope_kind"], replaces=experience_id)
+
+    def search_experiences(self, query, top_k=None):
+        return self.procedural.search(query, top_k)
+
+    def consolidate(self, *, max_jobs=100):
+        from .consolidation import consolidate
+        return consolidate(self, max_jobs=max_jobs)
+
     def build_context(self, system_prompt="", budget=None, *, tools=None):
         rows = self.history()
         query = next((r["payload"].get("content", "") for r in reversed(rows) if r["role"] == "user"), "")
@@ -311,17 +384,18 @@ class LaMemoryService:
             self._retrieval_cache = (cache_key, self.search(query))
         view = self.db.one("SELECT * FROM lamemory_working_views WHERE user_id=? AND session_id=?", (self.user_id, self.session_id))
         self.last_context = build_context(rows, self._retrieval_cache[1], system_prompt, self.config,
-                                          budget=budget, tools=tools, working_view=view)
+                                          budget=budget, tools=tools, working_view=view,
+                                          summaries=self.search_summaries(query), experiences=self.search_experiences(query))
         self.last_context.diagnostics["retrieval_query_truncated"] = query_truncated
         return self.last_context
 
     def jobs(self):
-        return self.db.rows("SELECT * FROM lamemory_jobs WHERE user_id=? AND session_id=? ORDER BY available_at,job_id",
+        return self.db.rows("SELECT * FROM lamemory_jobs WHERE user_id=? AND (session_id=? OR kind='summary') ORDER BY available_at,job_id",
                             (self.user_id, self.session_id))
 
     def retry_failed(self, job_id):
         with self.db.connection:
-            changed = self.db.execute("UPDATE lamemory_jobs SET status='pending',attempts=0,available_at=?,last_error=NULL WHERE user_id=? AND session_id=? AND job_id=? AND status='failed'",
+            changed = self.db.execute("UPDATE lamemory_jobs SET status='pending',attempts=0,available_at=?,last_error=NULL WHERE user_id=? AND (session_id=? OR kind='summary') AND job_id=? AND status='failed'",
                                       (time.time(), self.user_id, self.session_id, job_id)).rowcount
         return bool(changed)
 
@@ -333,6 +407,8 @@ class LaMemoryService:
         self._processing = True
         results = []
         try:
+            with self.db.connection:
+                self.hierarchy.enqueue_dirty()
             pending = [j for j in self.jobs() if j["status"] == "pending" and j["available_at"] <= time.time()][:max_jobs]
             for job in pending:
                 remaining = deadline - time.monotonic() if deadline else self.config.provider_timeout_seconds
@@ -340,15 +416,30 @@ class LaMemoryService:
                     break
                 attempt = job["attempts"] + 1
                 try:
-                    if self.provider is None:
-                        raise RuntimeError("未配置记忆提取 provider")
-                    messages = self.db.messages(self.user_id, self.session_id, job["turn_id"])
-                    result = self.provider.extract(messages, max_items=self.config.max_extracted_items,
-                                                   timeout=min(self.config.provider_timeout_seconds, remaining))
-                    candidates = validate_batch(result, messages, self.config)
+                    timeout = min(self.config.provider_timeout_seconds, remaining)
+                    if job["kind"] == "summary":
+                        self.hierarchy.rebuild(json.loads(job["payload_json"]), timeout=timeout)
+                        candidates = []
+                    elif job["kind"] == "experience":
+                        if json.loads(job["payload_json"]).get("project_id") != self.config.project_id:
+                            raise ValueError("经验任务需要使用原项目配置消费")
+                        self.procedural.extract(job, timeout=timeout)
+                        candidates = []
+                    elif job["kind"] == "extract":
+                        project = json.loads(job["payload_json"])
+                        if "project_id" in project and project["project_id"] != self.config.project_id:
+                            raise ValueError("提取任务需要使用原项目配置消费")
+                        if self.provider is None:
+                            raise RuntimeError("未配置记忆提取 provider")
+                        messages = self.db.messages(self.user_id, self.session_id, job["turn_id"])
+                        result = self.provider.extract(messages, max_items=self.config.max_extracted_items, timeout=timeout)
+                        candidates = validate_batch(result, messages, self.config)
+                    else:
+                        raise ValueError("未知的 LaMemory 任务类型")
                     with self.db.connection:
                         for candidate in candidates:
                             self._save(candidate, "extracted")
+                        self.hierarchy.enqueue_dirty()
                         self.db.execute("UPDATE lamemory_jobs SET status='completed',attempts=?,last_error=NULL WHERE job_id=? AND user_id=?",
                                         (attempt, job["job_id"], self.user_id))
                     self._retrieval_cache = None
@@ -367,9 +458,14 @@ class LaMemoryService:
         if timeout < 0:
             raise ValueError("timeout 不能为负数")
         deadline = time.monotonic() + timeout
-        # Snapshot target IDs: future turns are not part of this flush.
+        with self.db.connection:
+            self.hierarchy.enqueue_dirty()
+        # Include downstream summary generations created while consuming the snapshot.
         targets = {j["job_id"] for j in self.jobs()}
         while True:
+            with self.db.connection:
+                self.hierarchy.enqueue_dirty()
+            targets.update(j["job_id"] for j in self.jobs() if j["kind"] == "summary")
             jobs = [j for j in self.jobs() if j["job_id"] in targets]
             failed = sum(j["status"] == "failed" for j in jobs)
             remaining = sum(j["status"] == "pending" for j in jobs)

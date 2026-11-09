@@ -27,8 +27,10 @@ def validate_candidate(data, config, *, allowed_sources=None):
         raise ValueError("记忆内容为空或过长")
     kind = data.get("type", "fact")
     scope = data.get("scope_kind", "user")
-    if kind not in {"fact", "preference", "event"} or scope not in {"user", "session"}:
+    if kind not in {"fact", "preference", "event"} or scope not in {"user", "session", "project"}:
         raise ValueError("无效的记忆类型或作用范围")
+    if scope == "project" and config.project_id is None:
+        raise ValueError("项目范围需要宿主配置 project_id")
     sources = data.get("source_message_ids", [])
     if not isinstance(sources, list) or any(not isinstance(s, str) for s in sources):
         raise ValueError("来源必须为消息 ID 数组")

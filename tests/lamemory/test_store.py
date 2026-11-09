@@ -31,6 +31,7 @@ class StoreCases(MemoryTestCase):
             self.assertFalse(self.memory.db.connection.in_transaction)
             with sqlite3.connect(self.path, timeout=0.1) as other:
                 other.execute("UPDATE lamemory_sessions SET created_at=created_at")
+            other.close()
             return []
         self.provider.extract = extract
         self.assertEqual(self.memory.flush(timeout=1).status, "complete")

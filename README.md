@@ -82,6 +82,9 @@ uv sync
 # 带记忆和工具的对话机器人
 python -m Agent.chatBot_with_memory.main
 
+# 可视化 Web 工作台（浏览器打开 http://127.0.0.1:3080）
+python -m Agent.chatBot_with_memory.web
+
 # 搜索摘要工作流
 python Agent/workflow/main.py
 
@@ -90,6 +93,8 @@ python Agent/ResearchAssistant/main.py
 ```
 
 ## 🧩 核心模块说明
+
+Web 工作台支持会话恢复、工具执行轨迹、模型配置和 LaMemory 来源查看、更正/遗忘。启动选项、离线演示及功能范围见 [Web 工作台使用说明](docs/chat-web.md)。
 
 ### Memory — 记忆管理
 
@@ -103,7 +108,7 @@ python Agent/ResearchAssistant/main.py
 - **按需召回**：关键词检索返回有效记忆、来源和命中原因；更正保留历史版本，遗忘抑制旧来源重放
 - **上下文预算**：包含系统提示、工具 schema、当前请求和记忆；保留合法工具链，超限抛出明确错误
 
-数据默认保存至项目 `.myclaude/lamemory/`。不指定 session 时新建会话；使用相同用户可以跨会话召回，指定已有 session ID 可以恢复历史。可选工作摘要由 `compress()` 显式触发，旧 JSONL/Markdown 通过预览导入；默认不读取真实旧会话。主题聚合、用户概览、经验学习与 embedding 尚未实现。DeepSeek `deepseek-flash` 已通过真实文本、工具回传与记忆 smoke，结果见 [测试记录](benchmarks/providers/README.md)。
+数据默认保存至项目 `.myclaude/lamemory/`。不指定 session 时新建会话；使用相同用户可以跨会话召回，指定已有 session ID 可以恢复历史。可选工作摘要由 `compress()` 显式触发，旧 JSONL/Markdown 通过预览导入；默认不读取真实旧会话。M2/M3 已支持主题聚合、用户概览、增量整理与反馈验证的经验学习，启用方式见 [开发交付](docs/lamemory-m2-m3.md)；embedding 尚未实现。此前 DeepSeek `deepseek-flash` 已通过真实文本、工具回传与 M0/M1 记忆 smoke，结果见 [测试记录](benchmarks/providers/README.md)。
 
 ```python
 from core import Memory

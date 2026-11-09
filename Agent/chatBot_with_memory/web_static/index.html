@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>myClaude · 有记忆的工作台</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" id="sidebar" aria-label="会话导航">
+      <div class="brand"><span class="brand-symbol">m<span>✳</span></span><strong>myClaude</strong><span class="local-label">LOCAL</span></div>
+      <button class="new-chat" id="new-chat"><span class="icon" data-icon="plus"></span>新建会话<span class="keycap">⌘ K</span></button>
+      <button class="nav-button" id="capabilities"><span class="icon" data-icon="blocks"></span>工具与技能<span class="count" id="tool-count">—</span></button>
+      <div class="sidebar-label">工作区</div>
+      <div class="workspace"><span class="icon" data-icon="folder"></span><span id="workspace-name">当前项目</span><span class="workspace-dot"></span></div>
+      <div class="history-heading"><span>会话记录</span><span class="icon" data-icon="history"></span></div>
+      <label class="search-box"><span class="icon" data-icon="search"></span><input id="session-search" placeholder="搜索会话" aria-label="搜索会话"><kbd>/</kbd></label>
+      <div class="session-list" id="session-list"></div>
+      <div class="sidebar-footer">
+        <button id="settings-button" class="nav-button"><span class="icon" data-icon="settings"></span>模型设置<span class="settings-dot" id="settings-dot"></span></button>
+        <div class="profile"><span class="profile-avatar">Y</span><div><strong>本地工作台</strong><small id="connection">正在连接服务…</small></div><button class="icon-button" id="theme-toggle" aria-label="切换深色模式" title="切换主题"><span class="icon" data-icon="sun"></span></button></div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <button class="icon-button" id="sidebar-toggle" aria-label="切换会话侧栏"><span class="icon" data-icon="panel"></span></button>
+        <span class="breadcrumb">工作台<span>/</span></span>
+        <button class="session-title" id="session-title" title="重命名当前会话">新会话</button>
+        <span class="demo-tag" id="demo-tag" hidden>离线演示</span>
+        <div class="topbar-actions"><span class="saved-status" id="saved-status"><i></i>本地存储</span><button class="icon-button active" id="memory-toggle" aria-label="切换 LaMemory 面板" title="LaMemory"><span class="icon" data-icon="brain"></span></button></div>
+      </header>
+
+      <div class="conversation" id="conversation">
+        <section class="welcome" id="welcome">
+          <div class="welcome-mark" aria-hidden="true">✳</div>
+          <div class="eyebrow">A LITTLE CONTEXT. A LOT OF POSSIBILITY.</div>
+          <h1>今天，从哪里开始？</h1>
+          <p>一起探索、创造和解决问题。<br>重要的事，LaMemory 会帮你记住。</p>
+          <div class="suggestions">
+            <button data-prompt="请阅读当前项目，介绍目录结构和主要模块。"><span class="suggestion-icon blue" data-icon="code"></span><strong>读懂一个项目</strong><span>梳理结构，找到下一步方向</span><b>↗</b></button>
+            <button data-prompt="记住：我喜欢使用中文交流，解释代码时请提供具体示例。"><span class="suggestion-icon amber" data-icon="brain"></span><strong>记住我的偏好</strong><span>让每次对话都更了解你</span><b>↗</b></button>
+            <button data-prompt="请搜索我接下来提供的主题，整理关键观点并注明信息来源。"><span class="suggestion-icon green" data-icon="search"></span><strong>探索一个主题</strong><span>搜索资料，连接新的线索</span><b>↗</b></button>
+            <button data-prompt="请先向我确认目标，再把一个复杂任务拆解成可执行的步骤。"><span class="suggestion-icon purple" data-icon="list"></span><strong>把想法变成计划</strong><span>拆解问题，让行动更清晰</span><b>↗</b></button>
+          </div>
+        </section>
+        <div class="messages" id="messages" aria-live="polite"></div>
+      </div>
+      <div class="composer-area">
+        <div class="run-status" id="run-status" role="status" hidden><span class="spinner"></span><span id="run-status-text">正在思考</span></div>
+        <div class="setup-banner" id="setup-banner" hidden><span class="icon" data-icon="settings"></span><span>配置一个模型，开始你的第一次对话。</span><button id="setup-model">配置模型 ↗</button></div>
+        <form class="composer" id="composer">
+          <textarea id="prompt" rows="2" placeholder="描述你的想法，或告诉我需要记住什么…" aria-label="消息" maxlength="32000"></textarea>
+          <div class="composer-toolbar"><div class="composer-info"><span class="mode-chip"><span class="icon" data-icon="spark"></span>Agent</span><span class="memory-chip"><i></i>LaMemory</span></div><div class="composer-controls"><button type="button" class="model-button" id="model-button"><span id="model-name">配置模型</span><span class="icon" data-icon="chevron"></span></button><button class="send-button" id="send" type="submit" aria-label="发送消息"><span class="icon" data-icon="arrow"></span></button><button class="stop-button" id="stop" type="button" aria-label="停止当前任务" hidden><span></span></button></div></div>
+        </form>
+        <div class="composer-hint"><span>Enter 发送 · Shift + Enter 换行</span><span>记忆与对话保存在本机</span></div>
+      </div>
+    </main>
+
+    <aside class="memory-panel" id="memory-panel" aria-label="LaMemory 记忆面板">
+      <div class="memory-header"><span class="memory-logo"><span class="icon" data-icon="brain"></span></span><div><strong>LaMemory</strong><small>Layered Aggregated Memory</small></div><button class="icon-button" id="memory-close" aria-label="收起记忆面板"><span class="icon" data-icon="close"></span></button></div>
+      <div class="panel-tabs" role="tablist" aria-label="记忆面板视图"><button id="tab-library" role="tab" aria-selected="true" class="selected">记忆库 <span id="memory-count">0</span></button><button id="tab-context" role="tab" aria-selected="false">本轮上下文</button></div>
+      <div class="panel-content" id="library-view">
+        <div class="panel-intro">让每一次对话，都有迹可循。</div>
+        <label class="search-box memory-search"><span class="icon" data-icon="search"></span><input id="memory-search" placeholder="搜索记忆关键词" aria-label="搜索记忆"></label>
+        <div class="memory-items" id="memory-items"></div>
+        <section class="jobs-section"><div class="section-label">记忆整理任务<span id="job-count">0</span></div><div id="jobs"></div></section>
+      </div>
+      <div class="panel-content" id="context-view" hidden><div class="panel-intro">本轮实际提交给模型的上下文概览。</div><div id="context-details"></div></div>
+      <div class="memory-footer"><span class="icon" data-icon="shield"></span><span>原文保留 · 来源可追溯<br><small>更正与遗忘遵循 LaMemory 一致性规则</small></span></div>
+    </aside>
+  </div>
+
+  <dialog id="settings-dialog" class="modal">
+    <form id="settings-form">
+      <div class="modal-heading"><div><div class="eyebrow">MODEL CONNECTION</div><h2>连接你的模型</h2></div><button type="button" class="icon-button" data-close="settings-dialog" aria-label="关闭设置"><span class="icon" data-icon="close"></span></button></div>
+      <p class="muted">读取项目的环境配置；在这里修改的设置仅在本次服务运行期间生效。</p>
+      <label>模型提供商<select name="provider" id="provider"></select></label>
+      <label>模型名称<input name="model" id="model" required placeholder="输入服务商提供的模型 ID" autocomplete="off"></label>
+      <label>API 地址 <span class="optional">可选</span><input name="base_url" id="base-url" type="url" placeholder="留空使用该提供商默认地址" autocomplete="off"></label>
+      <label>API key<input name="api_key" id="api-key" type="password" placeholder="输入 API key" autocomplete="new-password"></label>
+      <div class="form-row"><label>上下文窗口<input name="context_window" id="context-window" type="number" min="1024" required value="32768"></label><label>最大输出 tokens<input name="max_tokens" id="max-tokens" type="number" min="1" required value="4096"></label></div>
+      <div class="form-error" id="settings-error" role="alert"></div>
+      <div class="modal-footer"><span class="muted">密钥不会返回到页面或写入文件</span><button class="primary-button" type="submit">保存配置</button></div>
+    </form>
+  </dialog>
+  <dialog id="detail-dialog" class="modal detail-modal"><div class="modal-heading"><h2 id="detail-title">详情</h2><button class="icon-button" data-close="detail-dialog" aria-label="关闭详情"><span class="icon" data-icon="close"></span></button></div><div id="detail-content"></div></dialog>
+  <dialog id="edit-dialog" class="modal"><form id="edit-form"><div class="modal-heading"><h2 id="edit-title">编辑</h2><button type="button" class="icon-button" data-close="edit-dialog" aria-label="关闭编辑"><span class="icon" data-icon="close"></span></button></div><label id="edit-label">内容<textarea id="edit-content" rows="5" required maxlength="4000"></textarea></label><p id="edit-note" class="muted"></p><div class="modal-footer"><button type="button" class="text-button" data-close="edit-dialog">取消</button><button class="primary-button" type="submit">保存</button></div></form></dialog>
+  <div class="toast" id="toast" role="status" hidden></div>
+</body>
+</html>

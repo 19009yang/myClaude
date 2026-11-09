@@ -8,7 +8,7 @@
 
 **Layered Aggregated Memory（简称 LaMemory）** 是 myClaude 的记忆系统名称。本文定义适合个人项目的开发任务：以结构化记录为基础，逐步形成主题摘要和用户概览，并通过检索与预算管理支持长期使用。
 
-**状态说明：M0/M1 的关键词模式单机运行时已实现并通过离线验证及 DeepSeek `deepseek-flash` 的真实记忆 smoke。本文保留分阶段设计，具体已实现接口、维护命令、测试证据与限制见 [使用与验证](lamemory-usage.md)。M2/M3、embedding 和完整对照评测尚未实施。**
+**状态说明：M0–M3 的关键词模式单机运行时已实现。M2/M3 本次完成离线行为验证；此前 DeepSeek `deepseek-flash` 的真实记忆 smoke 只验证 M0/M1，不能作为 M2/M3 的真实模型或效果证据。具体接口、启用方式与限制见 [使用与验证](lamemory-usage.md) 及 [M2/M3 开发交付](lamemory-m2-m3.md)。embedding 和完整对照评测尚未实施。**
 
 配套文档：[LaMemory 架构与实施方案](lamemory-design.md)。
 
@@ -71,7 +71,7 @@ LaMemory 的实现遵循以下原则：
 | `core/llm.py` | OpenAI 格式模型调用 | 支持显式配置、超时、用量事件和替换模型客户端 |
 | `tools/executor.py` | 工具分发与安全检查 | 支持按运行实例注入记忆工具 |
 | `tools/builtins/tool_def.py` | 工具定义与注册 | 注册面向用户的记忆工具 |
-| `tools/skill_loader.py` | 加载静态 Skill | M3 时再接经验读取，初版维持现有用途 |
+| `tools/skill_loader.py` | 加载静态 Skill | 保留静态加载；M3 经验通过服务、上下文和专用工具读取 |
 
 ### 3.2 M0 修复清单
 
@@ -198,6 +198,11 @@ SQLite 连接启用外键，设置合理的 busy timeout。默认数据目录建
 | `provider_timeout_seconds` | 30 | 模型请求时间上限；还要约束客户端内置重试 |
 | `job_max_attempts` | 3 | 包含首次执行，耗尽后标记 failed |
 | `auto_process_jobs` | 开发时显式选择 | 启用时在回复展示后有界消费；关闭时手动处理 |
+| `project_id` | null | M2 的宿主项目标签，限制项目记忆和经验的可见范围 |
+| `max_summary_chars` | 1200 | M2 分层摘要的字符上限，仍受提示词 token 预算约束 |
+| `auto_learn_experiences` | false | M3 是否在完整轮次提交时投递经验候选任务 |
+| `experience_min_successes` | 2 | M3 独立用户/测试成功证据门槛，不计训练轨迹或模型自评 |
+| `max_experience_candidates` | 3 | M3 单轮经验候选上限 |
 
 业务配置不保存明文密钥，provider 从单独的环境配置取得凭据。各评测组独立构造 provider 和配置对象，避免运行中修改全局环境变量造成串组。
 
@@ -349,6 +354,8 @@ M1 对短期缓存和长期任务分别记录状态，不把所有异常吞掉�
 
 整理命令先支持：处理积压任务、精确去重、应用已确定的失效状态、重建脏摘要、输出结果统计。不先引入自动聚类和复杂阶段调度。
 
+已实现：`hierarchy.py`、`consolidation.py`、迁移 `002_hierarchy.sql`。通过 `refresh_summaries()` 或 `consolidate()` 建立用户概览/固定项目摘要，`define_topic()` 管理手动主题；后续写入在同一事务内标脏并投递幂等重建任务。摘要来源包含记忆 ID、revision 与哈希，发布前复核快照。`flush()` 同时等待当前会话任务和用户级摘要任务，并追踪期间新增的摘要代次。未配置分层摘要 provider 时使用有长度限制的原文摘录。
+
 ### 10.2 M3：程序记忆
 
 经验结构建议包含任务类型、适用条件、步骤、结果依据、用户反馈、成功/失败计数和状态。
@@ -362,6 +369,8 @@ M1 对短期缓存和长期任务分别记录状态，不把所有异常吞掉�
 ```
 
 单次模型自评不能作为验证成功的唯一依据。同一轨迹重放不能累加为多次成功。错误经验支持撤销和版本替代。先保存为结构化经验；是否导出为 SKILL.md 是后续独立功能。
+
+已实现：`procedural.py`、迁移 `003_procedural.sql`。已完成轮次可手动投递经验提取，或通过 `auto_learn_experiences=True` 启用自动投递。默认需要两个独立任务中的用户/测试成功证据，或可信宿主提交用户明确认可，才能晋升；模型自评和训练轨迹不计独立成功。同一版本链上的同一反馈轨迹只记录一次。有效经验进入关键词检索及上下文，失败反馈使其撤销，替代版本从 candidate 重新验证。未实现自动 Skill 生成/安装及真实模型迁移效果评测。
 
 ## 11. 测试与验收
 

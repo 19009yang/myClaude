@@ -1,0 +1,205 @@
+{
+  "name": "LaMemory M2/M3 offline verification",
+  "run_at_utc": "2026-11-09T09:18:30.798543+00:00",
+  "mode": "offline",
+  "retrieval_mode": "keyword",
+  "python": "3.13.15",
+  "real_model_calls": false,
+  "verification": [
+    {
+      "suite": "lamemory",
+      "command": [
+        ".venv/bin/python",
+        "-W",
+        "error::ResourceWarning",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests/lamemory",
+        "-p",
+        "test_*.py"
+      ],
+      "exit_code": 0,
+      "test_count": 58,
+      "output": "..........................................................\n----------------------------------------------------------------------\nRan 58 tests in 4.491s\n\nOK\n"
+    },
+    {
+      "suite": "providers",
+      "command": [
+        ".venv/bin/python",
+        "-W",
+        "error::ResourceWarning",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests/providers",
+        "-p",
+        "test_*.py"
+      ],
+      "exit_code": 0,
+      "test_count": 20,
+      "output": "....................\n----------------------------------------------------------------------\nRan 20 tests in 0.330s\n\nOK\n"
+    }
+  ],
+  "fake_smoke": {
+    "mode": "fake",
+    "retrieval_mode": "keyword",
+    "python": "3.13.15",
+    "status": "passed",
+    "usage_events": [
+      {
+        "purpose": "agent",
+        "usage": {
+          "total_tokens": 0
+        }
+      },
+      {
+        "purpose": "agent",
+        "usage": {
+          "total_tokens": 0
+        }
+      },
+      {
+        "purpose": "extraction",
+        "usage": {
+          "total_tokens": 0
+        },
+        "fake": true
+      }
+    ],
+    "checks": {
+      "cross_session_retrieval": true,
+      "source_trace": true,
+      "user_isolation": true,
+      "context_retrieval": true,
+      "answer_grounded": true,
+      "persistence": true
+    },
+    "source_hashes": {
+      "core/lamemory/__init__.py": "530f133397422c94298a5b0a052886a69f36e268ae8360013a9aa5893a6d2196",
+      "core/lamemory/__main__.py": "491f5ef1cfd069f864fd62984022d5ea775b641ec8edf6c7018a89fde818fe07",
+      "core/lamemory/config.py": "4c77f1c3b15a0a8d43257bcb5efa00895aa678588e8fc117546a1fc5eadb3512",
+      "core/lamemory/consolidation.py": "e4453568490127edacb5292dfe0e3a0dd5869a479b8c4625a5b66702705dc534",
+      "core/lamemory/context.py": "7b19b7e3ea88494fbbcc25b80f59ceebbdfdd167dd0dd64244e9eef11076af16",
+      "core/lamemory/extraction.py": "f2a6a5ec7acff168877a1e1b2af19fcac8d8998349fdf6bcfe2f89ca24904c17",
+      "core/lamemory/hierarchy.py": "76b2fe5bd65b81063646ae706653fae4b6789063f9eb3514e06f38b334fd5a60",
+      "core/lamemory/migration.py": "a7f63c1e0d7df8943590e3d1bd98892d5cd947a396abfbcb3be0375474456e38",
+      "core/lamemory/models.py": "202a5d45ef869fe7a7b53f3cf6981b0740cf1e4df8936479ea0082ec93c93d88",
+      "core/lamemory/procedural.py": "721c1dabc0a45975224d84ccb738e0b70a97098f210a8aadc95ed157a8f2048d",
+      "core/lamemory/providers.py": "e118c7c14e2a20e6312ef8f5e61e76de0fc2417a659e1005c2e8261bfdb72c40",
+      "core/lamemory/retrieval.py": "e903ff64c34741e9c10c0c78e93e9cb07ade73a78016ccfe8264223fd03512c8",
+      "core/lamemory/service.py": "f6c182e3bed77b6d3a2de53f980747759cb848bb668c9d920201b42d31358bd7",
+      "core/lamemory/store.py": "39d9866bc5cb4ec10dcc0a477e10a5ff1419f3d1f581e2a334938c5e2add3095",
+      "core/lamemory/tools.py": "2dcfe938f2769919d6d5a87c7d0c55ca0df760cc5dbf0a896ea31c6d1f4ea106",
+      "core/providers/__init__.py": "0ed71895276e3f66442d97d15d10820a70f9ca0e1eda6d6b7a445c74113b2538",
+      "core/providers/anthropic.py": "17a52e674f2106ff579637fe38d2c7ad1c419cabe7049ce65ff5f6a8c6112f84",
+      "core/providers/client.py": "544ed3f140a09883061e396de3d68ced2e89ef0f3272e40ca5e2b1ca7c753a11",
+      "core/providers/config.py": "a2c85ca9731e637276eed95238eca1b9f37d0fc753a8eb926a2e7e27dc1dedd6",
+      "core/providers/messages.py": "a5d13239c01aaa067f0af6dd140f5708ef9bfff937060cf501a739b6ab8eec31",
+      "core/providers/openai_chat.py": "7b6bde4780460f0274d5b1cf007ad59eea1efd56aae245fd4812bb4cf5f7237e",
+      "core/providers/registry.py": "8d62969b15feae7a76baa05ae02b7afec037d4a8641112ece81f7bbde9880d8a",
+      "core/providers/types.py": "9595f3ca0f8b3ebf1c1586fe5b9134466e4ca4700ec92a29c122ee92c90e5f56",
+      "core/lamemory/migrations/001_initial.sql": "b61aed09847c3e6701dffa1d8818c70ac505a86525714f34bd15afcdf02e33f0",
+      "core/lamemory/migrations/002_hierarchy.sql": "a4792dc4ca5205ad4123071b96614a7d60fdabcf271e6ca35ff1c5fce6224294",
+      "core/lamemory/migrations/003_procedural.sql": "d95b60d9ad6853a6ef108d85e4734218373c44efb7c0e681d459b66b91b2e620",
+      "core/llm.py": "f253d096b6b7639e76bfd586fce7004d79072a86faf1ad2d64b1be983f1516a8",
+      "core/memory.py": "25f49c5a5169f8cbf90b29ff999141da70878f8cfc7f8e5837d84daef5c2f12a",
+      "tools/executor.py": "9cf33c85fa74c595ed93cb02d44cd597bd2750fe872e87e50967128c73f74698",
+      "Agent/chatBot_with_memory/runner.py": "f321e6383dbcbbeef39452428a0306a6b96a022077d2e8344c86a4411ef92f71",
+      "Agent/chatBot_with_memory/main.py": "06ec80c84945608c9a84f43c4e1c1cd2fea4ea8c07af468026aa22976601a3d7",
+      "tests/lamemory/fixtures/retrieval.json": "d740ae05ae7f9f928c8a39e207cbb4101da9a51ddadf788b296a1794c1b12d74"
+    },
+    "config": {
+      "retrieval_mode": "keyword",
+      "top_k": 5,
+      "memory_token_budget": 2048,
+      "context_window": 32768,
+      "reserved_output": 4096,
+      "safety_margin": 512,
+      "max_extracted_items": 8,
+      "max_content_chars": 4000,
+      "provider_timeout_seconds": 15,
+      "job_max_attempts": 3,
+      "retry_delay_seconds": 0.1,
+      "auto_process_jobs": true,
+      "project_id": null,
+      "auto_learn_experiences": false,
+      "experience_min_successes": 2,
+      "max_experience_candidates": 3,
+      "max_summary_chars": 1200
+    },
+    "config_hash": "8308d7cc7a0a9daa7e872352b627dcc459b2dbf562f2a655f9fe19e15fb8968f",
+    "seed_errors": [],
+    "flush": {
+      "status": "complete",
+      "completed": 1,
+      "failed": 0,
+      "remaining": 0
+    },
+    "answer": "项目代号是 Maple-Quartz-47。",
+    "retrieved": [
+      {
+        "item": {
+          "memory_id": "lam_5a8bb953d59c4f969245560a7ac988b6",
+          "user_id": "smoke",
+          "scope_kind": "user",
+          "scope_key": "smoke",
+          "type": "fact",
+          "content": "项目代号是 Maple-Quartz-47。",
+          "content_hash": "28c75c91b4211e121b4aa180281552e58a30f72e056d8c216f33e7015c045be4",
+          "slot_key": "project.codename",
+          "occurred_at": null,
+          "status": "active",
+          "revision": 1,
+          "superseded_by": null,
+          "origin": "extracted",
+          "created_at": "2026-11-09T09:18:36.456235+00:00",
+          "updated_at": "2026-11-09T09:18:36.456235+00:00",
+          "source_message_ids": [
+            "msg_46721b5e0677458ebc2fdd6584e51f97"
+          ]
+        },
+        "score": 2.0,
+        "reason": "关键词匹配：代号, 目代, 项目",
+        "mode": "keyword"
+      }
+    ],
+    "elapsed_seconds": 0.064
+  },
+  "fake_smoke_exit_code": 0,
+  "source_hashes": {
+    "Agent/chatBot_with_memory/main.py": "06ec80c84945608c9a84f43c4e1c1cd2fea4ea8c07af468026aa22976601a3d7",
+    "core/lamemory/__init__.py": "530f133397422c94298a5b0a052886a69f36e268ae8360013a9aa5893a6d2196",
+    "core/lamemory/__main__.py": "491f5ef1cfd069f864fd62984022d5ea775b641ec8edf6c7018a89fde818fe07",
+    "core/lamemory/config.py": "4c77f1c3b15a0a8d43257bcb5efa00895aa678588e8fc117546a1fc5eadb3512",
+    "core/lamemory/consolidation.py": "e4453568490127edacb5292dfe0e3a0dd5869a479b8c4625a5b66702705dc534",
+    "core/lamemory/context.py": "7b19b7e3ea88494fbbcc25b80f59ceebbdfdd167dd0dd64244e9eef11076af16",
+    "core/lamemory/extraction.py": "f2a6a5ec7acff168877a1e1b2af19fcac8d8998349fdf6bcfe2f89ca24904c17",
+    "core/lamemory/hierarchy.py": "76b2fe5bd65b81063646ae706653fae4b6789063f9eb3514e06f38b334fd5a60",
+    "core/lamemory/migration.py": "a7f63c1e0d7df8943590e3d1bd98892d5cd947a396abfbcb3be0375474456e38",
+    "core/lamemory/migrations/001_initial.sql": "b61aed09847c3e6701dffa1d8818c70ac505a86525714f34bd15afcdf02e33f0",
+    "core/lamemory/migrations/002_hierarchy.sql": "a4792dc4ca5205ad4123071b96614a7d60fdabcf271e6ca35ff1c5fce6224294",
+    "core/lamemory/migrations/003_procedural.sql": "d95b60d9ad6853a6ef108d85e4734218373c44efb7c0e681d459b66b91b2e620",
+    "core/lamemory/models.py": "202a5d45ef869fe7a7b53f3cf6981b0740cf1e4df8936479ea0082ec93c93d88",
+    "core/lamemory/procedural.py": "721c1dabc0a45975224d84ccb738e0b70a97098f210a8aadc95ed157a8f2048d",
+    "core/lamemory/providers.py": "e118c7c14e2a20e6312ef8f5e61e76de0fc2417a659e1005c2e8261bfdb72c40",
+    "core/lamemory/retrieval.py": "e903ff64c34741e9c10c0c78e93e9cb07ade73a78016ccfe8264223fd03512c8",
+    "core/lamemory/service.py": "f6c182e3bed77b6d3a2de53f980747759cb848bb668c9d920201b42d31358bd7",
+    "core/lamemory/store.py": "39d9866bc5cb4ec10dcc0a477e10a5ff1419f3d1f581e2a334938c5e2add3095",
+    "core/lamemory/tools.py": "2dcfe938f2769919d6d5a87c7d0c55ca0df760cc5dbf0a896ea31c6d1f4ea106",
+    "tests/lamemory/common.py": "a8306ed218c6e24beabb1dcf654ff6b2d229187e59d1a2f92e7a825a23526bf7",
+    "tests/lamemory/test_acceptance.py": "c5feaedf715b388a499a4801438bd32506b2165dd40682e32093e590f6bc9b91",
+    "tests/lamemory/test_chat_integration.py": "8ea18436ac85b5bd3fd97307e7ad22706244495f2802f156e3ab3d5a7164e2f2",
+    "tests/lamemory/test_cli.py": "7e7a08d22f884aa8836d59b6b51bf461011780886d847ea33ca7b2250aba70f6",
+    "tests/lamemory/test_failures.py": "a6ed84b908d4c345f3f2b5acdf20e84c6a3366ddc53c9f2dc58f0dd100f83da6",
+    "tests/lamemory/test_hierarchy.py": "90b04e8fe9c2d9dcd0d277415c4b8817e644e61614ec8860624859ff4b970fc0",
+    "tests/lamemory/test_migration.py": "25e76a66767e4e1a6ce855cc742ed902898627505931882b15a6617e2e275cad",
+    "tests/lamemory/test_procedural.py": "57984aaf3b6858572e9db35cbc514ad5e86217531c2415943230ab813548426b",
+    "tests/lamemory/test_retrieval.py": "3dd2a666b9ef6b3184de1969878adf82dd47f60e1f8fbb71483d49327e8db075",
+    "tests/lamemory/test_store.py": "e428a35a3e260ac8cd494ee9dfe613edcff0751af8898a38a1d00d7d8f98c3cd"
+  },
+  "status": "passed",
+  "elapsed_seconds": 5.747
+}

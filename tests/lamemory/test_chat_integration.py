@@ -10,6 +10,7 @@ from Agent.chatBot_with_memory.runner import ChatRunner
 from core.lamemory.providers import ChatMemoryProvider
 from core.lamemory.tools import get_memory_tools
 from core.llm import call_llm
+from core.providers import ModelConfig
 from tools.builtins.tool_def import Tool
 from tools.executor import ToolCall, ToolExecutor
 
@@ -58,9 +59,10 @@ class ChatCases(MemoryTestCase):
         client.with_options.return_value = client
         message = SimpleNamespace(content="回复", tool_calls=None)
         client.chat.completions.create.return_value = SimpleNamespace(choices=[SimpleNamespace(message=message)], usage=None)
-        result = call_llm([{"role": "user", "content": "测试"}], client=client, model="fake", timeout=2, max_tokens=123)
+        result = call_llm([{"role": "user", "content": "测试"}], client=client, model="fake", timeout=2, max_tokens=123,
+                          config=ModelConfig(provider="openai-compatible", model="fake", base_url="https://example.invalid/v1"))
         self.assertEqual(result["usage"]["total_tokens"], 0)
-        client.with_options.assert_called_once_with(timeout=2, max_retries=0)
+        client.with_options.assert_called_once_with(timeout=2, max_retries=0, base_url="https://example.invalid/v1")
         self.assertEqual(client.chat.completions.create.call_args.kwargs["max_tokens"], 123)
 
     def test_provider_only_sends_user_evidence_and_records_usage(self):

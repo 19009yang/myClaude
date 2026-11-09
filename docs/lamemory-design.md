@@ -4,7 +4,7 @@
 
 **Layered Aggregated Memory（简称 LaMemory）** 是 myClaude 计划开发的分层聚合记忆系统。本文描述目标架构、现有代码缺口和实施边界，配套执行步骤见 [LaMemory 开发指南](lamemory-development-guide.md)。
 
-M0/M1 的单机运行时已实现，`core/memory.py` 作为 `core/lamemory/` 的兼容门面。当前采用关键词模式；M2/M3 和完整对照评测仍为待实施方案。已运行的离线验证和真实模型验收限制见 [使用与验证](lamemory-usage.md)。
+M0–M3 的单机运行时已实现，`core/memory.py` 作为 `core/lamemory/` 的兼容门面。当前采用关键词模式；M2/M3 已完成离线功能验证，真实模型效果与完整对照评测仍待实施。启用方式和验收限制见 [使用与验证](lamemory-usage.md) 与 [M2/M3 开发交付](lamemory-m2-m3.md)。
 
 ## 1. 目标
 
@@ -112,4 +112,4 @@ M1 可先启用关键词模式；真实语义检索必须接入可用 embedding�
 
 报告任务得分、通过率、轮数、时间、错误率、检索指标及全部模型用量。提取与摘要成本单独统计，建库成本与在线成本分别呈现。经验学习另设训练/测试划分，不能用测试答案训练后续测试任务。
 
-当前已实现关键词模式的新引擎，并通过离线回归、fake 聊天 smoke 和 DeepSeek `deepseek-flash` 的真实记忆 smoke。测试记录位于 `benchmarks/lamemory/` 和 `benchmarks/providers/`，尚未取得 LaMemory 正式对照评测分数。
+当前关键词模式引擎的 M0–M3 已通过离线回归，原有 fake 聊天 smoke 已重跑通过；此前 DeepSeek `deepseek-flash` 的真实记忆 smoke 覆盖 M0/M1。测试记录位于 `benchmarks/lamemory/` 和 `benchmarks/providers/`，M2/M3 尚未进行真实模型效果验证，也未取得 LaMemory 正式对照评测分数。

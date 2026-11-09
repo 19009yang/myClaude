@@ -162,6 +162,6 @@ python -m benchmarks.lamemory.smoke --output benchmarks/lamemory/results/fake-sm
 python -m benchmarks.lamemory.smoke --real --output benchmarks/lamemory/results/real-smoke.json
 ```
 
-当前 provider 测试 20 项、记忆回归 34 项通过。联合测试使用 Anthropic 主模型和 DeepSeek 提取模型的本地 MockTransport，验证了主动保存 → 工具结果回传 → 自动提取去重 → 新会话召回与来源追溯。DeepSeek `deepseek-flash` 的真实 smoke 也已通过；缺少可用配置时 smoke 仍以退出码 2 和 blocked 状态报告。
+provider 测试 20 项通过；记忆回归在 M2/M3 交付后扩展为 58 项，记录见 [LaMemory 验证](../benchmarks/lamemory/README.md)。联合测试使用 Anthropic 主模型和 DeepSeek 提取模型的本地 MockTransport，验证了主动保存 → 工具结果回传 → 自动提取去重 → 新会话召回与来源追溯。此前 DeepSeek `deepseek-flash` 的真实 smoke 覆盖 M0/M1；缺少可用配置时 smoke 仍以退出码 2 和 blocked 状态报告。M2/M3 本次只进行离线功能验证。
 
 尚未实现：流式/异步事件、原生 Gemini、OpenAI Responses、OAuth、多模态、embedding、reranker、自动模型目录和价格目录。关键词检索不会因增加聊天供应商而自动变成语义检索。

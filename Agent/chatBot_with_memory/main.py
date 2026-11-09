@@ -44,6 +44,8 @@ SYSTEM_PROMPT = """
 你拥有长期记忆，会自动记住用户偏好和重要事实。回答时参考长期记忆中的信息，并在不确定时主动确认。
 用户要求记住、更正或忘记时，使用 lamemory_store/update/forget，并核实工具返回状态后说明结果。
 可用 lamemory_search 查询记忆和原始来源 ID；conflict 表示待裁决，不代表新事实已经生效。
+记忆可限定 user/session/project 范围，project 需要启动时绑定项目。可使用 lamemory_experience_search
+查询已验证经验，按适用条件复用并核实当前结果；错误经验可按用户要求撤销。
 
 ## 回答风格
 - 跟随用户使用的语言（中文/英文）
@@ -178,6 +180,8 @@ if __name__ == "__main__":
     parser.add_argument("--database")
     parser.add_argument("--user", default="local-user")
     parser.add_argument("--session", help="留空创建新会话，指定已有 ID 恢复会话")
+    parser.add_argument("--project", help="绑定固定项目标签")
+    parser.add_argument("--learn-experiences", action="store_true", help="完成轮次后投递经验候选提取任务")
     parser.add_argument("--provider", help="openai / anthropic / deepseek / qwen / openai-compatible")
     parser.add_argument("--model", help="覆盖 LLM_MODEL_NAME")
     parser.add_argument("--base-url", help="覆盖供应商默认端点")
@@ -190,4 +194,5 @@ if __name__ == "__main__":
         model_config = replace(model_config, base_url=args.base_url)
     run_chat(database_path=args.database, user_id=args.user, session_id=args.session, model_config=model_config,
              config=LaMemoryConfig(context_window=args.context_window or model_config.context_window or 32768,
+                                   project_id=args.project, auto_learn_experiences=args.learn_experiences,
                                    reserved_output=args.reserved_output if args.reserved_output is not None else model_config.max_tokens))
