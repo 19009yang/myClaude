@@ -24,6 +24,9 @@ Agent/chatBot
 Agent/chatBot_with_tool
 caculator/
 markdown/
-tests/
+!tests/
+!tests/**/
+!tests/**/test_*.py
 writing/
 output/
+.myclaude/

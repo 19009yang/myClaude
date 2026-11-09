@@ -78,10 +78,11 @@ class ToolResult:
 class ToolExecutor:
     """解析LLM消息并执行引用的工具."""
 
-    def __init__(self, guard: Optional[SafetyGuard] = None) -> None:
-        self.tools = get_builtin_tools()
+    def __init__(self, guard: Optional[SafetyGuard] = None, *, tools=None, interactive: bool = True) -> None:
+        self.tools = list(get_builtin_tools() if tools is None else tools)
         self.tool_map = {tool.name: tool for tool in self.tools}
         self.guard = guard or SafetyGuard()
+        self.interactive = interactive
 
     def parse_tool_calls(self, assistant_message: dict[str, Any]) -> list[ToolCall]:
         """
@@ -120,6 +121,8 @@ class ToolExecutor:
             )
 
         if guard_result.needs_confirm:
+            if not self.interactive:
+                return ToolResult(tool_call.id, f"未执行：需要用户确认。{guard_result.reason}", is_error=True)
             print(f"\n⚠️ 高风险操作: {guard_result.reason}")
             print(f"   工具: {tool_call.name}, 参数: {tool_call.arguments}")
             confirm = input("   是否允许执行？(y/N): ").strip().lower()
@@ -184,7 +187,7 @@ def demo() -> None:
                 "type": "function",
                 "function": {
                     "name": "read",
-                    "arguments": {"path": "markdown\codex-memory-system.md"}
+                    "arguments": {"path": "docs/lamemory-design.md"}
                 }
             },
             {

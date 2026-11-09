@@ -1,86 +1,51 @@
+"""旧模型函数兼容入口，供应商差异统一交给 core.providers。"""
 from __future__ import annotations
-import os
+
 from typing import Any
+
 from dotenv import load_dotenv
-from openai import OpenAI
+
+from .providers import ChatModel, ModelConfig, ProviderConfigError, ProviderRegistry
+from .providers.config import canonical_provider
 
 load_dotenv()
-
-def call_llm_chat(prompt:str):
-    """
-    简单文本生成接口：输入 prompt，返回字符串。
-    """
-    system_prompt="You are a helpful assistant"
-    client = OpenAI(
-    api_key=os.environ.get('LLM_API_KEY'),
-    base_url=os.environ.get('LLM_BASE_URL'))
-
-    response = client.chat.completions.create(
-        model=os.environ.get('LLM_MODEL_NAME'),
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": prompt},
-        ]
-    )
-    message=response.choices[0].message.content
-    return message or ''
 
 
 def call_llm(
     messages: list[dict[str, Any]],
     tools: list[dict[str, Any]] | None = None,
     system_prompt: str | None = None,
-)->dict[str,Any]:
-    """
-    消息/工具模式接口：返回 assistant message 字典。
-    """
-
-    msgs = list(messages)
-    if system_prompt:
-        msgs=[{"role":"system","content":system_prompt}]+msgs
-        #msgs = [{"role": "system", "content": system_prompt}, *msgs]
-    
-    kwargs: dict[str, Any] = {
-        "model": os.environ.get("LLM_MODEL_NAME"),
-        "messages": msgs,
-    }
-
-    if tools:
-        kwargs["tools"] = tools
-        kwargs["tool_choice"] = "auto"
-
-    client = OpenAI(
-    api_key=os.environ.get('LLM_API_KEY'),
-    base_url=os.environ.get('LLM_BASE_URL'))
-
-    response = client.chat.completions.create(**kwargs)
-    message = response.choices[0].message
-
-    result: dict[str, Any] = {
-        "role": "assistant",
-        "content": message.content or "",
-        "usage": {
-            "total_tokens": response.usage.total_tokens,
-            "prompt_tokens": response.usage.prompt_tokens,
-            "completion_tokens": response.usage.completion_tokens,
-        },
-    }
-
-    #提取模型思考过程（如有）
-    reasoning_content = getattr(message, "reasoning_content", None)
-
-    if reasoning_content:
-        result["reasoning_content"] = reasoning_content
-    if message.tool_calls:
-        # .model_dump() 转成普通字典 — 可以序列化、可以传给 API
-        result["tool_calls"] = [tool_call.model_dump() for tool_call in message.tool_calls]
-    return result
+    *,
+    client: Any = None,
+    model: str | None = None,
+    timeout: float | None = None,
+    max_retries: int | None = None,
+    max_tokens: int | None = None,
+    provider: str | ChatModel | None = None,
+    config: ModelConfig | None = None,
+    registry: ProviderRegistry | None = None,
+    temperature: float | None = None,
+    reasoning_effort: str | None = None,
+    thinking_budget: int | None = None,
+) -> dict[str, Any]:
+    """返回统一 assistant 字典；旧 LLM_* 配置和 SDK client 注入继续有效。"""
+    options = dict(model=model, timeout=timeout, max_retries=max_retries, max_tokens=max_tokens,
+                   temperature=temperature, reasoning_effort=reasoning_effort, thinking_budget=thinking_budget)
+    if isinstance(provider, ChatModel):
+        if config is not None or client is not None or registry is not None:
+            raise ProviderConfigError("已有 ChatModel 实例不能与 config/client/registry 混用")
+        return provider.complete(messages, tools, system_prompt, **options)
+    if provider is not None and not isinstance(provider, str):
+        raise ProviderConfigError("provider 必须为注册名或 ChatModel 实例")
+    if config is not None and provider is not None and config.provider != canonical_provider(provider):
+        raise ProviderConfigError("provider 与显式 config 不一致；请构造独立配置")
+    resolved = config if config is not None else ModelConfig.from_env(
+        model=model, provider=provider, require_key=client is None, registry=registry)
+    with ChatModel(resolved, registry=registry, client=client) as chat:
+        return chat.complete(messages, tools, system_prompt, **options)
 
 
-
-
-
-
-if __name__ == "__main__":
-    print("Basic:", call_llm_chat("hi"))
-    print("Full:",call_llm([{"role":"user","content":"hi"}],None,"You are a cat"))
+def call_llm_chat(prompt: str, **kwargs) -> str:
+    """文本便捷接口，使用与聊天/工具/记忆相同的适配层。"""
+    system_prompt = kwargs.pop("system_prompt", "You are a helpful assistant")
+    return call_llm([{"role": "user", "content": prompt}], system_prompt=system_prompt, **kwargs)["content"]

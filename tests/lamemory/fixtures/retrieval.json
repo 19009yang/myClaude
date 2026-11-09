@@ -1,0 +1,25 @@
+{
+  "items": [
+    {"key":"dev-language","type":"preference","content":"开发语言偏好：回答使用中文。","query":"开发语言"},
+    {"key":"format","type":"preference","content":"排版偏好：使用 Markdown 格式。","query":"Markdown"},
+    {"key":"timezone","type":"fact","content":"时区设置为 Asia/Shanghai。","query":"时区"},
+    {"key":"editor","type":"preference","content":"代码编辑器选择 Neovim。","query":"Neovim"},
+    {"key":"packages","type":"fact","content":"包管理器使用 uv。","query":"包管理器"},
+    {"key":"runtime","type":"fact","content":"运行时使用 Python 3.13。","query":"Python"},
+    {"key":"testing","type":"fact","content":"测试框架选择 unittest。","query":"unittest"},
+    {"key":"os","type":"fact","content":"开发电脑系统为 macOS。","query":"macOS"},
+    {"key":"database","type":"fact","content":"持久化数据库使用 SQLite。","query":"SQLite"},
+    {"key":"theme","type":"preference","content":"编辑主题偏好深色。","query":"深色"},
+    {"key":"drink","type":"preference","content":"饮品偏好无糖咖啡。","query":"咖啡"},
+    {"key":"meeting","type":"preference","content":"会议安排优先上午。","query":"会议"},
+    {"key":"travel","type":"preference","content":"短途交通偏好高铁。","query":"高铁"},
+    {"key":"backup","type":"fact","content":"备份计划为每周星期五。","query":"备份"},
+    {"key":"project","type":"fact","content":"当前项目名称为 Atlas。","query":"Atlas"},
+    {"key":"deadline","type":"event","content":"完成原型验收。","query":"原型验收","occurred_at":"2026-10-12"},
+    {"key":"trip-one","type":"event","content":"前往北京出差。","query":"北京出差","occurred_at":"2026-09-01"},
+    {"key":"trip-two","type":"event","content":"前往北京出差。","query":"北京出差","occurred_at":"2026-10-01"},
+    {"key":"hobby","type":"fact","content":"周末爱好摄影。","query":"摄影"},
+    {"key":"temporary","type":"preference","content":"本次会话要求只输出英文。","query":"本次会话","scope_kind":"session"}
+  ],
+  "no_answer_queries": ["医疗保险编号", "银行账号", "火星基地"]
+}

@@ -1,0 +1,115 @@
+{
+  "mode": "fake",
+  "retrieval_mode": "keyword",
+  "python": "3.13.15",
+  "status": "passed",
+  "usage_events": [
+    {
+      "purpose": "agent",
+      "usage": {
+        "total_tokens": 0
+      }
+    },
+    {
+      "purpose": "agent",
+      "usage": {
+        "total_tokens": 0
+      }
+    },
+    {
+      "purpose": "extraction",
+      "usage": {
+        "total_tokens": 0
+      },
+      "fake": true
+    }
+  ],
+  "checks": {
+    "cross_session_retrieval": true,
+    "source_trace": true,
+    "user_isolation": true,
+    "context_retrieval": true,
+    "answer_grounded": true,
+    "persistence": true
+  },
+  "source_hashes": {
+    "core/lamemory/__init__.py": "530f133397422c94298a5b0a052886a69f36e268ae8360013a9aa5893a6d2196",
+    "core/lamemory/__main__.py": "b609ed84a60d9aa0902778e5346f9a2d4b48e625752bdc1cf8a8e0606ef280da",
+    "core/lamemory/config.py": "53bf7831fd129a9438dd2e764c8a910dd9b9afdaf2f04d1e942d052ab7ee62d8",
+    "core/lamemory/context.py": "26d579f5642c3a2c46e18bc9569711c7299f0f9cda93097dc302e9abdfb52ea4",
+    "core/lamemory/extraction.py": "826c70921981bad9d411d0df119b7b0199c3d29204b03e3de82e467b6e5b5cc1",
+    "core/lamemory/migration.py": "a7f63c1e0d7df8943590e3d1bd98892d5cd947a396abfbcb3be0375474456e38",
+    "core/lamemory/models.py": "202a5d45ef869fe7a7b53f3cf6981b0740cf1e4df8936479ea0082ec93c93d88",
+    "core/lamemory/providers.py": "9e0c9f0d872df7a164e220da535319570815566d069c60d1d61d11ad85acc8d7",
+    "core/lamemory/retrieval.py": "e903ff64c34741e9c10c0c78e93e9cb07ade73a78016ccfe8264223fd03512c8",
+    "core/lamemory/service.py": "7e39b1445348df0efe59e66938c8c5c3e76d6bc512fe40269c571b82489f1bcf",
+    "core/lamemory/store.py": "234bf4e73ebe69adaeb0725301cb61226b534774befec8477c6cd445f87ac995",
+    "core/lamemory/tools.py": "5e007e47dba023c08895480b279a6a55820bd1d477620339a4f94828fd200589",
+    "core/providers/__init__.py": "0ed71895276e3f66442d97d15d10820a70f9ca0e1eda6d6b7a445c74113b2538",
+    "core/providers/anthropic.py": "17a52e674f2106ff579637fe38d2c7ad1c419cabe7049ce65ff5f6a8c6112f84",
+    "core/providers/client.py": "544ed3f140a09883061e396de3d68ced2e89ef0f3272e40ca5e2b1ca7c753a11",
+    "core/providers/config.py": "a2c85ca9731e637276eed95238eca1b9f37d0fc753a8eb926a2e7e27dc1dedd6",
+    "core/providers/messages.py": "a5d13239c01aaa067f0af6dd140f5708ef9bfff937060cf501a739b6ab8eec31",
+    "core/providers/openai_chat.py": "7b6bde4780460f0274d5b1cf007ad59eea1efd56aae245fd4812bb4cf5f7237e",
+    "core/providers/registry.py": "8d62969b15feae7a76baa05ae02b7afec037d4a8641112ece81f7bbde9880d8a",
+    "core/providers/types.py": "9595f3ca0f8b3ebf1c1586fe5b9134466e4ca4700ec92a29c122ee92c90e5f56",
+    "core/lamemory/migrations/001_initial.sql": "b61aed09847c3e6701dffa1d8818c70ac505a86525714f34bd15afcdf02e33f0",
+    "core/llm.py": "f253d096b6b7639e76bfd586fce7004d79072a86faf1ad2d64b1be983f1516a8",
+    "core/memory.py": "25f49c5a5169f8cbf90b29ff999141da70878f8cfc7f8e5837d84daef5c2f12a",
+    "tools/executor.py": "9cf33c85fa74c595ed93cb02d44cd597bd2750fe872e87e50967128c73f74698",
+    "Agent/chatBot_with_memory/runner.py": "f321e6383dbcbbeef39452428a0306a6b96a022077d2e8344c86a4411ef92f71",
+    "Agent/chatBot_with_memory/main.py": "264321e4d15e27b56db993bd72ce41a69055dc5dffdcceeec6a4512833a16f7c",
+    "tests/lamemory/fixtures/retrieval.json": "d740ae05ae7f9f928c8a39e207cbb4101da9a51ddadf788b296a1794c1b12d74"
+  },
+  "config": {
+    "retrieval_mode": "keyword",
+    "top_k": 5,
+    "memory_token_budget": 2048,
+    "context_window": 32768,
+    "reserved_output": 4096,
+    "safety_margin": 512,
+    "max_extracted_items": 8,
+    "max_content_chars": 4000,
+    "provider_timeout_seconds": 15,
+    "job_max_attempts": 3,
+    "retry_delay_seconds": 0.1,
+    "auto_process_jobs": true
+  },
+  "config_hash": "5c36a30760ad131226e2e4f3c37cafe53646c389c01e598c86db0d4d9e02473d",
+  "seed_errors": [],
+  "flush": {
+    "status": "complete",
+    "completed": 1,
+    "failed": 0,
+    "remaining": 0
+  },
+  "answer": "项目代号是 Maple-Quartz-47。",
+  "retrieved": [
+    {
+      "item": {
+        "memory_id": "lam_ae1c17279a104c40971065ee8de1c2af",
+        "user_id": "smoke",
+        "scope_kind": "user",
+        "scope_key": "smoke",
+        "type": "fact",
+        "content": "项目代号是 Maple-Quartz-47。",
+        "content_hash": "28c75c91b4211e121b4aa180281552e58a30f72e056d8c216f33e7015c045be4",
+        "slot_key": "project.codename",
+        "occurred_at": null,
+        "status": "active",
+        "revision": 1,
+        "superseded_by": null,
+        "origin": "extracted",
+        "created_at": "2026-11-09T08:36:45.946053+00:00",
+        "updated_at": "2026-11-09T08:36:45.946053+00:00",
+        "source_message_ids": [
+          "msg_3f448ee774f24c0c956a892a80c549c1"
+        ]
+      },
+      "score": 2.0,
+      "reason": "关键词匹配：代号, 目代, 项目",
+      "mode": "keyword"
+    }
+  ],
+  "elapsed_seconds": 0.063
+}

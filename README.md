@@ -2,11 +2,11 @@
 
 一个基于 Python 的 LLM Agent 实验项目，包含对话记忆管理、工具调用安全校验、工作流编排、技能系统等核心能力的实现。项目从零构建了一个类 Claude Code 的智能助手框架，适合学习 Agent 开发的核心概念。
 
-> ⚠️ **注意**：当前 Agent 仅支持 **OpenAI 格式的 API**，需配置兼容 OpenAI API 规范的 LLM 服务端（如 OpenAI、DeepSeek 等）。
+> 模型接口支持 OpenAI、Anthropic 原生 Messages、DeepSeek、Qwen 和自定义 OpenAI 兼容服务，配置与验证范围见 [模型提供商适配层](docs/model-providers.md)。
 
 ## ✨ 核心特性
 
-- **🧠 记忆管理** — 短期对话上下文 + 长期记忆自动提取，上下文接近上限时自动摘要压缩
+- **🧠 记忆管理** — LaMemory：SQLite 原文留档、跨会话关键词检索、来源追溯、更正/遗忘和上下文预算
 - **🔧 工具调用** — 内置 7 种工具（read/search/bash/ls/edit/grep/write），支持 LLM function calling
 - **🛡️ 安全校验** — 分级拦截策略（blocked/confirm/pass），YAML 配置，防止危险操作
 - **🔄 工作流编排** — Node/Flow 模式，支持条件分支、指数退避重试与节点回退，用 `>>` 语法链式定义 DAG
@@ -20,7 +20,9 @@
 learn/
 ├── core/               # 核心模块（框架层）
 │   ├── llm.py          # LLM 调用封装（文本生成 + 工具调用模式）
-│   ├── memory.py       # 记忆管理（对话历史 + 长期记忆 + 自动压缩）
+│   ├── providers/    # 供应商注册、模型配置和协议转换
+│   ├── memory.py       # LaMemory 兼容入口
+│   ├── lamemory/      # SQLite 存储、提取任务、检索、预算和迁移
 │   ├── node.py         # 工作流编排（Node/Flow + 重试 + 回退 + RetryableError）
 │   └── chat_memory/    # 记忆存储目录
 ├── tools/              # 工具系统
@@ -66,8 +68,9 @@ learn/
 # 安装依赖（推荐使用 uv）
 uv sync
 
-# 配置 LLM API（在 core/ 目录下创建 .env 文件）
-# 当前 Agent 仅支持 OpenAI 格式的 API，需配置以下环境变量：
+# 配置 LLM API（在项目根目录创建 .env 文件）
+# 可参考 .env.example，选择供应商并配置以下环境变量：
+# LLM_PROVIDER=openai-compatible # 或 openai / anthropic / deepseek / qwen
 # LLM_API_KEY=your_api_key
 # LLM_BASE_URL=your_base_url       # 如 https://api.openai.com/v1 或 DeepSeek 等
 # LLM_MODEL_NAME=your_model_name
@@ -77,7 +80,7 @@ uv sync
 
 ```bash
 # 带记忆和工具的对话机器人
-python Agent/chatBot_with_memory/main.py
+python -m Agent.chatBot_with_memory.main
 
 # 搜索摘要工作流
 python Agent/workflow/main.py
@@ -90,12 +93,17 @@ python Agent/ResearchAssistant/main.py
 
 ### Memory — 记忆管理
 
-`core/memory.py` 实现了双层记忆架构：
+记忆系统统一命名为 **Layered Aggregated Memory（LaMemory）**。M0/M1 关键词模式已实现，使用方法、迁移步骤、离线验证和限制见 [LaMemory 使用与验证](docs/lamemory-usage.md)。架构与后续阶段见 [架构方案](docs/lamemory-design.md) 和 [开发指南](docs/lamemory-development-guide.md)。
 
-- **短期记忆**：对话历史存储在 JSONL 文件中，每条消息逐行追加
-- **长期记忆**：每轮对话结束后，LLM 自动提取用户偏好和关键事实，追加到长期记忆文件
-- **自动压缩**：当 token 数达到上限的 90% 时，自动将较早对话压缩为摘要，保留最近几轮
-- **崩溃恢复**：启动时检测并清理未完成的 tool_call 消息链
+`core/memory.py` 作为 `core/lamemory/LaMemoryService` 的兼容门面：
+
+- **原文留档**：SQLite 按用户、会话、轮次保存消息与完整工具结构；工作视图裁剪不改写证据
+- **长期记忆**：完整轮次创建幂等提取任务；主回复展示后有界处理，支持失败检查与重试
+- **主动管理**：`lamemory_store/search/update/forget` 工具绑定当前用户和来源，返回真实保存状态
+- **按需召回**：关键词检索返回有效记忆、来源和命中原因；更正保留历史版本，遗忘抑制旧来源重放
+- **上下文预算**：包含系统提示、工具 schema、当前请求和记忆；保留合法工具链，超限抛出明确错误
+
+数据默认保存至项目 `.myclaude/lamemory/`。不指定 session 时新建会话；使用相同用户可以跨会话召回，指定已有 session ID 可以恢复历史。可选工作摘要由 `compress()` 显式触发，旧 JSONL/Markdown 通过预览导入；默认不读取真实旧会话。主题聚合、用户概览、经验学习与 embedding 尚未实现。DeepSeek `deepseek-flash` 已通过真实文本、工具回传与记忆 smoke，结果见 [测试记录](benchmarks/providers/README.md)。
 
 ```python
 from core import Memory
@@ -143,6 +151,8 @@ flow.run({})
 
 - `call_llm_chat(prompt)` — 简单文本生成
 - `call_llm(messages, tools, system_prompt)` — 完整消息模式，支持 function calling 和 reasoning_content
+
+两者共用 `core/providers/` 适配层，可使用 `ModelConfig`、`ChatModel` 和实例级注册表。原有 `LLM_*` 配置继续有效，新增 `LLM_PROVIDER` 选择协议；`MEMORY_LLM_*` 可单独配置记忆提取和摘要模型。用法、模型能力覆盖和离线验证见 [模型提供商文档](docs/model-providers.md)。
 
 ### Tools — 工具系统
 

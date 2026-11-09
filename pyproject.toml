@@ -8,6 +8,7 @@ dependencies = [
     "chardet>=7.4.3",
     "ddgs>=9.14.4",
     "dotenv>=0.9.9",
+    "httpx>=0.28.1",
     "openai>=2.44.0",
     "pymupdf>=1.23.0",
     "python-dotenv>=1.0.0",
