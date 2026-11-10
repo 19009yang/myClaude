@@ -19,6 +19,7 @@ from Agent.chatBot_with_memory.main import SYSTEM_PROMPT
 from Agent.chatBot_with_memory.runner import ChatRunner
 from core.lamemory import LaMemoryConfig, LaMemoryService
 from core.lamemory.providers import ChatMemoryProvider
+from core.lamemory.runtime import create_memory, maintain_embeddings
 from core.llm import call_llm
 from core.providers import ModelConfig, create_default_registry
 from tools import get_tools, get_default_registry
@@ -49,8 +50,13 @@ class Run:
 
 
 class WebApp:
-    def __init__(self, *, config=None, user_id="local-user", model_config=None, chat=None, demo=False):
+    def __init__(self, *, config=None, user_id="local-user", model_config=None, chat=None, demo=False, env=None, embedding_provider=None, reranker=None, retrieval_mode=None, rerank=None):
         self.config = config or LaMemoryConfig()
+        self.retrieval_env = dict(__import__('os').environ if env is None else env)
+        self.embedding_provider = embedding_provider
+        self.reranker = reranker
+        self.retrieval_mode = retrieval_mode
+        self.rerank = rerank
         self.user_id = LaMemoryService._identity(user_id)
         self.model = model_config
         self.chat_override = chat
@@ -70,12 +76,25 @@ class WebApp:
     def memory(self, session_id=None, *, model=None):
         provider = ChatMemoryProvider(model_config=model) if model else None
         # Overview connections do not create empty sessions on every refresh.
-        memory = LaMemoryService(self.config, user_id=self.user_id,
-                                 session_id=session_id or "__lamemory_web_overview__", provider=provider)
+        memory = self.create_memory(self.config, session_id or "__lamemory_web_overview__", provider)
         try:
             yield memory
         finally:
             memory.close()
+
+    def create_memory(self, config, session_id, provider=None):
+        return create_memory(config, user_id=self.user_id, session_id=session_id, provider=provider,
+                             env=self.retrieval_env, offline=self.demo,
+                             retrieval_mode=self.retrieval_mode, rerank=self.rerank,
+                             embedding_provider=self.embedding_provider, reranker=self.reranker)
+
+    def search_details(self, session_id, query):
+        self.require_session(session_id)
+        with self.memory(session_id) as memory:
+            bundle = memory.retrieve(query, top_k=100)
+            return {"mode": bundle.diagnostics["effective_mode"], "retrieval": bundle.diagnostics,
+                    "results": [h.to_dict() for h in bundle.items], "summaries": bundle.summaries,
+                    "experiences": bundle.experiences, "index": memory.embedding_status()}
 
     def require_session(self, session_id):
         with self.memory() as memory:
@@ -181,8 +200,8 @@ class WebApp:
             config = replace(self.config, context_window=model.context_window or self.config.context_window,
                              reserved_output=model.max_tokens) if model else self.config
             chat = self.chat_override or (demo_chat if self.demo else partial(call_llm, config=model))
-            with LaMemoryService(config, user_id=self.user_id, session_id=run.session_id,
-                                 provider=None if self.demo else ChatMemoryProvider(model_config=model)) as memory:
+            with self.create_memory(config, run.session_id,
+                                    None if self.demo else ChatMemoryProvider(model_config=model)) as memory:
                 runner = ChatRunner(memory, chat=chat, tools=get_tools(), system_prompt=SYSTEM_PROMPT)
 
                 def emit(event, data):
@@ -204,6 +223,13 @@ class WebApp:
                                 run.emit("warning", {"message": "记忆任务未完成，可在记忆面板检查并重试"})
                     except Exception:
                         run.emit("warning", {"message": "记忆整理失败，原始对话已保留，可稍后重试"})
+                if not self.demo and not run.cancel.is_set():
+                    try:
+                        status = maintain_embeddings(memory)
+                        if status:
+                            run.emit("index", status)
+                    except Exception:
+                        run.emit("warning", {"message": "语义索引维护失败，已保存的记忆仍可关键词检索"})
                 completion = {"status": "completed", "usage": runner.usage_events}
         except CancelledError as exc:
             run.emit("warning", {"message": str(exc)})
@@ -318,6 +344,8 @@ def make_server(app, host="127.0.0.1", port=3080):
                     return self.json(200, app.session(session_id))
                 if url.path == "/api/memories":
                     return self.json(200, app.memories(session_id, query.get("q", [""])[0]))
+                if url.path == "/api/memory-search":
+                    return self.json(200, app.search_details(session_id, query.get("q", [""])[0]))
                 if url.path == "/api/memory":
                     app.require_session(session_id)
                     with app.memory(session_id) as memory:
@@ -396,6 +424,8 @@ def main():
     parser.add_argument("--database")
     parser.add_argument("--user", default="local-user")
     parser.add_argument("--project")
+    parser.add_argument("--retrieval-mode", choices=["keyword", "hybrid"], default=None)
+    parser.add_argument("--rerank", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--demo", action="store_true", help="使用临时数据库运行离线演示，不请求模型")
     args = parser.parse_args()
     temporary = tempfile.TemporaryDirectory(prefix="myclaude-web-") if args.demo and not args.database else None
@@ -406,7 +436,8 @@ def main():
         model = ModelConfig.from_env(require_key=False)
     except ValueError:
         model = None
-    app = WebApp(config=config, user_id=args.user, model_config=model, demo=args.demo)
+    app = WebApp(config=config, user_id=args.user, model_config=model, demo=args.demo,
+                 retrieval_mode=args.retrieval_mode, rerank=args.rerank)
     server = make_server(app, port=args.port)
     print(f"myClaude Web → http://127.0.0.1:{server.server_port}", flush=True)
     if args.demo:

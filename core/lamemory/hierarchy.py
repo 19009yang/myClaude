@@ -78,8 +78,8 @@ class Hierarchy:
             items = self.db.rows("SELECT * FROM lamemory_items WHERE user_id=? AND status='active' AND scope_kind='user' AND type IN ('fact','preference') ORDER BY memory_id", (self.user,))
         else:
             # Membership follows the replacement lineage via the database trigger.
-            items = self.db.rows("SELECT * FROM lamemory_items WHERE user_id=? AND status='active' AND scope_kind!='session' AND ((scope_kind='project' AND scope_key=?) OR memory_id IN (SELECT memory_id FROM lamemory_topic_items WHERE user_id=? AND summary_id=?)) ORDER BY memory_id",
-                                 (self.user, row["project_id"], self.user, row["summary_id"]))
+            items = self.db.rows("SELECT * FROM lamemory_items WHERE user_id=? AND status='active' AND scope_kind!='session' AND ((scope_kind='project' AND scope_key=?) OR memory_id IN (SELECT memory_id FROM lamemory_topic_items WHERE user_id=? AND summary_id=?) AND (scope_kind='user' OR scope_kind='project' AND scope_key=?)) ORDER BY memory_id",
+                                 (self.user, row["project_id"], self.user, row["summary_id"], row["project_id"]))
         # Navigation contains labels only, never project facts from other contexts.
         navigation = []
         topics = []
@@ -139,7 +139,7 @@ class Hierarchy:
             row["navigation"] = self.snapshot(row)[0]["topic_navigation"]
         return row
 
-    def search(self, query):
+    def search(self, query, top_k=None):
         results = []
         query_terms = terms(query)
         for row in self.db.rows("SELECT * FROM lamemory_summaries WHERE user_id=? AND dirty=0 AND content!='' ORDER BY kind,topic_key", (self.user,)):
@@ -154,4 +154,4 @@ class Hierarchy:
                 result.update(mode="keyword", score=len(matched) / max(1, len(query_terms)) if row["kind"] == "topic" else 0,
                               reason="主题关键词匹配：" + ", ".join(sorted(matched)) if row["kind"] == "topic" else "用户概览导航")
                 results.append(result)
-        return sorted(results, key=lambda r: (-r["score"], r["topic_key"]))[:self.service.config.top_k]
+        return sorted(results, key=lambda r: (-r["score"], r["topic_key"]))[:self.service.config.top_k if top_k is None else top_k]

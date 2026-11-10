@@ -8,7 +8,7 @@
 
 **Layered Aggregated Memory（简称 LaMemory）** 是 myClaude 的记忆系统名称。本文定义适合个人项目的开发任务：以结构化记录为基础，逐步形成主题摘要和用户概览，并通过检索与预算管理支持长期使用。
 
-**状态说明：M0–M3 的关键词模式单机运行时已实现。M2/M3 已完成离线行为验证，并于 2026-11-10 补充 DeepSeek `deepseek-flash` 在线交付 smoke：M2 9 项、M3 15 项检查通过。历史真实记忆 smoke 仍只覆盖 M0/M1，新增在线证据见 [验证记录](../benchmarks/lamemory/README.md)；在线功能闭环不代表复杂任务收益或完整效果评测结论。具体接口、启用方式与限制见 [使用与验证](lamemory-usage.md) 及 [M2/M3 开发交付](lamemory-m2-m3.md)。embedding 和完整对照评测尚未实施。**
+**状态说明：M0–M3 的关键词模式单机运行时已实现。M2/M3 已完成离线行为验证，并于 2026-11-10 补充 DeepSeek `deepseek-flash` 在线交付 smoke：M2 9 项、M3 15 项检查通过。历史真实记忆 smoke 仍只覆盖 M0/M1，新增在线证据见 [验证记录](../benchmarks/lamemory/README.md)；在线功能闭环不代表复杂任务收益或完整效果评测结论。具体接口、启用方式与限制见 [使用与验证](lamemory-usage.md) 及 [M2/M3 开发交付](lamemory-m2-m3.md)。真实 embedding 适配器、hybrid 与可选 rerank 已完成本地实现和离线集成；真实语义 smoke 缺配置 blocked，完整任务对照评测仍未实施。见 [混合召回实施与验证](lamemory-hybrid-retrieval.md)。**
 
 配套文档：[LaMemory 架构与实施方案](lamemory-design.md)。
 
@@ -190,7 +190,7 @@ SQLite 连接启用外键，设置合理的 busy timeout。默认数据目录建
 |---|---|---|
 | `database_path` | `<project>/.myclaude/lamemory/lamemory.sqlite3` | 使用绝对解析后的路径；测试显式覆盖 |
 | `user_id` / `session_id` | 宿主提供 | 用户标识跨会话稳定；新会话生成新 session_id |
-| `retrieval_mode` | `keyword` | 接好 embedding 后再允许配置为 `hybrid` |
+| `retrieval_mode` | `keyword` | 已支持显式 `hybrid`；须完整配置独立 embedding 空间 |
 | `top_k` | 5 | 召回上限，仍受预算限制 |
 | `memory_token_budget` | 2048 | 召回记忆的初始上限，不包含全部对话预算 |
 | `context_window` / `reserved_output` | 按实际模型配置 | 必须满足输出预留和输入预算约束 |

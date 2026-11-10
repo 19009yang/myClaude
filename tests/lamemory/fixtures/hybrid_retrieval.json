@@ -1,0 +1,580 @@
+{
+  "schema_version": 1,
+  "relevance": "binary: expected identity=1, other=0",
+  "items": [
+    {
+      "key": "deps",
+      "content": "使用 uv 管理 Python 依赖",
+      "type": "fact"
+    },
+    {
+      "key": "language",
+      "content": "开发答复优先使用中文",
+      "type": "preference"
+    },
+    {
+      "key": "database",
+      "content": "Atlas 服务将 SQLite 作为本地存储",
+      "type": "fact"
+    },
+    {
+      "key": "error",
+      "content": "E_CONN_42 表示连接被拒绝，检查监听端口",
+      "type": "fact"
+    },
+    {
+      "key": "version",
+      "content": "构建环境固定 Python 3.13",
+      "type": "fact"
+    },
+    {
+      "key": "meeting",
+      "content": "2026-10-01 在杭州参加部署评审",
+      "type": "event",
+      "occurred_at": "2026-10-01"
+    },
+    {
+      "key": "meeting2",
+      "content": "2026-10-02 在苏州参加部署评审",
+      "type": "event",
+      "occurred_at": "2026-10-02"
+    },
+    {
+      "key": "unknown1",
+      "content": "参加无日期的周会",
+      "type": "event"
+    },
+    {
+      "key": "unknown2",
+      "content": "参加无日期的周会",
+      "type": "event"
+    },
+    {
+      "key": "scope",
+      "content": "项目 Orion 的测试命令是 uv run unittest",
+      "type": "fact",
+      "scope_kind": "project"
+    },
+    {
+      "key": "session",
+      "content": "本次临时报告使用三列表格",
+      "type": "fact",
+      "scope_kind": "session"
+    },
+    {
+      "key": "active",
+      "content": "最新发布区域为新加坡",
+      "type": "fact"
+    }
+  ],
+  "topics": [
+    {
+      "key": "topic-build",
+      "topic_key": "构建工具",
+      "members": [
+        "deps",
+        "version"
+      ]
+    },
+    {
+      "key": "topic-release",
+      "topic_key": "发布运维",
+      "members": [
+        "error",
+        "active"
+      ]
+    }
+  ],
+  "experiences": [
+    {
+      "key": "exp-build",
+      "task_type": "验证构建",
+      "conditions": "Python 依赖已安装",
+      "steps": [
+        "运行 uv run unittest",
+        "检查测试退出码"
+      ],
+      "result_basis": "合成测试成功"
+    },
+    {
+      "key": "exp-port",
+      "task_type": "排查连接拒绝",
+      "conditions": "本地服务连接失败",
+      "steps": [
+        "确认进程运行",
+        "核对监听端口"
+      ],
+      "result_basis": "端口检查恢复连接"
+    }
+  ],
+  "queries": [
+    {
+      "query_id": "q_00_0",
+      "query": "安装 Python 软件包的工具",
+      "kind": "item",
+      "expected": [
+        "deps"
+      ],
+      "split": "calibration",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project"
+    },
+    {
+      "query_id": "q_00_1",
+      "query": "uv",
+      "kind": "item",
+      "expected": [
+        "deps"
+      ],
+      "split": "calibration",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project"
+    },
+    {
+      "query_id": "q_01_0",
+      "query": "What language should coding answers use?",
+      "kind": "item",
+      "expected": [
+        "language"
+      ],
+      "split": "calibration",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project"
+    },
+    {
+      "query_id": "q_01_1",
+      "query": "开发答复中文",
+      "kind": "item",
+      "expected": [
+        "language"
+      ],
+      "split": "calibration",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project"
+    },
+    {
+      "query_id": "q_02_0",
+      "query": "Where does Atlas keep local records?",
+      "kind": "item",
+      "expected": [
+        "database"
+      ],
+      "split": "acceptance",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project"
+    },
+    {
+      "query_id": "q_02_1",
+      "query": "Atlas SQLite",
+      "kind": "item",
+      "expected": [
+        "database"
+      ],
+      "split": "acceptance",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project"
+    },
+    {
+      "query_id": "q_03_0",
+      "query": "连接拒绝先检查哪里",
+      "kind": "item",
+      "expected": [
+        "error"
+      ],
+      "split": "acceptance",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project"
+    },
+    {
+      "query_id": "q_03_1",
+      "query": "E_CONN_42",
+      "kind": "item",
+      "expected": [
+        "error"
+      ],
+      "split": "acceptance",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project"
+    },
+    {
+      "query_id": "q_04_0",
+      "query": "Which interpreter release is pinned?",
+      "kind": "item",
+      "expected": [
+        "version"
+      ],
+      "split": "acceptance",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project"
+    },
+    {
+      "query_id": "q_04_1",
+      "query": "Python 3.13",
+      "kind": "item",
+      "expected": [
+        "version"
+      ],
+      "split": "acceptance",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project"
+    },
+    {
+      "query_id": "q_05_0",
+      "query": "十月一日在哪开会",
+      "kind": "item",
+      "expected": [
+        "meeting"
+      ],
+      "split": "acceptance",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project"
+    },
+    {
+      "query_id": "q_05_1",
+      "query": "杭州部署评审",
+      "kind": "item",
+      "expected": [
+        "meeting"
+      ],
+      "split": "acceptance",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project"
+    },
+    {
+      "query_id": "q_06_0",
+      "query": "第二天部署评审城市",
+      "kind": "item",
+      "expected": [
+        "meeting2"
+      ],
+      "split": "acceptance",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project"
+    },
+    {
+      "query_id": "q_06_1",
+      "query": "苏州评审",
+      "kind": "item",
+      "expected": [
+        "meeting2"
+      ],
+      "split": "acceptance",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project"
+    },
+    {
+      "query_id": "q_07_0",
+      "query": "undated weekly meeting",
+      "kind": "item",
+      "expected": [
+        "unknown1",
+        "unknown2"
+      ],
+      "split": "acceptance",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project"
+    },
+    {
+      "query_id": "q_07_1",
+      "query": "无日期周会",
+      "kind": "item",
+      "expected": [
+        "unknown1",
+        "unknown2"
+      ],
+      "split": "acceptance",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project"
+    },
+    {
+      "query_id": "q_08_0",
+      "query": "weekly discussion without a date",
+      "kind": "item",
+      "expected": [
+        "unknown1",
+        "unknown2"
+      ],
+      "split": "acceptance",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project"
+    },
+    {
+      "query_id": "q_08_1",
+      "query": "无日期周会",
+      "kind": "item",
+      "expected": [
+        "unknown1",
+        "unknown2"
+      ],
+      "split": "acceptance",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project"
+    },
+    {
+      "query_id": "q_09_0",
+      "query": "How do I check Orion?",
+      "kind": "item",
+      "expected": [
+        "scope"
+      ],
+      "split": "acceptance",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project"
+    },
+    {
+      "query_id": "q_09_1",
+      "query": "Orion unittest",
+      "kind": "item",
+      "expected": [
+        "scope"
+      ],
+      "split": "acceptance",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project"
+    },
+    {
+      "query_id": "q_10_0",
+      "query": "How to format the current report?",
+      "kind": "item",
+      "expected": [
+        "session"
+      ],
+      "split": "acceptance",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project"
+    },
+    {
+      "query_id": "q_10_1",
+      "query": "临时报告三列表格",
+      "kind": "item",
+      "expected": [
+        "session"
+      ],
+      "split": "acceptance",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project"
+    },
+    {
+      "query_id": "q_11_0",
+      "query": "Where is the current release deployed?",
+      "kind": "item",
+      "expected": [
+        "active"
+      ],
+      "split": "acceptance",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project"
+    },
+    {
+      "query_id": "q_11_1",
+      "query": "新加坡发布",
+      "kind": "item",
+      "expected": [
+        "active"
+      ],
+      "split": "acceptance",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project"
+    },
+    {
+      "query_id": "topic-build0",
+      "query": "准备解释器和安装软件包",
+      "kind": "summary",
+      "expected": [
+        "topic-build"
+      ],
+      "split": "acceptance",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project"
+    },
+    {
+      "query_id": "topic-build1",
+      "query": "构建工具 uv",
+      "kind": "summary",
+      "expected": [
+        "topic-build"
+      ],
+      "split": "acceptance",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project"
+    },
+    {
+      "query_id": "topic-release0",
+      "query": "connection refused during rollout",
+      "kind": "summary",
+      "expected": [
+        "topic-release"
+      ],
+      "split": "acceptance",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project"
+    },
+    {
+      "query_id": "topic-release1",
+      "query": "发布运维新加坡",
+      "kind": "summary",
+      "expected": [
+        "topic-release"
+      ],
+      "split": "acceptance",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project"
+    },
+    {
+      "query_id": "exp-build0",
+      "query": "How to verify the build?",
+      "kind": "experience",
+      "expected": [
+        "exp-build"
+      ],
+      "split": "acceptance",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project"
+    },
+    {
+      "query_id": "exp-build1",
+      "query": "验证构建 unittest",
+      "kind": "experience",
+      "expected": [
+        "exp-build"
+      ],
+      "split": "acceptance",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project"
+    },
+    {
+      "query_id": "exp-port0",
+      "query": "service refuses the connection",
+      "kind": "experience",
+      "expected": [
+        "exp-port"
+      ],
+      "split": "acceptance",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project"
+    },
+    {
+      "query_id": "exp-port1",
+      "query": "排查监听端口",
+      "kind": "experience",
+      "expected": [
+        "exp-port"
+      ],
+      "split": "acceptance",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project"
+    },
+    {
+      "query_id": "none0",
+      "query": "月球旅游保险",
+      "kind": "item",
+      "expected": [],
+      "split": "calibration",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project"
+    },
+    {
+      "query_id": "none1",
+      "query": "quantum banana constellation",
+      "kind": "item",
+      "expected": [],
+      "split": "calibration",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project"
+    },
+    {
+      "query_id": "none2",
+      "query": "Mars submarine restaurant",
+      "kind": "item",
+      "expected": [],
+      "split": "acceptance",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project"
+    },
+    {
+      "query_id": "none3",
+      "query": "侏罗纪票务",
+      "kind": "item",
+      "expected": [],
+      "split": "acceptance",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project"
+    },
+    {
+      "query_id": "none4",
+      "query": "forgotten-never-return",
+      "kind": "item",
+      "expected": [],
+      "split": "acceptance",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project"
+    },
+    {
+      "query_id": "none5",
+      "query": "superseded-old-region",
+      "kind": "item",
+      "expected": [],
+      "split": "acceptance",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project"
+    },
+    {
+      "query_id": "none6",
+      "query": "private-user-vault",
+      "kind": "item",
+      "expected": [],
+      "split": "acceptance",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project"
+    },
+    {
+      "query_id": "none7",
+      "query": "private-project-vault",
+      "kind": "item",
+      "expected": [],
+      "split": "acceptance",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project"
+    }
+  ]
+}

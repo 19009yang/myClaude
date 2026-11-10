@@ -4,7 +4,7 @@
 
 **Layered Aggregated Memory（简称 LaMemory）** 是 myClaude 计划开发的分层聚合记忆系统。本文描述目标架构、现有代码缺口和实施边界，配套执行步骤见 [LaMemory 开发指南](lamemory-development-guide.md)。
 
-M0–M3 的单机运行时已实现，`core/memory.py` 作为 `core/lamemory/` 的兼容门面。当前采用关键词模式；M2/M3 已完成离线功能验证与 DeepSeek 在线交付 smoke，系统效果评估与完整对照评测仍待实施。启用方式和验收限制见 [使用与验证](lamemory-usage.md) 与 [M2/M3 开发交付](lamemory-m2-m3.md)。
+M0–M3 的单机运行时已实现，`core/memory.py` 作为 `core/lamemory/` 的兼容门面。默认关键词，显式 hybrid 支持真实 embedding 适配器、三类 RRF 及可选重排（默认关闭），本轮真实模型验证缺配置未执行，详见 [混合召回实施与验证](lamemory-hybrid-retrieval.md)；M2/M3 已完成离线功能验证与 DeepSeek 在线交付 smoke，系统效果评估与完整对照评测仍待实施。启用方式和验收限制见 [使用与验证](lamemory-usage.md) 与 [M2/M3 开发交付](lamemory-m2-m3.md)。
 
 ## 1. 目标
 

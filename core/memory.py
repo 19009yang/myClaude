@@ -9,7 +9,9 @@ from .lamemory.providers import ChatMemoryProvider
 
 class Memory:
     def __init__(self, memory_type="memory", memory_path=None, *, database_path=None,
-                 user_id="local-user", session_id=None, provider=None, config=None):
+                 user_id="local-user", session_id=None, provider=None, config=None,
+                 embedding_provider=None, reranker=None, env=None, offline=False,
+                 retrieval_mode=None, rerank=None):
         if memory_type != "memory":
             raise ValueError("memory_type 仅保留兼容值 'memory'，新配置请使用 LaMemoryConfig")
         if memory_path is not None:
@@ -20,8 +22,11 @@ class Memory:
         cfg = config or LaMemoryConfig()
         if database_path is not None:
             cfg = replace(cfg, database_path=database_path)
-        self.service = LaMemoryService(cfg, user_id=user_id, session_id=session_id,
-                                       provider=provider if provider is not None else ChatMemoryProvider())
+        from .lamemory.runtime import create_memory
+        self.service = create_memory(cfg, user_id=user_id, session_id=session_id,
+            provider=provider if provider is not None else (None if offline else ChatMemoryProvider()),
+            embedding_provider=embedding_provider, reranker=reranker, env=env, offline=offline,
+            retrieval_mode=retrieval_mode, rerank=rerank)
         if memory_path is not None and legacy.is_file():
             from .lamemory.migration import import_legacy
             import_legacy(self.service, session_path=legacy)

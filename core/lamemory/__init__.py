@@ -2,6 +2,7 @@
 from .config import LaMemoryConfig
 from .models import BudgetError, ContextResult, FlushResult, MemoryItem, SearchHit, WriteResult
 from .service import LaMemoryService
+from .retrieval_types import RetrievalBundle, RetrievalUnavailableError
 
 __all__ = ["LaMemoryConfig", "LaMemoryService", "BudgetError", "ContextResult", "FlushResult",
-           "MemoryItem", "SearchHit", "WriteResult"]
+           "MemoryItem", "SearchHit", "WriteResult", "RetrievalBundle", "RetrievalUnavailableError"]

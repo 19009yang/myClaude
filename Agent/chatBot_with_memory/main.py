@@ -6,6 +6,7 @@ from core import  call_llm, Node, Flow, shared, Memory
 from core.lamemory import LaMemoryConfig
 from core.lamemory.tools import get_memory_tools
 from core.providers import ModelConfig
+from core.lamemory.runtime import maintain_embeddings
 
 """
 带有长期记忆和工具调用的对话机器人工作流程(带skill激活功能)
@@ -120,17 +121,24 @@ class OutputNode(Node):
                         print(f"记忆提取任务 {job['status']}，可稍后重试：{job['last_error']}")
             except Exception as exc:
                 print(f"记忆任务处理失败，可稍后重试：{exc}")
+        try:
+            status = maintain_embeddings(memory.service)
+            if status and (status["remaining"] or status["missing"]):
+                print(f"语义索引尚有积压：{status}")
+        except Exception as exc:
+            print(f"语义索引维护失败，可稍后重试：{type(exc).__name__}")
         return "default", None
     
 def run_chat(*, database_path=None, user_id="local-user", session_id=None, config=None, provider=None,
-             model_config=None) -> None:
+             model_config=None, embedding_provider=None, reranker=None, env=None,
+             retrieval_mode=None, rerank=None) -> None:
     """运行对话循环"""
     print("=" * 60)
     print("🤖 Chatbot")
     print("=" * 60)
     print("工具调用: 可调用 search/read/grep/ls/bash/write等工具")
     print("技能激活: 可调用 activate_skill(name) 激活 Skill，获取完整操作指南")
-    print("记忆管理: LaMemory 关键词检索 + 原文留档 + 主动保存/更正/遗忘")
+    print("记忆管理: LaMemory 检索 + 原文留档 + 主动保存/更正/遗忘")
     print("安全防护: 危险命令自动拦截，高风险操作需确认")
     print("输入 'quit' 或 'exit' 退出\n")
 
@@ -140,7 +148,8 @@ def run_chat(*, database_path=None, user_id="local-user", session_id=None, confi
 
     guard = SafetyGuard()
     shared["memory"] = Memory(database_path=database_path, user_id=user_id, session_id=session_id,
-                               config=config, provider=provider)
+                               config=config, provider=provider, env=env, embedding_provider=embedding_provider,
+                               reranker=reranker, retrieval_mode=retrieval_mode, rerank=rerank)
     print(f"当前会话: {shared['memory'].service.session_id}")
     instance_tools = [*get_tools(), *get_memory_tools(shared["memory"].service)]
     shared["tool_executor"] = ToolExecutor(guard=guard, tools=instance_tools)
@@ -181,6 +190,8 @@ if __name__ == "__main__":
     parser.add_argument("--user", default="local-user")
     parser.add_argument("--session", help="留空创建新会话，指定已有 ID 恢复会话")
     parser.add_argument("--project", help="绑定固定项目标签")
+    parser.add_argument("--retrieval-mode", choices=["keyword", "hybrid"], default=None)
+    parser.add_argument("--rerank", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--learn-experiences", action="store_true", help="完成轮次后投递经验候选提取任务")
     parser.add_argument("--provider", help="openai / anthropic / deepseek / qwen / openai-compatible")
     parser.add_argument("--model", help="覆盖 LLM_MODEL_NAME")
@@ -193,6 +204,7 @@ if __name__ == "__main__":
     if args.base_url:
         model_config = replace(model_config, base_url=args.base_url)
     run_chat(database_path=args.database, user_id=args.user, session_id=args.session, model_config=model_config,
+             retrieval_mode=args.retrieval_mode, rerank=args.rerank,
              config=LaMemoryConfig(context_window=args.context_window or model_config.context_window or 32768,
                                    project_id=args.project, auto_learn_experiences=args.learn_experiences,
                                    reserved_output=args.reserved_output if args.reserved_output is not None else model_config.max_tokens))

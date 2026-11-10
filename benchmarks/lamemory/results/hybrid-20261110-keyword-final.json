@@ -1,0 +1,3122 @@
+{
+  "status": "complete",
+  "mode": "keyword",
+  "real_semantic_validation": false,
+  "space_id": null,
+  "index": {
+    "space_id": null,
+    "status": "unselected"
+  },
+  "parameters": {
+    "retrieval_mode": "keyword",
+    "keyword_candidate_k": 30,
+    "semantic_candidate_k": 30,
+    "rrf_k": 60,
+    "keyword_weight": 1.0,
+    "semantic_weight": 1.0,
+    "semantic_min_similarity": 0.3,
+    "retrieval_timeout_seconds": 10,
+    "allow_keyword_fallback": true,
+    "rerank_enabled": false,
+    "rerank_top_n": 20,
+    "rerank_timeout_seconds": 5,
+    "embedding_batch_size": 16,
+    "max_embedding_chars": 12000,
+    "top_k": 5,
+    "memory_token_budget": 2048,
+    "context_window": 32768,
+    "reserved_output": 4096,
+    "safety_margin": 512,
+    "max_extracted_items": 8,
+    "max_content_chars": 4000,
+    "provider_timeout_seconds": 30,
+    "job_max_attempts": 3,
+    "retry_delay_seconds": 0.1,
+    "auto_process_jobs": true,
+    "project_id": "demo-project",
+    "auto_learn_experiences": false,
+    "experience_min_successes": 2,
+    "max_experience_candidates": 3,
+    "max_summary_chars": 1200
+  },
+  "parameter_fingerprint": "f632ab8130d42ed0033c1dafdc25aaaf957302b8bf53e650b882183a4b52ecad",
+  "metrics_by_split": {
+    "calibration": {
+      "queries": 6,
+      "answerable": 4,
+      "no_answer": 2,
+      "recall_at_5": 0.75,
+      "mrr_at_5": 0.625,
+      "ndcg_at_5": 0.6577324383928644,
+      "no_answer_false_recall_rate": 0.0,
+      "p50_ms": 0.1682499423623085,
+      "p95_ms": 0.7854590658098459,
+      "degraded_queries": 0
+    },
+    "acceptance": {
+      "queries": 34,
+      "answerable": 28,
+      "no_answer": 6,
+      "recall_at_5": 0.6428571428571429,
+      "mrr_at_5": 0.625,
+      "ndcg_at_5": 0.629676062627552,
+      "no_answer_false_recall_rate": 0.16666666666666666,
+      "p50_ms": 0.1629579346626997,
+      "p95_ms": 0.19312510266900063,
+      "degraded_queries": 0
+    }
+  },
+  "usage": {
+    "index_build": [],
+    "embedding_queries": [],
+    "rerank": [],
+    "extraction": [],
+    "main_chat": []
+  },
+  "cost_note": "记录独立 token 用量；未配置单价，不估算费用",
+  "failures": [
+    "q_01_0",
+    "q_04_0",
+    "q_05_0",
+    "q_07_0",
+    "q_08_0",
+    "q_10_0",
+    "q_11_0",
+    "topic-build0",
+    "topic-release0",
+    "exp-build0",
+    "exp-port0",
+    "none5"
+  ],
+  "queries": [
+    {
+      "query_id": "q_00_0",
+      "query": "安装 Python 软件包的工具",
+      "kind": "item",
+      "expected": [
+        "lam_b50dbfdb94784a26816fc20824773e3d"
+      ],
+      "split": "calibration",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project",
+      "selected": [
+        "lam_a70ee03c4c4e422a973f263dd4559d12",
+        "lam_b50dbfdb94784a26816fc20824773e3d"
+      ],
+      "latency_ms": 0.7854590658098459,
+      "diagnostics": {
+        "requested_mode": "keyword",
+        "effective_mode": "keyword",
+        "degraded": false,
+        "degraded_reasons": [],
+        "space_id": null,
+        "per_kind": {
+          "item": {
+            "selected_count": 2,
+            "keyword_count": 2,
+            "semantic_count": 0,
+            "fused_count": 2,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "summary": {
+            "selected_count": 1,
+            "keyword_count": 1,
+            "semantic_count": 0,
+            "fused_count": 1,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "experience": {
+            "selected_count": 1,
+            "keyword_count": 1,
+            "semantic_count": 0,
+            "fused_count": 1,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          }
+        },
+        "timings_ms": {
+          "query_embedding": 0,
+          "semantic": 0,
+          "fusion": 0,
+          "rerank": 0
+        },
+        "cache": {
+          "query_embedding_hit": false,
+          "retrieval_hit": false
+        },
+        "retrieval_generation": 64,
+        "data_version": 2
+      },
+      "selected_counts": {
+        "item": 2,
+        "summary": 1,
+        "experience": 1
+      },
+      "injected_counts": {
+        "retrieved": 2,
+        "summaries": 1,
+        "experiences": 1
+      },
+      "candidate_counts": {
+        "item": 2,
+        "summary": 1,
+        "experience": 1
+      }
+    },
+    {
+      "query_id": "q_00_1",
+      "query": "uv",
+      "kind": "item",
+      "expected": [
+        "lam_b50dbfdb94784a26816fc20824773e3d"
+      ],
+      "split": "calibration",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project",
+      "selected": [
+        "lam_b50dbfdb94784a26816fc20824773e3d",
+        "lam_c66dce9662b3478889d2b8018c1ca8f1"
+      ],
+      "latency_ms": 0.23808307014405727,
+      "diagnostics": {
+        "requested_mode": "keyword",
+        "effective_mode": "keyword",
+        "degraded": false,
+        "degraded_reasons": [],
+        "space_id": null,
+        "per_kind": {
+          "item": {
+            "selected_count": 2,
+            "keyword_count": 2,
+            "semantic_count": 0,
+            "fused_count": 2,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "summary": {
+            "selected_count": 1,
+            "keyword_count": 1,
+            "semantic_count": 0,
+            "fused_count": 1,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "experience": {
+            "selected_count": 1,
+            "keyword_count": 1,
+            "semantic_count": 0,
+            "fused_count": 1,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          }
+        },
+        "timings_ms": {
+          "query_embedding": 0,
+          "semantic": 0,
+          "fusion": 0,
+          "rerank": 0
+        },
+        "cache": {
+          "query_embedding_hit": false,
+          "retrieval_hit": false
+        },
+        "retrieval_generation": 64,
+        "data_version": 2
+      },
+      "selected_counts": {
+        "item": 2,
+        "summary": 1,
+        "experience": 1
+      },
+      "injected_counts": {
+        "retrieved": 2,
+        "summaries": 1,
+        "experiences": 1
+      },
+      "candidate_counts": {
+        "item": 2,
+        "summary": 1,
+        "experience": 1
+      }
+    },
+    {
+      "query_id": "q_01_0",
+      "query": "What language should coding answers use?",
+      "kind": "item",
+      "expected": [
+        "lam_187474ffd4484bb2b32fdc300d43a0db"
+      ],
+      "split": "calibration",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project",
+      "selected": [],
+      "latency_ms": 0.17966586165130138,
+      "diagnostics": {
+        "requested_mode": "keyword",
+        "effective_mode": "keyword",
+        "degraded": false,
+        "degraded_reasons": [],
+        "space_id": null,
+        "per_kind": {
+          "item": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "summary": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "experience": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          }
+        },
+        "timings_ms": {
+          "query_embedding": 0,
+          "semantic": 0,
+          "fusion": 0,
+          "rerank": 0
+        },
+        "cache": {
+          "query_embedding_hit": false,
+          "retrieval_hit": false
+        },
+        "retrieval_generation": 64,
+        "data_version": 2
+      },
+      "selected_counts": {
+        "item": 0,
+        "summary": 0,
+        "experience": 0
+      },
+      "injected_counts": {
+        "retrieved": 0,
+        "summaries": 0,
+        "experiences": 0
+      },
+      "candidate_counts": {
+        "item": 0,
+        "summary": 0,
+        "experience": 0
+      }
+    },
+    {
+      "query_id": "q_01_1",
+      "query": "开发答复中文",
+      "kind": "item",
+      "expected": [
+        "lam_187474ffd4484bb2b32fdc300d43a0db"
+      ],
+      "split": "calibration",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project",
+      "selected": [
+        "lam_187474ffd4484bb2b32fdc300d43a0db"
+      ],
+      "latency_ms": 0.1682499423623085,
+      "diagnostics": {
+        "requested_mode": "keyword",
+        "effective_mode": "keyword",
+        "degraded": false,
+        "degraded_reasons": [],
+        "space_id": null,
+        "per_kind": {
+          "item": {
+            "selected_count": 1,
+            "keyword_count": 1,
+            "semantic_count": 0,
+            "fused_count": 1,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "summary": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "experience": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          }
+        },
+        "timings_ms": {
+          "query_embedding": 0,
+          "semantic": 0,
+          "fusion": 0,
+          "rerank": 0
+        },
+        "cache": {
+          "query_embedding_hit": false,
+          "retrieval_hit": false
+        },
+        "retrieval_generation": 64,
+        "data_version": 2
+      },
+      "selected_counts": {
+        "item": 1,
+        "summary": 0,
+        "experience": 0
+      },
+      "injected_counts": {
+        "retrieved": 1,
+        "summaries": 0,
+        "experiences": 0
+      },
+      "candidate_counts": {
+        "item": 1,
+        "summary": 0,
+        "experience": 0
+      }
+    },
+    {
+      "query_id": "q_02_0",
+      "query": "Where does Atlas keep local records?",
+      "kind": "item",
+      "expected": [
+        "lam_6e089a2dbbb546d489e989bf66057270"
+      ],
+      "split": "acceptance",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project",
+      "selected": [
+        "lam_6e089a2dbbb546d489e989bf66057270"
+      ],
+      "latency_ms": 0.1674590166658163,
+      "diagnostics": {
+        "requested_mode": "keyword",
+        "effective_mode": "keyword",
+        "degraded": false,
+        "degraded_reasons": [],
+        "space_id": null,
+        "per_kind": {
+          "item": {
+            "selected_count": 1,
+            "keyword_count": 1,
+            "semantic_count": 0,
+            "fused_count": 1,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "summary": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "experience": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          }
+        },
+        "timings_ms": {
+          "query_embedding": 0,
+          "semantic": 0,
+          "fusion": 0,
+          "rerank": 0
+        },
+        "cache": {
+          "query_embedding_hit": false,
+          "retrieval_hit": false
+        },
+        "retrieval_generation": 64,
+        "data_version": 2
+      },
+      "selected_counts": {
+        "item": 1,
+        "summary": 0,
+        "experience": 0
+      },
+      "injected_counts": {
+        "retrieved": 1,
+        "summaries": 0,
+        "experiences": 0
+      },
+      "candidate_counts": {
+        "item": 1,
+        "summary": 0,
+        "experience": 0
+      }
+    },
+    {
+      "query_id": "q_02_1",
+      "query": "Atlas SQLite",
+      "kind": "item",
+      "expected": [
+        "lam_6e089a2dbbb546d489e989bf66057270"
+      ],
+      "split": "acceptance",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project",
+      "selected": [
+        "lam_6e089a2dbbb546d489e989bf66057270"
+      ],
+      "latency_ms": 0.156833091750741,
+      "diagnostics": {
+        "requested_mode": "keyword",
+        "effective_mode": "keyword",
+        "degraded": false,
+        "degraded_reasons": [],
+        "space_id": null,
+        "per_kind": {
+          "item": {
+            "selected_count": 1,
+            "keyword_count": 1,
+            "semantic_count": 0,
+            "fused_count": 1,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "summary": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "experience": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          }
+        },
+        "timings_ms": {
+          "query_embedding": 0,
+          "semantic": 0,
+          "fusion": 0,
+          "rerank": 0
+        },
+        "cache": {
+          "query_embedding_hit": false,
+          "retrieval_hit": false
+        },
+        "retrieval_generation": 64,
+        "data_version": 2
+      },
+      "selected_counts": {
+        "item": 1,
+        "summary": 0,
+        "experience": 0
+      },
+      "injected_counts": {
+        "retrieved": 1,
+        "summaries": 0,
+        "experiences": 0
+      },
+      "candidate_counts": {
+        "item": 1,
+        "summary": 0,
+        "experience": 0
+      }
+    },
+    {
+      "query_id": "q_03_0",
+      "query": "连接拒绝先检查哪里",
+      "kind": "item",
+      "expected": [
+        "lam_4a2ca78c82b34436a399afa9746f04ea"
+      ],
+      "split": "acceptance",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project",
+      "selected": [
+        "lam_4a2ca78c82b34436a399afa9746f04ea"
+      ],
+      "latency_ms": 0.22200006060302258,
+      "diagnostics": {
+        "requested_mode": "keyword",
+        "effective_mode": "keyword",
+        "degraded": false,
+        "degraded_reasons": [],
+        "space_id": null,
+        "per_kind": {
+          "item": {
+            "selected_count": 1,
+            "keyword_count": 1,
+            "semantic_count": 0,
+            "fused_count": 1,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "summary": {
+            "selected_count": 1,
+            "keyword_count": 1,
+            "semantic_count": 0,
+            "fused_count": 1,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "experience": {
+            "selected_count": 2,
+            "keyword_count": 2,
+            "semantic_count": 0,
+            "fused_count": 2,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          }
+        },
+        "timings_ms": {
+          "query_embedding": 0,
+          "semantic": 0,
+          "fusion": 0,
+          "rerank": 0
+        },
+        "cache": {
+          "query_embedding_hit": false,
+          "retrieval_hit": false
+        },
+        "retrieval_generation": 64,
+        "data_version": 2
+      },
+      "selected_counts": {
+        "item": 1,
+        "summary": 1,
+        "experience": 2
+      },
+      "injected_counts": {
+        "retrieved": 1,
+        "summaries": 1,
+        "experiences": 2
+      },
+      "candidate_counts": {
+        "item": 1,
+        "summary": 1,
+        "experience": 2
+      }
+    },
+    {
+      "query_id": "q_03_1",
+      "query": "E_CONN_42",
+      "kind": "item",
+      "expected": [
+        "lam_4a2ca78c82b34436a399afa9746f04ea"
+      ],
+      "split": "acceptance",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project",
+      "selected": [
+        "lam_4a2ca78c82b34436a399afa9746f04ea"
+      ],
+      "latency_ms": 0.1735419500619173,
+      "diagnostics": {
+        "requested_mode": "keyword",
+        "effective_mode": "keyword",
+        "degraded": false,
+        "degraded_reasons": [],
+        "space_id": null,
+        "per_kind": {
+          "item": {
+            "selected_count": 1,
+            "keyword_count": 1,
+            "semantic_count": 0,
+            "fused_count": 1,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "summary": {
+            "selected_count": 1,
+            "keyword_count": 1,
+            "semantic_count": 0,
+            "fused_count": 1,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "experience": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          }
+        },
+        "timings_ms": {
+          "query_embedding": 0,
+          "semantic": 0,
+          "fusion": 0,
+          "rerank": 0
+        },
+        "cache": {
+          "query_embedding_hit": false,
+          "retrieval_hit": false
+        },
+        "retrieval_generation": 64,
+        "data_version": 2
+      },
+      "selected_counts": {
+        "item": 1,
+        "summary": 1,
+        "experience": 0
+      },
+      "injected_counts": {
+        "retrieved": 1,
+        "summaries": 1,
+        "experiences": 0
+      },
+      "candidate_counts": {
+        "item": 1,
+        "summary": 1,
+        "experience": 0
+      }
+    },
+    {
+      "query_id": "q_04_0",
+      "query": "Which interpreter release is pinned?",
+      "kind": "item",
+      "expected": [
+        "lam_a70ee03c4c4e422a973f263dd4559d12"
+      ],
+      "split": "acceptance",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project",
+      "selected": [],
+      "latency_ms": 0.16604200936853886,
+      "diagnostics": {
+        "requested_mode": "keyword",
+        "effective_mode": "keyword",
+        "degraded": false,
+        "degraded_reasons": [],
+        "space_id": null,
+        "per_kind": {
+          "item": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "summary": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "experience": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          }
+        },
+        "timings_ms": {
+          "query_embedding": 0,
+          "semantic": 0,
+          "fusion": 0,
+          "rerank": 0
+        },
+        "cache": {
+          "query_embedding_hit": false,
+          "retrieval_hit": false
+        },
+        "retrieval_generation": 64,
+        "data_version": 2
+      },
+      "selected_counts": {
+        "item": 0,
+        "summary": 0,
+        "experience": 0
+      },
+      "injected_counts": {
+        "retrieved": 0,
+        "summaries": 0,
+        "experiences": 0
+      },
+      "candidate_counts": {
+        "item": 0,
+        "summary": 0,
+        "experience": 0
+      }
+    },
+    {
+      "query_id": "q_04_1",
+      "query": "Python 3.13",
+      "kind": "item",
+      "expected": [
+        "lam_a70ee03c4c4e422a973f263dd4559d12"
+      ],
+      "split": "acceptance",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project",
+      "selected": [
+        "lam_a70ee03c4c4e422a973f263dd4559d12",
+        "lam_b50dbfdb94784a26816fc20824773e3d"
+      ],
+      "latency_ms": 0.19312510266900063,
+      "diagnostics": {
+        "requested_mode": "keyword",
+        "effective_mode": "keyword",
+        "degraded": false,
+        "degraded_reasons": [],
+        "space_id": null,
+        "per_kind": {
+          "item": {
+            "selected_count": 2,
+            "keyword_count": 2,
+            "semantic_count": 0,
+            "fused_count": 2,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "summary": {
+            "selected_count": 1,
+            "keyword_count": 1,
+            "semantic_count": 0,
+            "fused_count": 1,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "experience": {
+            "selected_count": 1,
+            "keyword_count": 1,
+            "semantic_count": 0,
+            "fused_count": 1,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          }
+        },
+        "timings_ms": {
+          "query_embedding": 0,
+          "semantic": 0,
+          "fusion": 0,
+          "rerank": 0
+        },
+        "cache": {
+          "query_embedding_hit": false,
+          "retrieval_hit": false
+        },
+        "retrieval_generation": 64,
+        "data_version": 2
+      },
+      "selected_counts": {
+        "item": 2,
+        "summary": 1,
+        "experience": 1
+      },
+      "injected_counts": {
+        "retrieved": 2,
+        "summaries": 1,
+        "experiences": 1
+      },
+      "candidate_counts": {
+        "item": 2,
+        "summary": 1,
+        "experience": 1
+      }
+    },
+    {
+      "query_id": "q_05_0",
+      "query": "十月一日在哪开会",
+      "kind": "item",
+      "expected": [
+        "lam_657acb77de7d4c48aab0728b602221bb"
+      ],
+      "split": "acceptance",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project",
+      "selected": [],
+      "latency_ms": 0.16129110008478165,
+      "diagnostics": {
+        "requested_mode": "keyword",
+        "effective_mode": "keyword",
+        "degraded": false,
+        "degraded_reasons": [],
+        "space_id": null,
+        "per_kind": {
+          "item": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "summary": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "experience": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          }
+        },
+        "timings_ms": {
+          "query_embedding": 0,
+          "semantic": 0,
+          "fusion": 0,
+          "rerank": 0
+        },
+        "cache": {
+          "query_embedding_hit": false,
+          "retrieval_hit": false
+        },
+        "retrieval_generation": 64,
+        "data_version": 2
+      },
+      "selected_counts": {
+        "item": 0,
+        "summary": 0,
+        "experience": 0
+      },
+      "injected_counts": {
+        "retrieved": 0,
+        "summaries": 0,
+        "experiences": 0
+      },
+      "candidate_counts": {
+        "item": 0,
+        "summary": 0,
+        "experience": 0
+      }
+    },
+    {
+      "query_id": "q_05_1",
+      "query": "杭州部署评审",
+      "kind": "item",
+      "expected": [
+        "lam_657acb77de7d4c48aab0728b602221bb"
+      ],
+      "split": "acceptance",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project",
+      "selected": [
+        "lam_657acb77de7d4c48aab0728b602221bb",
+        "lam_c839e8e85dfc48fb84b9eb79de276b01"
+      ],
+      "latency_ms": 0.17945794388651848,
+      "diagnostics": {
+        "requested_mode": "keyword",
+        "effective_mode": "keyword",
+        "degraded": false,
+        "degraded_reasons": [],
+        "space_id": null,
+        "per_kind": {
+          "item": {
+            "selected_count": 2,
+            "keyword_count": 2,
+            "semantic_count": 0,
+            "fused_count": 2,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "summary": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "experience": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          }
+        },
+        "timings_ms": {
+          "query_embedding": 0,
+          "semantic": 0,
+          "fusion": 0,
+          "rerank": 0
+        },
+        "cache": {
+          "query_embedding_hit": false,
+          "retrieval_hit": false
+        },
+        "retrieval_generation": 64,
+        "data_version": 2
+      },
+      "selected_counts": {
+        "item": 2,
+        "summary": 0,
+        "experience": 0
+      },
+      "injected_counts": {
+        "retrieved": 2,
+        "summaries": 0,
+        "experiences": 0
+      },
+      "candidate_counts": {
+        "item": 2,
+        "summary": 0,
+        "experience": 0
+      }
+    },
+    {
+      "query_id": "q_06_0",
+      "query": "第二天部署评审城市",
+      "kind": "item",
+      "expected": [
+        "lam_c839e8e85dfc48fb84b9eb79de276b01"
+      ],
+      "split": "acceptance",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project",
+      "selected": [
+        "lam_657acb77de7d4c48aab0728b602221bb",
+        "lam_c839e8e85dfc48fb84b9eb79de276b01"
+      ],
+      "latency_ms": 0.16554188914597034,
+      "diagnostics": {
+        "requested_mode": "keyword",
+        "effective_mode": "keyword",
+        "degraded": false,
+        "degraded_reasons": [],
+        "space_id": null,
+        "per_kind": {
+          "item": {
+            "selected_count": 2,
+            "keyword_count": 2,
+            "semantic_count": 0,
+            "fused_count": 2,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "summary": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "experience": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          }
+        },
+        "timings_ms": {
+          "query_embedding": 0,
+          "semantic": 0,
+          "fusion": 0,
+          "rerank": 0
+        },
+        "cache": {
+          "query_embedding_hit": false,
+          "retrieval_hit": false
+        },
+        "retrieval_generation": 64,
+        "data_version": 2
+      },
+      "selected_counts": {
+        "item": 2,
+        "summary": 0,
+        "experience": 0
+      },
+      "injected_counts": {
+        "retrieved": 2,
+        "summaries": 0,
+        "experiences": 0
+      },
+      "candidate_counts": {
+        "item": 2,
+        "summary": 0,
+        "experience": 0
+      }
+    },
+    {
+      "query_id": "q_06_1",
+      "query": "苏州评审",
+      "kind": "item",
+      "expected": [
+        "lam_c839e8e85dfc48fb84b9eb79de276b01"
+      ],
+      "split": "acceptance",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project",
+      "selected": [
+        "lam_c839e8e85dfc48fb84b9eb79de276b01",
+        "lam_657acb77de7d4c48aab0728b602221bb"
+      ],
+      "latency_ms": 0.16091717407107353,
+      "diagnostics": {
+        "requested_mode": "keyword",
+        "effective_mode": "keyword",
+        "degraded": false,
+        "degraded_reasons": [],
+        "space_id": null,
+        "per_kind": {
+          "item": {
+            "selected_count": 2,
+            "keyword_count": 2,
+            "semantic_count": 0,
+            "fused_count": 2,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "summary": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "experience": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          }
+        },
+        "timings_ms": {
+          "query_embedding": 0,
+          "semantic": 0,
+          "fusion": 0,
+          "rerank": 0
+        },
+        "cache": {
+          "query_embedding_hit": false,
+          "retrieval_hit": false
+        },
+        "retrieval_generation": 64,
+        "data_version": 2
+      },
+      "selected_counts": {
+        "item": 2,
+        "summary": 0,
+        "experience": 0
+      },
+      "injected_counts": {
+        "retrieved": 2,
+        "summaries": 0,
+        "experiences": 0
+      },
+      "candidate_counts": {
+        "item": 2,
+        "summary": 0,
+        "experience": 0
+      }
+    },
+    {
+      "query_id": "q_07_0",
+      "query": "undated weekly meeting",
+      "kind": "item",
+      "expected": [
+        "lam_b482fb0b23c04a5290b09e65977d9315",
+        "lam_b08ee47bff2b4f8ca09763fefac0401c"
+      ],
+      "split": "acceptance",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project",
+      "selected": [],
+      "latency_ms": 0.16020797193050385,
+      "diagnostics": {
+        "requested_mode": "keyword",
+        "effective_mode": "keyword",
+        "degraded": false,
+        "degraded_reasons": [],
+        "space_id": null,
+        "per_kind": {
+          "item": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "summary": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "experience": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          }
+        },
+        "timings_ms": {
+          "query_embedding": 0,
+          "semantic": 0,
+          "fusion": 0,
+          "rerank": 0
+        },
+        "cache": {
+          "query_embedding_hit": false,
+          "retrieval_hit": false
+        },
+        "retrieval_generation": 64,
+        "data_version": 2
+      },
+      "selected_counts": {
+        "item": 0,
+        "summary": 0,
+        "experience": 0
+      },
+      "injected_counts": {
+        "retrieved": 0,
+        "summaries": 0,
+        "experiences": 0
+      },
+      "candidate_counts": {
+        "item": 0,
+        "summary": 0,
+        "experience": 0
+      }
+    },
+    {
+      "query_id": "q_07_1",
+      "query": "无日期周会",
+      "kind": "item",
+      "expected": [
+        "lam_b482fb0b23c04a5290b09e65977d9315",
+        "lam_b08ee47bff2b4f8ca09763fefac0401c"
+      ],
+      "split": "acceptance",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project",
+      "selected": [
+        "lam_b08ee47bff2b4f8ca09763fefac0401c",
+        "lam_b482fb0b23c04a5290b09e65977d9315"
+      ],
+      "latency_ms": 0.1591250766068697,
+      "diagnostics": {
+        "requested_mode": "keyword",
+        "effective_mode": "keyword",
+        "degraded": false,
+        "degraded_reasons": [],
+        "space_id": null,
+        "per_kind": {
+          "item": {
+            "selected_count": 2,
+            "keyword_count": 2,
+            "semantic_count": 0,
+            "fused_count": 2,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "summary": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "experience": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          }
+        },
+        "timings_ms": {
+          "query_embedding": 0,
+          "semantic": 0,
+          "fusion": 0,
+          "rerank": 0
+        },
+        "cache": {
+          "query_embedding_hit": false,
+          "retrieval_hit": false
+        },
+        "retrieval_generation": 64,
+        "data_version": 2
+      },
+      "selected_counts": {
+        "item": 2,
+        "summary": 0,
+        "experience": 0
+      },
+      "injected_counts": {
+        "retrieved": 2,
+        "summaries": 0,
+        "experiences": 0
+      },
+      "candidate_counts": {
+        "item": 2,
+        "summary": 0,
+        "experience": 0
+      }
+    },
+    {
+      "query_id": "q_08_0",
+      "query": "weekly discussion without a date",
+      "kind": "item",
+      "expected": [
+        "lam_b482fb0b23c04a5290b09e65977d9315",
+        "lam_b08ee47bff2b4f8ca09763fefac0401c"
+      ],
+      "split": "acceptance",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project",
+      "selected": [
+        "lam_b056bcaa6b344796b87306aaca514cdb",
+        "lam_6e089a2dbbb546d489e989bf66057270"
+      ],
+      "latency_ms": 0.16916682943701744,
+      "diagnostics": {
+        "requested_mode": "keyword",
+        "effective_mode": "keyword",
+        "degraded": false,
+        "degraded_reasons": [],
+        "space_id": null,
+        "per_kind": {
+          "item": {
+            "selected_count": 2,
+            "keyword_count": 2,
+            "semantic_count": 0,
+            "fused_count": 2,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "summary": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "experience": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          }
+        },
+        "timings_ms": {
+          "query_embedding": 0,
+          "semantic": 0,
+          "fusion": 0,
+          "rerank": 0
+        },
+        "cache": {
+          "query_embedding_hit": false,
+          "retrieval_hit": false
+        },
+        "retrieval_generation": 64,
+        "data_version": 2
+      },
+      "selected_counts": {
+        "item": 2,
+        "summary": 0,
+        "experience": 0
+      },
+      "injected_counts": {
+        "retrieved": 2,
+        "summaries": 0,
+        "experiences": 0
+      },
+      "candidate_counts": {
+        "item": 2,
+        "summary": 0,
+        "experience": 0
+      }
+    },
+    {
+      "query_id": "q_08_1",
+      "query": "无日期周会",
+      "kind": "item",
+      "expected": [
+        "lam_b482fb0b23c04a5290b09e65977d9315",
+        "lam_b08ee47bff2b4f8ca09763fefac0401c"
+      ],
+      "split": "acceptance",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project",
+      "selected": [
+        "lam_b08ee47bff2b4f8ca09763fefac0401c",
+        "lam_b482fb0b23c04a5290b09e65977d9315"
+      ],
+      "latency_ms": 0.15741586685180664,
+      "diagnostics": {
+        "requested_mode": "keyword",
+        "effective_mode": "keyword",
+        "degraded": false,
+        "degraded_reasons": [],
+        "space_id": null,
+        "per_kind": {
+          "item": {
+            "selected_count": 2,
+            "keyword_count": 2,
+            "semantic_count": 0,
+            "fused_count": 2,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "summary": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "experience": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          }
+        },
+        "timings_ms": {
+          "query_embedding": 0,
+          "semantic": 0,
+          "fusion": 0,
+          "rerank": 0
+        },
+        "cache": {
+          "query_embedding_hit": false,
+          "retrieval_hit": false
+        },
+        "retrieval_generation": 64,
+        "data_version": 2
+      },
+      "selected_counts": {
+        "item": 2,
+        "summary": 0,
+        "experience": 0
+      },
+      "injected_counts": {
+        "retrieved": 2,
+        "summaries": 0,
+        "experiences": 0
+      },
+      "candidate_counts": {
+        "item": 2,
+        "summary": 0,
+        "experience": 0
+      }
+    },
+    {
+      "query_id": "q_09_0",
+      "query": "How do I check Orion?",
+      "kind": "item",
+      "expected": [
+        "lam_c66dce9662b3478889d2b8018c1ca8f1"
+      ],
+      "split": "acceptance",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project",
+      "selected": [
+        "lam_c66dce9662b3478889d2b8018c1ca8f1",
+        "lam_b056bcaa6b344796b87306aaca514cdb",
+        "lam_6e089a2dbbb546d489e989bf66057270"
+      ],
+      "latency_ms": 0.18537510186433792,
+      "diagnostics": {
+        "requested_mode": "keyword",
+        "effective_mode": "keyword",
+        "degraded": false,
+        "degraded_reasons": [],
+        "space_id": null,
+        "per_kind": {
+          "item": {
+            "selected_count": 3,
+            "keyword_count": 3,
+            "semantic_count": 0,
+            "fused_count": 3,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "summary": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "experience": {
+            "selected_count": 1,
+            "keyword_count": 1,
+            "semantic_count": 0,
+            "fused_count": 1,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          }
+        },
+        "timings_ms": {
+          "query_embedding": 0,
+          "semantic": 0,
+          "fusion": 0,
+          "rerank": 0
+        },
+        "cache": {
+          "query_embedding_hit": false,
+          "retrieval_hit": false
+        },
+        "retrieval_generation": 64,
+        "data_version": 2
+      },
+      "selected_counts": {
+        "item": 3,
+        "summary": 0,
+        "experience": 1
+      },
+      "injected_counts": {
+        "retrieved": 3,
+        "summaries": 0,
+        "experiences": 1
+      },
+      "candidate_counts": {
+        "item": 3,
+        "summary": 0,
+        "experience": 1
+      }
+    },
+    {
+      "query_id": "q_09_1",
+      "query": "Orion unittest",
+      "kind": "item",
+      "expected": [
+        "lam_c66dce9662b3478889d2b8018c1ca8f1"
+      ],
+      "split": "acceptance",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project",
+      "selected": [
+        "lam_c66dce9662b3478889d2b8018c1ca8f1"
+      ],
+      "latency_ms": 0.1752499956637621,
+      "diagnostics": {
+        "requested_mode": "keyword",
+        "effective_mode": "keyword",
+        "degraded": false,
+        "degraded_reasons": [],
+        "space_id": null,
+        "per_kind": {
+          "item": {
+            "selected_count": 1,
+            "keyword_count": 1,
+            "semantic_count": 0,
+            "fused_count": 1,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "summary": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "experience": {
+            "selected_count": 1,
+            "keyword_count": 1,
+            "semantic_count": 0,
+            "fused_count": 1,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          }
+        },
+        "timings_ms": {
+          "query_embedding": 0,
+          "semantic": 0,
+          "fusion": 0,
+          "rerank": 0
+        },
+        "cache": {
+          "query_embedding_hit": false,
+          "retrieval_hit": false
+        },
+        "retrieval_generation": 64,
+        "data_version": 2
+      },
+      "selected_counts": {
+        "item": 1,
+        "summary": 0,
+        "experience": 1
+      },
+      "injected_counts": {
+        "retrieved": 1,
+        "summaries": 0,
+        "experiences": 1
+      },
+      "candidate_counts": {
+        "item": 1,
+        "summary": 0,
+        "experience": 1
+      }
+    },
+    {
+      "query_id": "q_10_0",
+      "query": "How to format the current report?",
+      "kind": "item",
+      "expected": [
+        "lam_100bb723388c4460b43f70388791824d"
+      ],
+      "split": "acceptance",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project",
+      "selected": [
+        "lam_b056bcaa6b344796b87306aaca514cdb"
+      ],
+      "latency_ms": 0.15862495638430119,
+      "diagnostics": {
+        "requested_mode": "keyword",
+        "effective_mode": "keyword",
+        "degraded": false,
+        "degraded_reasons": [],
+        "space_id": null,
+        "per_kind": {
+          "item": {
+            "selected_count": 1,
+            "keyword_count": 1,
+            "semantic_count": 0,
+            "fused_count": 1,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "summary": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "experience": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          }
+        },
+        "timings_ms": {
+          "query_embedding": 0,
+          "semantic": 0,
+          "fusion": 0,
+          "rerank": 0
+        },
+        "cache": {
+          "query_embedding_hit": false,
+          "retrieval_hit": false
+        },
+        "retrieval_generation": 64,
+        "data_version": 2
+      },
+      "selected_counts": {
+        "item": 1,
+        "summary": 0,
+        "experience": 0
+      },
+      "injected_counts": {
+        "retrieved": 1,
+        "summaries": 0,
+        "experiences": 0
+      },
+      "candidate_counts": {
+        "item": 1,
+        "summary": 0,
+        "experience": 0
+      }
+    },
+    {
+      "query_id": "q_10_1",
+      "query": "临时报告三列表格",
+      "kind": "item",
+      "expected": [
+        "lam_100bb723388c4460b43f70388791824d"
+      ],
+      "split": "acceptance",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project",
+      "selected": [
+        "lam_100bb723388c4460b43f70388791824d"
+      ],
+      "latency_ms": 0.1602920237928629,
+      "diagnostics": {
+        "requested_mode": "keyword",
+        "effective_mode": "keyword",
+        "degraded": false,
+        "degraded_reasons": [],
+        "space_id": null,
+        "per_kind": {
+          "item": {
+            "selected_count": 1,
+            "keyword_count": 1,
+            "semantic_count": 0,
+            "fused_count": 1,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "summary": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "experience": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          }
+        },
+        "timings_ms": {
+          "query_embedding": 0,
+          "semantic": 0,
+          "fusion": 0,
+          "rerank": 0
+        },
+        "cache": {
+          "query_embedding_hit": false,
+          "retrieval_hit": false
+        },
+        "retrieval_generation": 64,
+        "data_version": 2
+      },
+      "selected_counts": {
+        "item": 1,
+        "summary": 0,
+        "experience": 0
+      },
+      "injected_counts": {
+        "retrieved": 1,
+        "summaries": 0,
+        "experiences": 0
+      },
+      "candidate_counts": {
+        "item": 1,
+        "summary": 0,
+        "experience": 0
+      }
+    },
+    {
+      "query_id": "q_11_0",
+      "query": "Where is the current release deployed?",
+      "kind": "item",
+      "expected": [
+        "lam_6bd469f01d834204baa07b62cd33921f"
+      ],
+      "split": "acceptance",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project",
+      "selected": [
+        "lam_b056bcaa6b344796b87306aaca514cdb"
+      ],
+      "latency_ms": 0.15895790420472622,
+      "diagnostics": {
+        "requested_mode": "keyword",
+        "effective_mode": "keyword",
+        "degraded": false,
+        "degraded_reasons": [],
+        "space_id": null,
+        "per_kind": {
+          "item": {
+            "selected_count": 1,
+            "keyword_count": 1,
+            "semantic_count": 0,
+            "fused_count": 1,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "summary": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "experience": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          }
+        },
+        "timings_ms": {
+          "query_embedding": 0,
+          "semantic": 0,
+          "fusion": 0,
+          "rerank": 0
+        },
+        "cache": {
+          "query_embedding_hit": false,
+          "retrieval_hit": false
+        },
+        "retrieval_generation": 64,
+        "data_version": 2
+      },
+      "selected_counts": {
+        "item": 1,
+        "summary": 0,
+        "experience": 0
+      },
+      "injected_counts": {
+        "retrieved": 1,
+        "summaries": 0,
+        "experiences": 0
+      },
+      "candidate_counts": {
+        "item": 1,
+        "summary": 0,
+        "experience": 0
+      }
+    },
+    {
+      "query_id": "q_11_1",
+      "query": "新加坡发布",
+      "kind": "item",
+      "expected": [
+        "lam_6bd469f01d834204baa07b62cd33921f"
+      ],
+      "split": "acceptance",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project",
+      "selected": [
+        "lam_6bd469f01d834204baa07b62cd33921f"
+      ],
+      "latency_ms": 0.16420893371105194,
+      "diagnostics": {
+        "requested_mode": "keyword",
+        "effective_mode": "keyword",
+        "degraded": false,
+        "degraded_reasons": [],
+        "space_id": null,
+        "per_kind": {
+          "item": {
+            "selected_count": 1,
+            "keyword_count": 1,
+            "semantic_count": 0,
+            "fused_count": 1,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "summary": {
+            "selected_count": 1,
+            "keyword_count": 1,
+            "semantic_count": 0,
+            "fused_count": 1,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "experience": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          }
+        },
+        "timings_ms": {
+          "query_embedding": 0,
+          "semantic": 0,
+          "fusion": 0,
+          "rerank": 0
+        },
+        "cache": {
+          "query_embedding_hit": false,
+          "retrieval_hit": false
+        },
+        "retrieval_generation": 64,
+        "data_version": 2
+      },
+      "selected_counts": {
+        "item": 1,
+        "summary": 1,
+        "experience": 0
+      },
+      "injected_counts": {
+        "retrieved": 1,
+        "summaries": 1,
+        "experiences": 0
+      },
+      "candidate_counts": {
+        "item": 1,
+        "summary": 1,
+        "experience": 0
+      }
+    },
+    {
+      "query_id": "topic-build0",
+      "query": "准备解释器和安装软件包",
+      "kind": "summary",
+      "expected": [
+        "sum_faf9616516a14cfa9cbf13fa633551ed"
+      ],
+      "split": "acceptance",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project",
+      "selected": [],
+      "latency_ms": 0.17475010827183723,
+      "diagnostics": {
+        "requested_mode": "keyword",
+        "effective_mode": "keyword",
+        "degraded": false,
+        "degraded_reasons": [],
+        "space_id": null,
+        "per_kind": {
+          "item": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "summary": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "experience": {
+            "selected_count": 1,
+            "keyword_count": 1,
+            "semantic_count": 0,
+            "fused_count": 1,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          }
+        },
+        "timings_ms": {
+          "query_embedding": 0,
+          "semantic": 0,
+          "fusion": 0,
+          "rerank": 0
+        },
+        "cache": {
+          "query_embedding_hit": false,
+          "retrieval_hit": false
+        },
+        "retrieval_generation": 64,
+        "data_version": 2
+      },
+      "selected_counts": {
+        "item": 0,
+        "summary": 0,
+        "experience": 1
+      },
+      "injected_counts": {
+        "retrieved": 0,
+        "summaries": 0,
+        "experiences": 1
+      },
+      "candidate_counts": {
+        "item": 0,
+        "summary": 0,
+        "experience": 1
+      }
+    },
+    {
+      "query_id": "topic-build1",
+      "query": "构建工具 uv",
+      "kind": "summary",
+      "expected": [
+        "sum_faf9616516a14cfa9cbf13fa633551ed"
+      ],
+      "split": "acceptance",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project",
+      "selected": [
+        "sum_faf9616516a14cfa9cbf13fa633551ed"
+      ],
+      "latency_ms": 0.18991692923009396,
+      "diagnostics": {
+        "requested_mode": "keyword",
+        "effective_mode": "keyword",
+        "degraded": false,
+        "degraded_reasons": [],
+        "space_id": null,
+        "per_kind": {
+          "item": {
+            "selected_count": 3,
+            "keyword_count": 3,
+            "semantic_count": 0,
+            "fused_count": 3,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "summary": {
+            "selected_count": 1,
+            "keyword_count": 1,
+            "semantic_count": 0,
+            "fused_count": 1,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "experience": {
+            "selected_count": 1,
+            "keyword_count": 1,
+            "semantic_count": 0,
+            "fused_count": 1,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          }
+        },
+        "timings_ms": {
+          "query_embedding": 0,
+          "semantic": 0,
+          "fusion": 0,
+          "rerank": 0
+        },
+        "cache": {
+          "query_embedding_hit": false,
+          "retrieval_hit": false
+        },
+        "retrieval_generation": 64,
+        "data_version": 2
+      },
+      "selected_counts": {
+        "item": 3,
+        "summary": 1,
+        "experience": 1
+      },
+      "injected_counts": {
+        "retrieved": 3,
+        "summaries": 1,
+        "experiences": 1
+      },
+      "candidate_counts": {
+        "item": 3,
+        "summary": 1,
+        "experience": 1
+      }
+    },
+    {
+      "query_id": "topic-release0",
+      "query": "connection refused during rollout",
+      "kind": "summary",
+      "expected": [
+        "sum_86fc498ca8dd49f6933a9387dc608da2"
+      ],
+      "split": "acceptance",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project",
+      "selected": [],
+      "latency_ms": 0.16187503933906555,
+      "diagnostics": {
+        "requested_mode": "keyword",
+        "effective_mode": "keyword",
+        "degraded": false,
+        "degraded_reasons": [],
+        "space_id": null,
+        "per_kind": {
+          "item": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "summary": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "experience": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          }
+        },
+        "timings_ms": {
+          "query_embedding": 0,
+          "semantic": 0,
+          "fusion": 0,
+          "rerank": 0
+        },
+        "cache": {
+          "query_embedding_hit": false,
+          "retrieval_hit": false
+        },
+        "retrieval_generation": 64,
+        "data_version": 2
+      },
+      "selected_counts": {
+        "item": 0,
+        "summary": 0,
+        "experience": 0
+      },
+      "injected_counts": {
+        "retrieved": 0,
+        "summaries": 0,
+        "experiences": 0
+      },
+      "candidate_counts": {
+        "item": 0,
+        "summary": 0,
+        "experience": 0
+      }
+    },
+    {
+      "query_id": "topic-release1",
+      "query": "发布运维新加坡",
+      "kind": "summary",
+      "expected": [
+        "sum_86fc498ca8dd49f6933a9387dc608da2"
+      ],
+      "split": "acceptance",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project",
+      "selected": [
+        "sum_86fc498ca8dd49f6933a9387dc608da2"
+      ],
+      "latency_ms": 0.1629579346626997,
+      "diagnostics": {
+        "requested_mode": "keyword",
+        "effective_mode": "keyword",
+        "degraded": false,
+        "degraded_reasons": [],
+        "space_id": null,
+        "per_kind": {
+          "item": {
+            "selected_count": 1,
+            "keyword_count": 1,
+            "semantic_count": 0,
+            "fused_count": 1,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "summary": {
+            "selected_count": 1,
+            "keyword_count": 1,
+            "semantic_count": 0,
+            "fused_count": 1,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "experience": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          }
+        },
+        "timings_ms": {
+          "query_embedding": 0,
+          "semantic": 0,
+          "fusion": 0,
+          "rerank": 0
+        },
+        "cache": {
+          "query_embedding_hit": false,
+          "retrieval_hit": false
+        },
+        "retrieval_generation": 64,
+        "data_version": 2
+      },
+      "selected_counts": {
+        "item": 1,
+        "summary": 1,
+        "experience": 0
+      },
+      "injected_counts": {
+        "retrieved": 1,
+        "summaries": 1,
+        "experiences": 0
+      },
+      "candidate_counts": {
+        "item": 1,
+        "summary": 1,
+        "experience": 0
+      }
+    },
+    {
+      "query_id": "exp-build0",
+      "query": "How to verify the build?",
+      "kind": "experience",
+      "expected": [
+        "exp-build"
+      ],
+      "split": "acceptance",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project",
+      "selected": [],
+      "latency_ms": 0.15658396296203136,
+      "diagnostics": {
+        "requested_mode": "keyword",
+        "effective_mode": "keyword",
+        "degraded": false,
+        "degraded_reasons": [],
+        "space_id": null,
+        "per_kind": {
+          "item": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "summary": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "experience": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          }
+        },
+        "timings_ms": {
+          "query_embedding": 0,
+          "semantic": 0,
+          "fusion": 0,
+          "rerank": 0
+        },
+        "cache": {
+          "query_embedding_hit": false,
+          "retrieval_hit": false
+        },
+        "retrieval_generation": 64,
+        "data_version": 2
+      },
+      "selected_counts": {
+        "item": 0,
+        "summary": 0,
+        "experience": 0
+      },
+      "injected_counts": {
+        "retrieved": 0,
+        "summaries": 0,
+        "experiences": 0
+      },
+      "candidate_counts": {
+        "item": 0,
+        "summary": 0,
+        "experience": 0
+      }
+    },
+    {
+      "query_id": "exp-build1",
+      "query": "验证构建 unittest",
+      "kind": "experience",
+      "expected": [
+        "exp-build"
+      ],
+      "split": "acceptance",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project",
+      "selected": [
+        "exp-build"
+      ],
+      "latency_ms": 0.18020812422037125,
+      "diagnostics": {
+        "requested_mode": "keyword",
+        "effective_mode": "keyword",
+        "degraded": false,
+        "degraded_reasons": [],
+        "space_id": null,
+        "per_kind": {
+          "item": {
+            "selected_count": 2,
+            "keyword_count": 2,
+            "semantic_count": 0,
+            "fused_count": 2,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "summary": {
+            "selected_count": 1,
+            "keyword_count": 1,
+            "semantic_count": 0,
+            "fused_count": 1,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "experience": {
+            "selected_count": 1,
+            "keyword_count": 1,
+            "semantic_count": 0,
+            "fused_count": 1,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          }
+        },
+        "timings_ms": {
+          "query_embedding": 0,
+          "semantic": 0,
+          "fusion": 0,
+          "rerank": 0
+        },
+        "cache": {
+          "query_embedding_hit": false,
+          "retrieval_hit": false
+        },
+        "retrieval_generation": 64,
+        "data_version": 2
+      },
+      "selected_counts": {
+        "item": 2,
+        "summary": 1,
+        "experience": 1
+      },
+      "injected_counts": {
+        "retrieved": 2,
+        "summaries": 1,
+        "experiences": 1
+      },
+      "candidate_counts": {
+        "item": 2,
+        "summary": 1,
+        "experience": 1
+      }
+    },
+    {
+      "query_id": "exp-port0",
+      "query": "service refuses the connection",
+      "kind": "experience",
+      "expected": [
+        "exp-port"
+      ],
+      "split": "acceptance",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project",
+      "selected": [],
+      "latency_ms": 0.15875021927058697,
+      "diagnostics": {
+        "requested_mode": "keyword",
+        "effective_mode": "keyword",
+        "degraded": false,
+        "degraded_reasons": [],
+        "space_id": null,
+        "per_kind": {
+          "item": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "summary": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "experience": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          }
+        },
+        "timings_ms": {
+          "query_embedding": 0,
+          "semantic": 0,
+          "fusion": 0,
+          "rerank": 0
+        },
+        "cache": {
+          "query_embedding_hit": false,
+          "retrieval_hit": false
+        },
+        "retrieval_generation": 64,
+        "data_version": 2
+      },
+      "selected_counts": {
+        "item": 0,
+        "summary": 0,
+        "experience": 0
+      },
+      "injected_counts": {
+        "retrieved": 0,
+        "summaries": 0,
+        "experiences": 0
+      },
+      "candidate_counts": {
+        "item": 0,
+        "summary": 0,
+        "experience": 0
+      }
+    },
+    {
+      "query_id": "exp-port1",
+      "query": "排查监听端口",
+      "kind": "experience",
+      "expected": [
+        "exp-port"
+      ],
+      "split": "acceptance",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project",
+      "selected": [
+        "exp-port"
+      ],
+      "latency_ms": 0.18474995158612728,
+      "diagnostics": {
+        "requested_mode": "keyword",
+        "effective_mode": "keyword",
+        "degraded": false,
+        "degraded_reasons": [],
+        "space_id": null,
+        "per_kind": {
+          "item": {
+            "selected_count": 1,
+            "keyword_count": 1,
+            "semantic_count": 0,
+            "fused_count": 1,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "summary": {
+            "selected_count": 1,
+            "keyword_count": 1,
+            "semantic_count": 0,
+            "fused_count": 1,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "experience": {
+            "selected_count": 1,
+            "keyword_count": 1,
+            "semantic_count": 0,
+            "fused_count": 1,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          }
+        },
+        "timings_ms": {
+          "query_embedding": 0,
+          "semantic": 0,
+          "fusion": 0,
+          "rerank": 0
+        },
+        "cache": {
+          "query_embedding_hit": false,
+          "retrieval_hit": false
+        },
+        "retrieval_generation": 64,
+        "data_version": 2
+      },
+      "selected_counts": {
+        "item": 1,
+        "summary": 1,
+        "experience": 1
+      },
+      "injected_counts": {
+        "retrieved": 1,
+        "summaries": 1,
+        "experiences": 1
+      },
+      "candidate_counts": {
+        "item": 1,
+        "summary": 1,
+        "experience": 1
+      }
+    },
+    {
+      "query_id": "none0",
+      "query": "月球旅游保险",
+      "kind": "item",
+      "expected": [],
+      "split": "calibration",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project",
+      "selected": [],
+      "latency_ms": 0.15587499365210533,
+      "diagnostics": {
+        "requested_mode": "keyword",
+        "effective_mode": "keyword",
+        "degraded": false,
+        "degraded_reasons": [],
+        "space_id": null,
+        "per_kind": {
+          "item": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "summary": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "experience": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          }
+        },
+        "timings_ms": {
+          "query_embedding": 0,
+          "semantic": 0,
+          "fusion": 0,
+          "rerank": 0
+        },
+        "cache": {
+          "query_embedding_hit": false,
+          "retrieval_hit": false
+        },
+        "retrieval_generation": 64,
+        "data_version": 2
+      },
+      "selected_counts": {
+        "item": 0,
+        "summary": 0,
+        "experience": 0
+      },
+      "injected_counts": {
+        "retrieved": 0,
+        "summaries": 0,
+        "experiences": 0
+      },
+      "candidate_counts": {
+        "item": 0,
+        "summary": 0,
+        "experience": 0
+      }
+    },
+    {
+      "query_id": "none1",
+      "query": "quantum banana constellation",
+      "kind": "item",
+      "expected": [],
+      "split": "calibration",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project",
+      "selected": [],
+      "latency_ms": 0.1517909113317728,
+      "diagnostics": {
+        "requested_mode": "keyword",
+        "effective_mode": "keyword",
+        "degraded": false,
+        "degraded_reasons": [],
+        "space_id": null,
+        "per_kind": {
+          "item": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "summary": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "experience": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          }
+        },
+        "timings_ms": {
+          "query_embedding": 0,
+          "semantic": 0,
+          "fusion": 0,
+          "rerank": 0
+        },
+        "cache": {
+          "query_embedding_hit": false,
+          "retrieval_hit": false
+        },
+        "retrieval_generation": 64,
+        "data_version": 2
+      },
+      "selected_counts": {
+        "item": 0,
+        "summary": 0,
+        "experience": 0
+      },
+      "injected_counts": {
+        "retrieved": 0,
+        "summaries": 0,
+        "experiences": 0
+      },
+      "candidate_counts": {
+        "item": 0,
+        "summary": 0,
+        "experience": 0
+      }
+    },
+    {
+      "query_id": "none2",
+      "query": "Mars submarine restaurant",
+      "kind": "item",
+      "expected": [],
+      "split": "acceptance",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project",
+      "selected": [],
+      "latency_ms": 0.15129195526242256,
+      "diagnostics": {
+        "requested_mode": "keyword",
+        "effective_mode": "keyword",
+        "degraded": false,
+        "degraded_reasons": [],
+        "space_id": null,
+        "per_kind": {
+          "item": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "summary": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "experience": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          }
+        },
+        "timings_ms": {
+          "query_embedding": 0,
+          "semantic": 0,
+          "fusion": 0,
+          "rerank": 0
+        },
+        "cache": {
+          "query_embedding_hit": false,
+          "retrieval_hit": false
+        },
+        "retrieval_generation": 64,
+        "data_version": 2
+      },
+      "selected_counts": {
+        "item": 0,
+        "summary": 0,
+        "experience": 0
+      },
+      "injected_counts": {
+        "retrieved": 0,
+        "summaries": 0,
+        "experiences": 0
+      },
+      "candidate_counts": {
+        "item": 0,
+        "summary": 0,
+        "experience": 0
+      }
+    },
+    {
+      "query_id": "none3",
+      "query": "侏罗纪票务",
+      "kind": "item",
+      "expected": [],
+      "split": "acceptance",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project",
+      "selected": [],
+      "latency_ms": 0.15154201537370682,
+      "diagnostics": {
+        "requested_mode": "keyword",
+        "effective_mode": "keyword",
+        "degraded": false,
+        "degraded_reasons": [],
+        "space_id": null,
+        "per_kind": {
+          "item": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "summary": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "experience": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          }
+        },
+        "timings_ms": {
+          "query_embedding": 0,
+          "semantic": 0,
+          "fusion": 0,
+          "rerank": 0
+        },
+        "cache": {
+          "query_embedding_hit": false,
+          "retrieval_hit": false
+        },
+        "retrieval_generation": 64,
+        "data_version": 2
+      },
+      "selected_counts": {
+        "item": 0,
+        "summary": 0,
+        "experience": 0
+      },
+      "injected_counts": {
+        "retrieved": 0,
+        "summaries": 0,
+        "experiences": 0
+      },
+      "candidate_counts": {
+        "item": 0,
+        "summary": 0,
+        "experience": 0
+      }
+    },
+    {
+      "query_id": "none4",
+      "query": "forgotten-never-return",
+      "kind": "item",
+      "expected": [],
+      "split": "acceptance",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project",
+      "selected": [],
+      "latency_ms": 0.16975007019937038,
+      "diagnostics": {
+        "requested_mode": "keyword",
+        "effective_mode": "keyword",
+        "degraded": false,
+        "degraded_reasons": [],
+        "space_id": null,
+        "per_kind": {
+          "item": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "summary": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "experience": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          }
+        },
+        "timings_ms": {
+          "query_embedding": 0,
+          "semantic": 0,
+          "fusion": 0,
+          "rerank": 0
+        },
+        "cache": {
+          "query_embedding_hit": false,
+          "retrieval_hit": false
+        },
+        "retrieval_generation": 64,
+        "data_version": 2
+      },
+      "selected_counts": {
+        "item": 0,
+        "summary": 0,
+        "experience": 0
+      },
+      "injected_counts": {
+        "retrieved": 0,
+        "summaries": 0,
+        "experiences": 0
+      },
+      "candidate_counts": {
+        "item": 0,
+        "summary": 0,
+        "experience": 0
+      }
+    },
+    {
+      "query_id": "none5",
+      "query": "superseded-old-region",
+      "kind": "item",
+      "expected": [],
+      "split": "acceptance",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project",
+      "selected": [
+        "lam_b056bcaa6b344796b87306aaca514cdb"
+      ],
+      "latency_ms": 0.15479209832847118,
+      "diagnostics": {
+        "requested_mode": "keyword",
+        "effective_mode": "keyword",
+        "degraded": false,
+        "degraded_reasons": [],
+        "space_id": null,
+        "per_kind": {
+          "item": {
+            "selected_count": 1,
+            "keyword_count": 1,
+            "semantic_count": 0,
+            "fused_count": 1,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "summary": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "experience": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          }
+        },
+        "timings_ms": {
+          "query_embedding": 0,
+          "semantic": 0,
+          "fusion": 0,
+          "rerank": 0
+        },
+        "cache": {
+          "query_embedding_hit": false,
+          "retrieval_hit": false
+        },
+        "retrieval_generation": 64,
+        "data_version": 2
+      },
+      "selected_counts": {
+        "item": 1,
+        "summary": 0,
+        "experience": 0
+      },
+      "injected_counts": {
+        "retrieved": 1,
+        "summaries": 0,
+        "experiences": 0
+      },
+      "candidate_counts": {
+        "item": 1,
+        "summary": 0,
+        "experience": 0
+      }
+    },
+    {
+      "query_id": "none6",
+      "query": "private-user-vault",
+      "kind": "item",
+      "expected": [],
+      "split": "acceptance",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project",
+      "selected": [],
+      "latency_ms": 0.1652499195188284,
+      "diagnostics": {
+        "requested_mode": "keyword",
+        "effective_mode": "keyword",
+        "degraded": false,
+        "degraded_reasons": [],
+        "space_id": null,
+        "per_kind": {
+          "item": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "summary": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "experience": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          }
+        },
+        "timings_ms": {
+          "query_embedding": 0,
+          "semantic": 0,
+          "fusion": 0,
+          "rerank": 0
+        },
+        "cache": {
+          "query_embedding_hit": false,
+          "retrieval_hit": false
+        },
+        "retrieval_generation": 64,
+        "data_version": 2
+      },
+      "selected_counts": {
+        "item": 0,
+        "summary": 0,
+        "experience": 0
+      },
+      "injected_counts": {
+        "retrieved": 0,
+        "summaries": 0,
+        "experiences": 0
+      },
+      "candidate_counts": {
+        "item": 0,
+        "summary": 0,
+        "experience": 0
+      }
+    },
+    {
+      "query_id": "none7",
+      "query": "private-project-vault",
+      "kind": "item",
+      "expected": [],
+      "split": "acceptance",
+      "user_id": "benchmark-user",
+      "session_id": "benchmark-session",
+      "project_id": "demo-project",
+      "selected": [],
+      "latency_ms": 0.1521660014986992,
+      "diagnostics": {
+        "requested_mode": "keyword",
+        "effective_mode": "keyword",
+        "degraded": false,
+        "degraded_reasons": [],
+        "space_id": null,
+        "per_kind": {
+          "item": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "summary": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          },
+          "experience": {
+            "selected_count": 0,
+            "keyword_count": 0,
+            "semantic_count": 0,
+            "fused_count": 0,
+            "rerank_status": "disabled",
+            "effective_mode": "keyword"
+          }
+        },
+        "timings_ms": {
+          "query_embedding": 0,
+          "semantic": 0,
+          "fusion": 0,
+          "rerank": 0
+        },
+        "cache": {
+          "query_embedding_hit": false,
+          "retrieval_hit": false
+        },
+        "retrieval_generation": 64,
+        "data_version": 2
+      },
+      "selected_counts": {
+        "item": 0,
+        "summary": 0,
+        "experience": 0
+      },
+      "injected_counts": {
+        "retrieved": 0,
+        "summaries": 0,
+        "experiences": 0
+      },
+      "candidate_counts": {
+        "item": 0,
+        "summary": 0,
+        "experience": 0
+      }
+    }
+  ],
+  "fixture_sha256": "4231f77c57c559ba49e54ea90c3154302c0fbc32d8bae849bd506a808b88a106",
+  "synthetic_only": true,
+  "identity_map": {
+    "deps": "lam_b50dbfdb94784a26816fc20824773e3d",
+    "language": "lam_187474ffd4484bb2b32fdc300d43a0db",
+    "database": "lam_6e089a2dbbb546d489e989bf66057270",
+    "error": "lam_4a2ca78c82b34436a399afa9746f04ea",
+    "version": "lam_a70ee03c4c4e422a973f263dd4559d12",
+    "meeting": "lam_657acb77de7d4c48aab0728b602221bb",
+    "meeting2": "lam_c839e8e85dfc48fb84b9eb79de276b01",
+    "unknown1": "lam_b482fb0b23c04a5290b09e65977d9315",
+    "unknown2": "lam_b08ee47bff2b4f8ca09763fefac0401c",
+    "scope": "lam_c66dce9662b3478889d2b8018c1ca8f1",
+    "session": "lam_100bb723388c4460b43f70388791824d",
+    "active": "lam_6bd469f01d834204baa07b62cd33921f",
+    "topic-build": "sum_faf9616516a14cfa9cbf13fa633551ed",
+    "topic-release": "sum_86fc498ca8dd49f6933a9387dc608da2",
+    "exp-build": "exp-build",
+    "exp-port": "exp-port"
+  }
+}

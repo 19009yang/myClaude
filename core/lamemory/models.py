@@ -45,6 +45,7 @@ class SearchHit:
     score: float
     reason: str
     mode: str = "keyword"
+    retrieval: dict = field(default_factory=dict)
 
     def to_dict(self):
         return asdict(self)

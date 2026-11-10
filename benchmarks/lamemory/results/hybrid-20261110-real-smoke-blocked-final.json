@@ -1,0 +1,26 @@
+{
+  "status": "blocked",
+  "reason": "hybrid 缺少 LAMEMORY_EMBEDDING_MODEL/BASE_URL/DIMENSIONS/NAMESPACE",
+  "mode": "hybrid",
+  "real_semantic_validation": false,
+  "fixture_sha256": "4231f77c57c559ba49e54ea90c3154302c0fbc32d8bae849bd506a808b88a106",
+  "synthetic_only": true,
+  "identity_map": {
+    "deps": "lam_d3dece4cd8e24d3da90323fd7363af31",
+    "language": "lam_3ace3e07388249ecacba8c7097621e6c",
+    "database": "lam_f7b31b6dd29b414bb21af33ec1239d10",
+    "error": "lam_ed432d70ef6a4f6d9bb45256c5d5a36d",
+    "version": "lam_b8601f609b654e9dbf90a42489126584",
+    "meeting": "lam_4b0551f237344c10a3c93fc415a679f8",
+    "meeting2": "lam_6428c120cff9479aac2ed6d862cce5c3",
+    "unknown1": "lam_05aaeeb41f8e4c2c94b2ade7ca54495d",
+    "unknown2": "lam_ed10b336ec6847c38496099bd6cd1fcf",
+    "scope": "lam_5740a7c77dad4c98a6aa31dce03452b0",
+    "session": "lam_e29b3b076d5f403baf7de27028669f55",
+    "active": "lam_6e586fbdafe54a5f84cf700af9e6e673",
+    "topic-build": "sum_0977e05ce9a64b11ae9c5e7cd25faffb",
+    "topic-release": "sum_b9940b5d273d4277afc42570f9b561ef",
+    "exp-build": "exp-build",
+    "exp-port": "exp-port"
+  }
+}

@@ -7,6 +7,7 @@ from pathlib import Path
 from . import LaMemoryConfig, LaMemoryService
 from .migration import discover_legacy_paths, import_legacy, preview_legacy
 from .providers import ChatMemoryProvider
+from .runtime import create_memory
 
 
 def main():
@@ -16,6 +17,8 @@ def main():
     parser.add_argument("--session", default="legacy-session")
     parser.add_argument("--project")
     parser.add_argument("--offline", action="store_true", help="不调用模型；摘要使用原文摘录，模型任务保留错误")
+    parser.add_argument("--retrieval-mode", choices=["keyword", "hybrid"], default=None)
+    parser.add_argument("--rerank", action=argparse.BooleanOptionalAction, default=None)
     commands = parser.add_subparsers(dest="command", required=True)
     for name in ("preview", "import"):
         command = commands.add_parser(name)
@@ -28,6 +31,14 @@ def main():
     for name in ("inspect", "forget", "retry"):
         command = commands.add_parser(name)
         command.add_argument("id")
+    for name in ("index-status", "index-enqueue"):
+        commands.add_parser(name)
+    command = commands.add_parser("index-process")
+    command.add_argument("--max-jobs", type=int, default=16)
+    command = commands.add_parser("index-flush")
+    command.add_argument("--timeout", type=float, default=30)
+    command = commands.add_parser("index-retry")
+    command.add_argument("id")
     commands.add_parser("jobs")
     command = commands.add_parser("process")
     command.add_argument("--max-jobs", type=int, default=1)
@@ -71,16 +82,34 @@ def main():
         result = {k: v for k, v in result.items() if k not in {"messages", "entries"}}
     else:
         cfg = LaMemoryConfig(project_id=args.project, **({"database_path": args.database} if args.database else {}))
-        with LaMemoryService(cfg, user_id=args.user, session_id=args.session,
-                             provider=None if args.offline else ChatMemoryProvider()) as service:
+        with create_memory(cfg, user_id=args.user, session_id=args.session,
+                           retrieval_mode=args.retrieval_mode, rerank=args.rerank, offline=args.offline,
+                           select_space=args.command == "index-status" or (args.offline and args.command.startswith("index-")),
+                           provider=None if args.offline else ChatMemoryProvider()) as service:
             if args.command == "import":
                 result = import_legacy(service, session_path=args.session_file, memory_path=args.memory_file)
             elif args.command == "search":
-                result = {"mode": "keyword", "results": [h.to_dict() for h in service.search(args.query)]}
+                bundle = service.retrieve(args.query)
+                result = {"mode": bundle.diagnostics["effective_mode"], "results": [h.to_dict() for h in bundle.items],
+                          "summaries": bundle.summaries, "experiences": bundle.experiences, "retrieval": bundle.diagnostics}
             elif args.command == "inspect":
                 result = service.inspect(args.id)
             elif args.command == "forget":
                 result = service.forget(args.id)
+            elif args.command == "index-status":
+                result = service.embedding_status()
+            elif args.command == "index-enqueue":
+                result = service.enqueue_embeddings()
+            elif args.command == "index-process":
+                if args.offline:
+                    raise ValueError("offline 不运行 embedding provider")
+                result = service.process_embedding_jobs(args.max_jobs)
+            elif args.command == "index-flush":
+                if args.offline:
+                    raise ValueError("offline 不运行 embedding provider")
+                result = service.flush_embeddings(args.timeout)
+            elif args.command == "index-retry":
+                result = {"retried": service.retry_embedding_job(args.id)}
             elif args.command == "jobs":
                 result = service.jobs()
             elif args.command == "retry":
@@ -116,7 +145,16 @@ def main():
             else:
                 result = asdict(service.flush(args.timeout))
     print(json.dumps(result, ensure_ascii=False, indent=2))
+    if args.command == "index-flush" and result["status"] != "complete":
+        return 1
+    if args.command == "index-process" and any(j["status"] == "failed" for j in result):
+        return 1
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        raise SystemExit(main())
+    except (ValueError, RuntimeError) as exc:
+        print(json.dumps({"error": str(exc)}, ensure_ascii=False))
+        raise SystemExit(2)

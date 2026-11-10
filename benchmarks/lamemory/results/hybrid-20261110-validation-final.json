@@ -1,0 +1,188 @@
+{
+  "date": "2026-11-10",
+  "baseline_head": "7d29ffd811977c7c24d7831a3264e42c94dbf9bd",
+  "scope": "local implementation; no commit/push; temporary SQLite and synthetic data only",
+  "preserved_initial_changes": [
+    "README.md additions",
+    "docs/lamemory-hybrid-retrieval-plan.md"
+  ],
+  "baseline_test_attempt": {
+    "command": ".venv/bin/python -m unittest discover -s tests/lamemory -p 'test_*.py'",
+    "total": 69,
+    "passed": 66,
+    "errors": 3,
+    "reason": "sandbox disallowed local HTTP socket bind; not application assertions"
+  },
+  "final_tests": [
+    {
+      "command": ".venv/bin/python -m unittest discover -s tests/lamemory -p 'test_*.py'",
+      "total": 108,
+      "passed": 108,
+      "exit_code": 0,
+      "raw_log": "hybrid-20261110-lamemory-tests-stable.log",
+      "loopback_permission": true
+    },
+    {
+      "command": ".venv/bin/python -m unittest discover -s tests/providers -p 'test_*.py'",
+      "total": 20,
+      "passed": 20,
+      "exit_code": 0,
+      "raw_log": "hybrid-20261110-provider-tests.log"
+    },
+    {
+      "command": "git diff --check",
+      "exit_code": 0
+    },
+    {
+      "command": "node --check Agent/chatBot_with_memory/web_static/app.js",
+      "exit_code": 0
+    }
+  ],
+  "phases": {
+    "A": "pure cosine/validation/RRF tests before real adapter",
+    "B": "fake provider, migration, transactional ledger, persistent jobs, CAS, retry, restart, repair",
+    "C": "real SDK adapter, mock transport and protocol validation; separate config and resource ownership",
+    "D": "three kinds, source/scope before top-k, shared query, profile background, context/tools",
+    "E": "optional JSON rerank, complete identity validation, deadline and stable RRF fallback",
+    "F": "facade, terminal, Web chat/panel, CLI commands, bounded post-reply maintenance and docs",
+    "G": "offline regression and 40-query keyword baseline complete; real hybrid/rerank smoke blocked"
+  },
+  "evaluation": {
+    "queries": 40,
+    "answerable": 32,
+    "no_answer": 8,
+    "relevance": "binary per entity kind",
+    "fixture_sha256": "4231f77c57c559ba49e54ea90c3154302c0fbc32d8bae849bd506a808b88a106",
+    "metrics_by_split": {
+      "calibration": {
+        "queries": 6,
+        "answerable": 4,
+        "no_answer": 2,
+        "recall_at_5": 0.75,
+        "mrr_at_5": 0.75,
+        "ndcg_at_5": 0.75,
+        "no_answer_false_recall_rate": 0.0,
+        "p50_ms": 0.15891692601144314,
+        "p95_ms": 0.7981669623404741,
+        "degraded_queries": 0
+      },
+      "acceptance": {
+        "queries": 34,
+        "answerable": 28,
+        "no_answer": 6,
+        "recall_at_5": 0.6428571428571429,
+        "mrr_at_5": 0.625,
+        "ndcg_at_5": 0.629676062627552,
+        "no_answer_false_recall_rate": 0.16666666666666666,
+        "p50_ms": 0.16154092736542225,
+        "p95_ms": 0.20054192282259464,
+        "degraded_queries": 0
+      }
+    },
+    "artifacts": [
+      "hybrid-20261110-keyword-stable.json",
+      "hybrid-20261110-hybrid-stable.json",
+      "hybrid-20261110-hybrid-rerank-stable.json",
+      "hybrid-20261110-real-smoke-blocked-stable.json"
+    ],
+    "stable_entity_ids": true,
+    "repeatable_ranking_test": true
+  },
+  "real_embedding_smoke": {
+    "status": "blocked",
+    "executed": false,
+    "reason": "missing complete LAMEMORY_EMBEDDING_MODEL/BASE_URL/DIMENSIONS/NAMESPACE",
+    "exit_code": 2,
+    "semantic_gain_claimed": false
+  },
+  "real_rerank_smoke": {
+    "status": "blocked",
+    "executed": false,
+    "reason": "embedding baseline unavailable; no complete independent rerank route",
+    "gain_claimed": false
+  },
+  "design_adjustments": [
+    "cache only 64 query vectors; final rankings and provenance are always re-read",
+    "exact query hash prevents case-sensitive input aliasing",
+    "drop changed candidates rather than retry entire retrieval"
+  ],
+  "limits": [
+    "O(N*D) exact Python scan; visible-range reconciliation/materialization scans",
+    "single process serial consumer; no multi-worker claim/lease",
+    "single vector per document and character truncation; not tokenizer limit validation",
+    "real embedding/rerank retrieval quality and model costs unverified",
+    "no old-binary schema-v4 rollback compatibility claim"
+  ],
+  "previous_evidence": "hybrid-20261110-validation.json",
+  "post_full_regression_check": {
+    "command": ".venv/bin/python -m unittest discover -s tests/lamemory -p test_hybrid_integration.py",
+    "passed": 16,
+    "exit_code": 0,
+    "reason": "explicit deadline=0 must not call an external embedding provider"
+  },
+  "modified_tracked_files": [
+    ".env.example",
+    "Agent/chatBot_with_memory/main.py",
+    "Agent/chatBot_with_memory/web.py",
+    "Agent/chatBot_with_memory/web_static/app.js",
+    "Agent/chatBot_with_memory/web_static/index.html",
+    "README.md",
+    "benchmarks/lamemory/README.md",
+    "core/lamemory/__init__.py",
+    "core/lamemory/__main__.py",
+    "core/lamemory/config.py",
+    "core/lamemory/context.py",
+    "core/lamemory/hierarchy.py",
+    "core/lamemory/models.py",
+    "core/lamemory/service.py",
+    "core/lamemory/tools.py",
+    "core/memory.py",
+    "docs/lamemory-design.md",
+    "docs/lamemory-development-guide.md",
+    "docs/lamemory-storage-and-lifecycle.md",
+    "docs/lamemory-usage.md",
+    "tests/lamemory/test_hierarchy.py",
+    "tests/lamemory/test_web.py"
+  ],
+  "added_files": [
+    "benchmarks/lamemory/hybrid_retrieval.py",
+    "benchmarks/lamemory/hybrid_smoke.py",
+    "benchmarks/lamemory/results/hybrid-20261110-hybrid-final.json",
+    "benchmarks/lamemory/results/hybrid-20261110-hybrid-rerank-final.json",
+    "benchmarks/lamemory/results/hybrid-20261110-hybrid-rerank-stable.json",
+    "benchmarks/lamemory/results/hybrid-20261110-hybrid-rerank.json",
+    "benchmarks/lamemory/results/hybrid-20261110-hybrid-stable.json",
+    "benchmarks/lamemory/results/hybrid-20261110-hybrid.json",
+    "benchmarks/lamemory/results/hybrid-20261110-keyword-final.json",
+    "benchmarks/lamemory/results/hybrid-20261110-keyword-stable.json",
+    "benchmarks/lamemory/results/hybrid-20261110-keyword.json",
+    "benchmarks/lamemory/results/hybrid-20261110-lamemory-tests-stable.log",
+    "benchmarks/lamemory/results/hybrid-20261110-lamemory-tests.log",
+    "benchmarks/lamemory/results/hybrid-20261110-provider-tests.log",
+    "benchmarks/lamemory/results/hybrid-20261110-real-smoke-blocked-final.json",
+    "benchmarks/lamemory/results/hybrid-20261110-real-smoke-blocked-stable.json",
+    "benchmarks/lamemory/results/hybrid-20261110-real-smoke-blocked.json",
+    "benchmarks/lamemory/results/hybrid-20261110-validation-final.json",
+    "benchmarks/lamemory/results/hybrid-20261110-validation.json",
+    "core/lamemory/embedding_index.py",
+    "core/lamemory/embedding_space.py",
+    "core/lamemory/embeddings.py",
+    "core/lamemory/fusion.py",
+    "core/lamemory/migrations/004_hybrid_retrieval.sql",
+    "core/lamemory/reranking.py",
+    "core/lamemory/retrieval_engine.py",
+    "core/lamemory/retrieval_sources.py",
+    "core/lamemory/retrieval_types.py",
+    "core/lamemory/runtime.py",
+    "docs/lamemory-hybrid-retrieval.md",
+    "tests/lamemory/fixtures/hybrid_retrieval.json",
+    "tests/lamemory/test_embedding_index.py",
+    "tests/lamemory/test_embeddings.py",
+    "tests/lamemory/test_fusion.py",
+    "tests/lamemory/test_hybrid_benchmark.py",
+    "tests/lamemory/test_hybrid_integration.py",
+    "tests/lamemory/test_hybrid_retrieval.py",
+    "tests/lamemory/test_reranking.py"
+  ],
+  "final_head": "7d29ffd811977c7c24d7831a3264e42c94dbf9bd"
+}

@@ -44,3 +44,21 @@ M2/M3 新增 24 项行为用例，覆盖 M1 库升级保留消息/来源/任务�
 `smoke.py` 使用不依赖终端输入的 `ChatRunner`，所有状态保存在临时库，执行后删除。报告保存配置、配置哈希、检索模式、命中来源、分项检查、耗时及分用途模型 usage；真实模式不输出密钥。ChatRunner 默认仅启用绑定的记忆工具，宿主可显式增加普通工具；内置安全确认在无人值守模式返回未执行。聊天轮数和模型请求有界，宿主添加的同步工具需要自行遵守超时；此 runner 不提供操作系统级工作区隔离。
 
 后续工作：扩大真实模型样本；再按开发指南冻结同一 Agent 的 none/legacy/lamemory 三组资产、独立工作区、模型预算和评分协议，建立 6–10 个完整任务。尚未运行这些对照，不宣称任务得分或语义召回提升。
+
+## Hybrid 本地实施验收（2026-11-10）
+
+关键词、真实 embedding 适配器、按种类 RRF、可选 LLM JSON 重排已接入服务、上下文、工具、终端和 Web。默认 keyword、rerank 关闭。最终 **108 项 LaMemory 测试、20 项 provider 测试通过**，以及 JS 语法和 diff 检查通过；均使用临时库与合成数据。本轮 [验证报告](results/hybrid-20261110-validation-final.json) 和 [原始测试日志](results/hybrid-20261110-lamemory-tests-stable.log) 与历史报告并存。实现细节、模型示例、索引命令和回退见 [实施与验证](../../docs/lamemory-hybrid-retrieval.md)。
+
+40 查询（32 有答案、8 无答案）使用固定身份、固定实体 ID 和同一权威快照；校准与验收分开，未调整默认 cosine 阈值。关键词验收集 34 查询：Recall@5=0.642857，MRR@5=0.625，nDCG@5=0.629676，无答案错误召回率=1/6。误召回包含旧区域查询与当前区域共享词的案例；中英文改写无匹配案例见原始 failures。按种类评测，profile 导航不算相关答案，不构造跨种类统一分数。
+
+- [固定 ID 的关键词结果](results/hybrid-20261110-keyword-stable.json)：实际基线、失败样例、p50/p95、候选/选中/注入数。
+- [Hybrid 状态](results/hybrid-20261110-hybrid-stable.json)、[Hybrid+rerank 状态](results/hybrid-20261110-hybrid-rerank-stable.json)、[真实 smoke 状态](results/hybrid-20261110-real-smoke-blocked-stable.json)：均 **blocked / 未执行**，缺完整 embedding 模型、端点、维度和 namespace。没有真实语义或重排收益结论。
+
+最初归档的非固定 ID 报告及随后中间报告保留为原始证据，当前比较使用 `*-stable.json`；早期 UUID tie-break 会影响同分排名，已增加重复运行一致性测试。fake 固定向量只用于协议与一致性测试，不进入真实收益评测。
+
+```bash
+.venv/bin/python -m benchmarks.lamemory.hybrid_retrieval --mode all --output /tmp/lamemory-hybrid-new-run
+.venv/bin/python -m benchmarks.lamemory.hybrid_smoke --output /tmp/lamemory-hybrid-new-smoke.json
+```
+
+输出目录/文件必须是新路径。缺配置返回 blocked 和非零退出码，不随机补向量；真实模式需要用户配置的模型，不自动选择模型。索引建库、查询向量与重排 token 用量分开记录；未配置单价，不估算费用。完整任务效果评测仍未执行。

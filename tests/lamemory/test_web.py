@@ -208,3 +208,14 @@ class WebHTTPCases(MemoryTestCase):
         self.assertNotIn("event: tool_start", replay)
         _, _, body = self.request("GET", "/api/session?session_id=" + session_id)
         self.assertEqual(len(json.loads(body)["messages"]), 4)
+
+    def test_search_details_reports_actual_offline_mode(self):
+        self.memory.store('synthetic alpha')
+        status, _, body = self.request('GET', '/api/memory-search?session_id=first&q=alpha')
+        self.assertEqual(status, 200)
+        detail = json.loads(body)
+        self.assertEqual(detail['mode'], 'keyword')
+        self.assertIn('offline', detail['retrieval']['degraded_reasons'])
+        self.assertTrue(detail['results'])
+        self.assertNotIn('api_key', body)
+        self.assertEqual(self.request('GET', '/api/memory-search?session_id=private&q=alpha')[0], 404)

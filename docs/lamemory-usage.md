@@ -1,8 +1,8 @@
 # LaMemory 使用与验证
 
-日期：2026-11-09
+日期：2026-11-09；混合召回补充：2026-11-10
 
-当前已实现 M0–M3 的单机运行时，检索模式为 `keyword`。除事实、偏好、事件、原始证据、版本、遗忘、持久化任务和预算外，支持用户概览、项目/手动主题摘要、增量失效、离线整理和有反馈验证的程序经验。M2/M3 的启用方式及接口见 [开发交付](lamemory-m2-m3.md)。embedding 和完整对照评测仍属后续工作。此前 DeepSeek `deepseek-flash` 真实记忆 smoke 的范围为 M0/M1，记录见 [real-smoke.json](../benchmarks/lamemory/results/real-smoke.json)。
+当前已实现 M0–M3 的单机运行时，默认检索模式为 `keyword`，可显式配置 `hybrid` 与可选重排。除事实、偏好、事件、原始证据、版本、遗忘、持久化任务和预算外，支持用户概览、项目/手动主题摘要、增量失效、离线整理和有反馈验证的程序经验。M2/M3 的启用方式及接口见 [开发交付](lamemory-m2-m3.md)。真实 embedding 适配器与混合链路已实现、离线测试通过；本轮真实语义 smoke 缺配置未执行，完整任务对照评测仍待开展。模型配置、回填和回退见 [混合召回实施与验证](lamemory-hybrid-retrieval.md)。此前 DeepSeek `deepseek-flash` 真实记忆 smoke 的范围为 M0/M1，记录见 [real-smoke.json](../benchmarks/lamemory/results/real-smoke.json)。
 
 ## 启动聊天
 

@@ -1,0 +1,114 @@
+{
+  "date": "2026-11-10",
+  "baseline_head": "7d29ffd811977c7c24d7831a3264e42c94dbf9bd",
+  "scope": "local implementation; no commit/push; temporary SQLite and synthetic data only",
+  "preserved_initial_changes": [
+    "README.md additions",
+    "docs/lamemory-hybrid-retrieval-plan.md"
+  ],
+  "baseline_test_attempt": {
+    "command": ".venv/bin/python -m unittest discover -s tests/lamemory -p 'test_*.py'",
+    "total": 69,
+    "passed": 66,
+    "errors": 3,
+    "reason": "sandbox disallowed local HTTP socket bind; not application assertions"
+  },
+  "final_tests": [
+    {
+      "command": ".venv/bin/python -m unittest discover -s tests/lamemory -p 'test_*.py'",
+      "total": 107,
+      "passed": 107,
+      "exit_code": 0,
+      "raw_log": "hybrid-20261110-lamemory-tests.log",
+      "loopback_permission": true
+    },
+    {
+      "command": ".venv/bin/python -m unittest discover -s tests/providers -p 'test_*.py'",
+      "total": 20,
+      "passed": 20,
+      "exit_code": 0,
+      "raw_log": "hybrid-20261110-provider-tests.log"
+    },
+    {
+      "command": "git diff --check",
+      "exit_code": 0
+    },
+    {
+      "command": "node --check Agent/chatBot_with_memory/web_static/app.js",
+      "exit_code": 0
+    }
+  ],
+  "phases": {
+    "A": "pure cosine/validation/RRF tests before real adapter",
+    "B": "fake provider, migration, transactional ledger, persistent jobs, CAS, retry, restart, repair",
+    "C": "real SDK adapter, mock transport and protocol validation; separate config and resource ownership",
+    "D": "three kinds, source/scope before top-k, shared query, profile background, context/tools",
+    "E": "optional JSON rerank, complete identity validation, deadline and stable RRF fallback",
+    "F": "facade, terminal, Web chat/panel, CLI commands, bounded post-reply maintenance and docs",
+    "G": "offline regression and 40-query keyword baseline complete; real hybrid/rerank smoke blocked"
+  },
+  "evaluation": {
+    "queries": 40,
+    "answerable": 32,
+    "no_answer": 8,
+    "relevance": "binary per entity kind",
+    "fixture_sha256": "4231f77c57c559ba49e54ea90c3154302c0fbc32d8bae849bd506a808b88a106",
+    "metrics_by_split": {
+      "calibration": {
+        "queries": 6,
+        "answerable": 4,
+        "no_answer": 2,
+        "recall_at_5": 0.75,
+        "mrr_at_5": 0.625,
+        "ndcg_at_5": 0.6577324383928644,
+        "no_answer_false_recall_rate": 0.0,
+        "p50_ms": 0.1682499423623085,
+        "p95_ms": 0.7854590658098459,
+        "degraded_queries": 0
+      },
+      "acceptance": {
+        "queries": 34,
+        "answerable": 28,
+        "no_answer": 6,
+        "recall_at_5": 0.6428571428571429,
+        "mrr_at_5": 0.625,
+        "ndcg_at_5": 0.629676062627552,
+        "no_answer_false_recall_rate": 0.16666666666666666,
+        "p50_ms": 0.1629579346626997,
+        "p95_ms": 0.19312510266900063,
+        "degraded_queries": 0
+      }
+    },
+    "artifacts": [
+      "hybrid-20261110-keyword-final.json",
+      "hybrid-20261110-hybrid-final.json",
+      "hybrid-20261110-hybrid-rerank-final.json",
+      "hybrid-20261110-real-smoke-blocked-final.json"
+    ]
+  },
+  "real_embedding_smoke": {
+    "status": "blocked",
+    "executed": false,
+    "reason": "missing complete LAMEMORY_EMBEDDING_MODEL/BASE_URL/DIMENSIONS/NAMESPACE",
+    "exit_code": 2,
+    "semantic_gain_claimed": false
+  },
+  "real_rerank_smoke": {
+    "status": "blocked",
+    "executed": false,
+    "reason": "embedding baseline unavailable; no complete independent rerank route",
+    "gain_claimed": false
+  },
+  "design_adjustments": [
+    "cache only 64 query vectors; final rankings and provenance are always re-read",
+    "exact query hash prevents case-sensitive input aliasing",
+    "drop changed candidates rather than retry entire retrieval"
+  ],
+  "limits": [
+    "O(N*D) exact Python scan; visible-range reconciliation/materialization scans",
+    "single process serial consumer; no multi-worker claim/lease",
+    "single vector per document and character truncation; not tokenizer limit validation",
+    "real embedding/rerank retrieval quality and model costs unverified",
+    "no old-binary schema-v4 rollback compatibility claim"
+  ]
+}

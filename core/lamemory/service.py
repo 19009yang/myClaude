@@ -3,6 +3,7 @@ import hashlib
 import json
 import time
 import uuid
+from collections import OrderedDict
 
 from .config import LaMemoryConfig
 from .context import build_context, valid_chain
@@ -20,15 +21,30 @@ def new_id(prefix):
 
 class LaMemoryService:
     """用户级长期记录共享，会话原文和临时要求隔离；不自动启动 worker。"""
-    def __init__(self, config=None, *, user_id="local-user", session_id=None, provider=None):
+    def __init__(self, config=None, *, user_id="local-user", session_id=None, provider=None,
+                 embedding_provider=None, reranker=None):
         self.config = config or LaMemoryConfig()
         self.user_id = self._identity(user_id)
         self.session_id = self._identity(session_id or new_id("session_"))
         self.provider = provider
+        self.embedding_provider = embedding_provider
+        self.reranker = reranker
+        self._owned_clients = []
+        if self.config.retrieval_mode == "hybrid" and embedding_provider is None:
+            raise ValueError("hybrid 需要显式 embedding_provider")
+        if self.config.rerank_enabled and reranker is None:
+            raise ValueError("rerank_enabled 需要 reranker")
         self.db = SQLiteStore(self.config.database_path)
         self.hierarchy = Hierarchy(self)
         self.procedural = ProceduralMemory(self)
+        from .embedding_index import EmbeddingIndex
+        try:
+            self.embedding_index = EmbeddingIndex(self, embedding_provider) if embedding_provider else None
+        except Exception:
+            self.db.close()
+            raise
         self.last_context = None
+        self._query_embedding_cache = OrderedDict()
         self._retrieval_cache = None
         self._processing = False
         with self.db.connection:
@@ -46,6 +62,29 @@ class LaMemoryService:
 
     def close(self):
         self.db.close()
+        for client in self._owned_clients:
+            client.close()
+        self._owned_clients.clear()
+
+    def _index(self):
+        if self.embedding_index is None:
+            raise ValueError("未选择 embedding 空间")
+        return self.embedding_index
+
+    def enqueue_embeddings(self):
+        return self._index().enqueue()
+
+    def process_embedding_jobs(self, max_jobs=16, *, deadline=None):
+        return self._index().process(max_jobs, deadline=deadline)
+
+    def flush_embeddings(self, timeout=30):
+        return self._index().flush(timeout)
+
+    def embedding_status(self):
+        return self._index().status() if self.embedding_index else {"space_id": None, "status": "unselected"}
+
+    def retry_embedding_job(self, job_id):
+        return self._index().retry(job_id)
 
     def __enter__(self):
         return self
@@ -288,7 +327,14 @@ class LaMemoryService:
         versions = sorted((self._item(row).to_dict() for row in lineage), key=lambda v: (v["revision"], v["created_at"]))
         return {"item": item.to_dict(), "sources": sources, "versions": versions}
 
+    def retrieve(self, query, *, kinds=("item", "summary", "experience"), filters=None, top_k=None):
+        from .retrieval_engine import retrieve
+        return retrieve(self, query, kinds=kinds, filters=filters, top_k=top_k)
+
     def search(self, query, filters=None, top_k=None):
+        return self.retrieve(query, kinds=("item",), filters=filters, top_k=top_k).items
+
+    def _keyword_search(self, query, filters=None, top_k=None):
         """在可信身份限定后执行关键词排序，默认仅返回 active 记录。"""
         self._validate_query(query)
         if not query.strip():
@@ -303,9 +349,17 @@ class LaMemoryService:
         status = filters.get("status", "active")
         if status not in {"active", "pending", "deleted", "superseded"}:
             raise ValueError("无效的状态过滤条件")
+        return [SearchHit(item, score, reason) for item, score, reason in rank(query, self._item_candidates(filters))[:limit]]
+
+    def _item_candidates(self, filters=None):
+        filters = filters or {}
+        status = filters.get("status", "active")
         rows = self.db.rows("SELECT * FROM lamemory_items WHERE user_id=? AND status=? AND ((scope_kind='user' AND scope_key=?) OR (scope_kind='session' AND scope_key=?) OR (scope_kind='project' AND scope_key=?))",
                             (self.user_id, status, self.user_id, self.session_id, self.config.project_id))
         items = []
+        source_map = {}
+        for source in self.db.rows("SELECT memory_id,message_id FROM lamemory_sources WHERE user_id=? ORDER BY message_id", (self.user_id,)):
+            source_map.setdefault(source["memory_id"], []).append(source["message_id"])
         after = normalize_time(filters.get("occurred_after"))
         before = normalize_time(filters.get("occurred_before"))
         for row in rows:
@@ -316,8 +370,8 @@ class LaMemoryService:
                 continue
             if before and (occurred is None or occurred > before):
                 continue
-            items.append(self._item(row))
-        return [SearchHit(item, score, reason) for item, score, reason in rank(query, items)[:limit]]
+            items.append(MemoryItem(**row, source_message_ids=source_map.get(row["memory_id"], [])))
+        return items
 
     def _validate_query(self, query):
         if not isinstance(query, str) or len(query) > self.config.max_content_chars:
@@ -337,7 +391,7 @@ class LaMemoryService:
 
     def search_summaries(self, query):
         self._validate_query(query)
-        return self.hierarchy.search(query)
+        return self.retrieve(query, kinds=("summary",)).summaries
 
     def capture_experience(self, turn_id=None):
         return self.procedural.capture(turn_id)
@@ -366,7 +420,7 @@ class LaMemoryService:
                                        scope_kind=old["scope_kind"], replaces=experience_id)
 
     def search_experiences(self, query, top_k=None):
-        return self.procedural.search(query, top_k)
+        return self.retrieve(query, kinds=("experience",), top_k=top_k).experiences
 
     def consolidate(self, *, max_jobs=100):
         from .consolidation import consolidate
@@ -378,14 +432,12 @@ class LaMemoryService:
         query = query or ""
         query_truncated = len(query) > self.config.max_content_chars
         query = query[:self.config.max_content_chars]
-        # Cache only retrieval within a turn. Writes and source appends invalidate it.
-        cache_key = (self.current_turn_id, query, self.db.execute("PRAGMA data_version").fetchone()[0])
-        if self._retrieval_cache is None or self._retrieval_cache[0] != cache_key:
-            self._retrieval_cache = (cache_key, self.search(query))
+        bundle = self.retrieve(query)
         view = self.db.one("SELECT * FROM lamemory_working_views WHERE user_id=? AND session_id=?", (self.user_id, self.session_id))
-        self.last_context = build_context(rows, self._retrieval_cache[1], system_prompt, self.config,
+        self.last_context = build_context(rows, bundle.items, system_prompt, self.config,
                                           budget=budget, tools=tools, working_view=view,
-                                          summaries=self.search_summaries(query), experiences=self.search_experiences(query))
+                                          summaries=bundle.summaries, experiences=bundle.experiences,
+                                          retrieval_diagnostics=bundle.diagnostics)
         self.last_context.diagnostics["retrieval_query_truncated"] = query_truncated
         return self.last_context
 

@@ -212,7 +212,7 @@ class HierarchyCases(MemoryTestCase):
         db.close()
         upgraded = SQLiteStore(path)
         self.addCleanup(upgraded.close)
-        self.assertEqual([r["version"] for r in upgraded.rows("SELECT version FROM lamemory_migrations ORDER BY version")], [1, 2, 3])
+        self.assertEqual([r["version"] for r in upgraded.rows("SELECT version FROM lamemory_migrations ORDER BY version")], [1, 2, 3, 4])
         self.assertEqual(upgraded.one("SELECT * FROM lamemory_sources")["message_id"], "msg")
         self.assertEqual(upgraded.one("SELECT * FROM lamemory_jobs")["status"], "pending")
         self.assertEqual(upgraded.execute("PRAGMA foreign_keys").fetchone()[0], 1)

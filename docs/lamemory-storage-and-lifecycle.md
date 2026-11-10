@@ -298,8 +298,8 @@ lamemory_forget(memory_id) → forget()
 1. 按 `user_id`、可见 `scope`、状态过滤，默认只取 `active`。可选过滤 `type`、`scope_kind`、`status`、`occurred_after/before`。
 2. 规范化查询与内容：英文/数字按词，中文按连续双字片段；单个中文字符也支持匹配。
 3. 在 Python 中比较候选内容的关键词集合，当前没有使用 SQLite FTS。
-4. 分数为“命中词数 / 查询词数”；完整规范化查询是内容子串时额外加 1。之后按分数降序、revision 降序、ID 排序，默认 `top_k=5`。没有向量融合或时间衰减排序。
-5. 返回 `SearchHit`，包含完整记忆、`score`、`reason`、`mode="keyword"` 及来源 ID。空查询或无关键词交集返回空列表；同义改写不保证召回。
+4. 分数为“命中词数 / 查询词数”；完整规范化查询是内容子串时额外加 1。之后按分数降序、revision 降序、ID 排序，默认 `top_k=5`。这是 keyword 默认路径；显式 hybrid 增加 cosine 与按种类 RRF，无时间衰减排序。
+5. 返回 `SearchHit`，包含完整记忆、`score`、`reason`、实际 `mode`、可选 retrieval 诊断及来源 ID。空查询或无关键词交集返回空列表；同义改写不保证召回。
 
 默认搜索不包含 pending、superseded、deleted；显式传 `status` 可查询相应状态，`inspect()` 可追溯版本。程序经验以任务类型、条件、步骤拼成文本，复用同一关键词排序；结果依据不会加入经验匹配文本。
 
@@ -307,7 +307,7 @@ lamemory_forget(memory_id) → forget()
 
 ### 6.2 build_context() 实际选择什么
 
-服务从历史中取**最近一条用户消息**作为查询，最多截取 `max_content_chars` 个字符。工具循环沿用该请求，不将工具输出作为新的事实检索查询。同轮事实检索使用缓存；新用户消息、服务写入、任务完成等操作使缓存失效，缓存键还包含 SQLite `data_version`。摘要和经验在组装时分别查询。
+服务从历史中取**最近一条用户消息**作为查询，最多截取 `max_content_chars` 个字符。工具循环沿用该请求，不将工具输出作为新的事实检索查询。三类对象使用一次 retrieve，共享一次 query embedding。实例内仅缓存 64 条查询向量，不缓存最终排名或旧来源包；每次检索重读权威候选，在所有外部调用结束后统一复核。事务内 retrieval generation 与 SQLite data_version 都可观察，覆盖同连接索引发布、反馈、遗忘和跨连接变更。
 
 [context.py](../core/lamemory/context.py) 的预算分为两层：
 
@@ -365,3 +365,9 @@ lamemory_forget(memory_id) → forget()
 本次文档核对时运行上述离线回归：**69 项全部通过**（2026-11-10）。其中 HTTP 测试需要绑定本机临时端口，沙箱限制下无法执行，获准在沙箱外重跑后通过。本次没有重新执行真实模型在线评测。
 
 已有真实模型 smoke 的结果与限制见 [验证记录](../benchmarks/lamemory/README.md) 和 [M2/M3 交付说明](lamemory-m2-m3.md)。功能闭环验证不等于摘要质量或复杂任务经验迁移收益已经得到系统评估。
+
+## 9. Hybrid 检索投影（schema v4）
+
+迁移 `004_hybrid_retrieval.sql` 增加 retrieval_state、embedding_entities、embedding_spaces、embeddings、embedding_jobs、embedding_progress 六张 `lamemory_` 表。前三类权威对象变更在原事务内更新账本和用户代次，删除保留范围 tombstone；关系与投影变化也增加用户代次。投影只在相同空间、代次、实际输入 hash 和有效状态下使用，不成为事实来源。
+
+`enqueue_embeddings/process_embedding_jobs/flush_embeddings` 管理独立持久化索引队列；provider 调用在写事务外，发布在短事务内 CAS 复核来源。failed 有限重试后保留，显式 retry；损坏或丢失投影可协调 repair。原 `flush()` 继续只处理生成任务，不隐式消费索引。配置、命令、覆盖率、降级与当前限制详见 [混合召回实施与验证](lamemory-hybrid-retrieval.md)。本节是新增实现；上文 69 项是文档核对时历史记录，本轮最终数量见新验证报告，真实向量 smoke 仍缺配置未执行。

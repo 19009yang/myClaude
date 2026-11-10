@@ -1,0 +1,26 @@
+{
+  "status": "blocked",
+  "reason": "hybrid 缺少 LAMEMORY_EMBEDDING_MODEL/BASE_URL/DIMENSIONS/NAMESPACE",
+  "mode": "hybrid-rerank",
+  "real_semantic_validation": false,
+  "fixture_sha256": "4231f77c57c559ba49e54ea90c3154302c0fbc32d8bae849bd506a808b88a106",
+  "synthetic_only": true,
+  "identity_map": {
+    "deps": "lam_fixture_deps",
+    "language": "lam_fixture_language",
+    "database": "lam_fixture_database",
+    "error": "lam_fixture_error",
+    "version": "lam_fixture_version",
+    "meeting": "lam_fixture_meeting",
+    "meeting2": "lam_fixture_meeting2",
+    "unknown1": "lam_fixture_unknown1",
+    "unknown2": "lam_fixture_unknown2",
+    "scope": "lam_fixture_scope",
+    "session": "lam_fixture_session",
+    "active": "lam_fixture_active",
+    "topic-build": "sum_fixture_topic-build",
+    "topic-release": "sum_fixture_topic-release",
+    "exp-build": "exp-build",
+    "exp-port": "exp-port"
+  }
+}
