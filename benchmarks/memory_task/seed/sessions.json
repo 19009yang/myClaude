@@ -1,0 +1,374 @@
+{
+  "schema_version": 1,
+  "user_id": "memory-benchmark-user",
+  "ordering": "数组顺序；先基础历史消息，再按顺序处理合成补充。后续明确更正优先。",
+  "sessions": [
+    {
+      "session_id": "history-001",
+      "date": "2025-03-09",
+      "kind": "history_message",
+      "messages": [
+        {
+          "message_id": "H001",
+          "role": "user",
+          "content": "你好，我是沈磊，想跟你聊聊。今年24，在北京做产品经理。"
+        },
+        {
+          "message_id": "H002",
+          "role": "user",
+          "content": "效率工具类的，公司在望京这边，做需求文档、数据分析这些。月入大概一万八，存款还在攒。"
+        },
+        {
+          "message_id": "H003",
+          "role": "user",
+          "content": "我习惯用Notion做笔记和待办，通勤在地铁上听播客。对了，我住朝阳望京阜通东大街那边。"
+        }
+      ]
+    },
+    {
+      "session_id": "history-002",
+      "date": "2025-03-10",
+      "kind": "history_message",
+      "messages": [
+        {
+          "message_id": "H004",
+          "role": "user",
+          "content": "通勤大概四十分钟，从望京到公司，正好把今天的待办在脑子里过一遍。"
+        },
+        {
+          "message_id": "H005",
+          "role": "user",
+          "content": "对了，跟你聊了几天我发现，你回复如果先给结论再展开，我会看得更舒服。以后能这样吗？还有，涉及数据时尽量给具体数字。"
+        }
+      ]
+    },
+    {
+      "session_id": "history-003",
+      "date": "2025-03-10",
+      "kind": "history_message",
+      "messages": [
+        {
+          "message_id": "H006",
+          "role": "user",
+          "content": "刚开完项目周会，跟研发对齐了下一迭代的进度。今天主要把PRD的逻辑链梳理完了，还跑了一组用户行为数据。"
+        },
+        {
+          "message_id": "H007",
+          "role": "user",
+          "content": "还行吧，我在学SQL和Python，想以后能自己独立跑数，不用老是等数据分析师。我的目标很明确，想做出一款日活过亿的产品。"
+        },
+        {
+          "message_id": "H008",
+          "role": "user",
+          "content": "还在积累阶段吧，先从把手头的效率工具做好开始，把用户痛点真正解决掉。"
+        }
+      ]
+    },
+    {
+      "session_id": "history-004",
+      "date": "2025-03-11",
+      "kind": "history_message",
+      "messages": [
+        {
+          "message_id": "H009",
+          "role": "user",
+          "content": "最近在看SQL进阶的网课，有个窗口函数的题总是搞不明白，想请教你。"
+        },
+        {
+          "message_id": "H010",
+          "role": "user",
+          "content": "就是ROW_NUMBER和RANK的区别，实际业务场景里不知道怎么选。我目标是今年能独立写复杂查询，不再依赖分析师。"
+        }
+      ]
+    },
+    {
+      "session_id": "history-005",
+      "date": "2025-03-12",
+      "kind": "history_message",
+      "messages": [
+        {
+          "message_id": "H011",
+          "role": "user",
+          "content": "有，我们的新用户流失率有点高。我想在下一版PRD里加一个引导式的任务清单，让用户快速感知到核心功能的价值。"
+        },
+        {
+          "message_id": "H012",
+          "role": "user",
+          "content": "得跟研发负责人张伟博弈一下。他总说我需求提得太密，但为了用户体验，该争还得争。最终目标是把产品做到日活过亿，现在每个细节都是积累。"
+        }
+      ]
+    },
+    {
+      "session_id": "history-006",
+      "date": "2025-03-13",
+      "kind": "history_message",
+      "messages": [
+        {
+          "message_id": "H013",
+          "role": "user",
+          "content": "今天脖子又僵了，早上一转头就咔咔响。近视加上颈椎劳损，感觉身体在抗议我这工作强度。"
+        },
+        {
+          "message_id": "H014",
+          "role": "user",
+          "content": "去年查过，说是轻度劳损，医生建议多活动。我每周去做一次理疗，周二刚做完，效果还行。"
+        }
+      ]
+    },
+    {
+      "session_id": "history-007",
+      "date": "2025-03-13",
+      "kind": "history_message",
+      "messages": [
+        {
+          "message_id": "H015",
+          "role": "user",
+          "content": "午休时把上周的账单理了一下，存款还是三万出头，得想办法多攒点。"
+        },
+        {
+          "message_id": "H016",
+          "role": "user",
+          "content": "每周日复盘一次，用记账软件分类。我消费挺理性的，京东Plus和盒马X会员都是为了凑单省钱。"
+        },
+        {
+          "message_id": "H017",
+          "role": "user",
+          "content": "有，目标五年内攒到三十万，建立一套适合自己的投资体系。现在主要还是买稳健理财，不敢乱投。"
+        }
+      ]
+    },
+    {
+      "session_id": "history-008",
+      "date": "2025-03-15",
+      "kind": "history_message",
+      "messages": [
+        {
+          "message_id": "H018",
+          "role": "user",
+          "content": "晚上跟表哥李明在望京附近吃火锅，聊了不少行业动态。"
+        },
+        {
+          "message_id": "H019",
+          "role": "user",
+          "content": "对，后端开发工程师，在海淀那边。我们每月会聚一次，交流下技术趋势和职业方向。"
+        }
+      ]
+    },
+    {
+      "session_id": "history-009",
+      "date": "2025-03-16",
+      "kind": "history_message",
+      "messages": [
+        {
+          "message_id": "H020",
+          "role": "user",
+          "content": "产品类、商业类、心理学都会看。最近也在补设计心理学的课，想提升跟UI设计师的沟通效率。"
+        },
+        {
+          "message_id": "H021",
+          "role": "user",
+          "content": "重要的章节精读，做思维导图和笔记。我习惯把书里的理论模型拆解出来，想想能不能用到产品设计上。"
+        }
+      ]
+    },
+    {
+      "session_id": "history-010",
+      "date": "2025-03-17",
+      "kind": "history_message",
+      "messages": [
+        {
+          "message_id": "H022",
+          "role": "user",
+          "content": "Jira跟进度，Notion写文档和笔记，Axure画原型。早上还会列一个今日待办，按优先级排序。"
+        },
+        {
+          "message_id": "H023",
+          "role": "user",
+          "content": "下午有个跨部门沟通会，要跟UI确认设计稿交付时间。对了，我十点才到公司，弹性工作制。"
+        }
+      ]
+    },
+    {
+      "session_id": "history-011",
+      "date": "2025-03-18",
+      "kind": "history_message",
+      "messages": [
+        {
+          "message_id": "H024",
+          "role": "user",
+          "content": "想请教你一个职业规划的问题。我现在是P5产品经理，想三年内升到P6，你觉得最重要的是补齐哪块能力？"
+        },
+        {
+          "message_id": "H025",
+          "role": "user",
+          "content": "PRD和竞品分析我比较自信，但数据分析还在学习中。SQL和Python正在啃，目标是能独立跑数、输出报告。"
+        },
+        {
+          "message_id": "H026",
+          "role": "user",
+          "content": "顺便复盘下目标进度：SQL学习目前20%，比原计划慢了一点，主要是加班太多。晋升P6还在推进，Q2希望能独立带一个推荐模块的全链路。"
+        }
+      ]
+    },
+    {
+      "session_id": "history-012",
+      "date": "2025-03-19",
+      "kind": "history_message",
+      "messages": [
+        {
+          "message_id": "H027",
+          "role": "user",
+          "content": "我发现自己写PRD有个固定仪式：必须先用Axure画完原型，再用XMind梳理逻辑链，最后才动笔。少了哪一步都觉得不踏实。"
+        },
+        {
+          "message_id": "H028",
+          "role": "user",
+          "content": "还有，我用Jira看板时有个怪癖：必须把P0需求标红，P1标黄，P2标灰，一眼就能看出优先级。研发团队一开始不适应，现在也跟着我这套颜色分类用了。"
+        },
+        {
+          "message_id": "H029",
+          "role": "user",
+          "content": "基本固定了。读书笔记用微信读书+Notion，项目管理用Jira，原型用Axure，数据分析用Excel和Python，通勤听播客用喜马拉雅和苹果播客。换工具对我来说成本很高。"
+        },
+        {
+          "message_id": "H030",
+          "role": "user",
+          "content": "对了，我购物也有固定流程：先看核心参数→翻最新差评→对比性价比→最后才下单。京东Plus和盒马X会员就是为了省运费和比价方便。"
+        }
+      ]
+    },
+    {
+      "session_id": "history-013",
+      "date": "2025-03-19",
+      "kind": "history_message",
+      "messages": [
+        {
+          "message_id": "H031",
+          "role": "user",
+          "content": "帮我记一下接下来的待办，按优先级排：1）明天下午3点前提交Q2产品规划初稿；2）周五晚上社群答疑不能忘；3）下周二上午9:30体检；4）本周末完成SQL第五章作业；5）4月初给爸妈买颈椎按摩仪寄回石家庄。"
+        },
+        {
+          "message_id": "H032",
+          "role": "user",
+          "content": "产品规划是最紧急的，体检和社群是固定日程不能改。SQL作业可以稍微延后到周日晚，买按摩仪不着急，4月10号前搞定就行。"
+        },
+        {
+          "message_id": "H033",
+          "role": "user",
+          "content": "晋升P6还在推进，Q2要争取独立带模块。数据分析能力目前20%，计划Q3能独立跑复杂查询。理财本金还是3万，今年目标到8万，需要控制下非必要支出。"
+        }
+      ]
+    },
+    {
+      "session_id": "history-014",
+      "date": "2025-03-19",
+      "kind": "history_message",
+      "messages": [
+        {
+          "message_id": "H034",
+          "role": "user",
+          "content": "第一，回答我问题时先给结论再给理由，别铺垫太长；第二，涉及数据或事实时，尽量给出具体数字，别用'很多'、'大概'这种模糊词；第三，如果我提到颈椎、眼睛或健康相关话题，主动提醒我不要久坐，建议我起来活动。"
+        },
+        {
+          "message_id": "H035",
+          "role": "user",
+          "content": "有。我喜欢用Notion做笔记，如果你给的方法论建议，直接给我可套用的框架或模板思路，我会自己整理进Notion。不要长篇大论的解释。"
+        }
+      ]
+    },
+    {
+      "session_id": "history-015",
+      "date": "2025-03-21",
+      "kind": "history_message",
+      "messages": [
+        {
+          "message_id": "H036",
+          "role": "user",
+          "content": "今天早上又是八点闹钟响了三次才起，昨晚复盘工作到一点半。弹性工作制的好处就是不用打卡，但坏处是作息越来越不规律。"
+        },
+        {
+          "message_id": "H037",
+          "role": "user",
+          "content": "差不多吧，晚上要么加班，要么看书刷手机，回过神来就一点了。早餐经常跳过，到公司先冲咖啡，不然脑子启动不了。晚餐更惨，经常拖到九点多才吃。"
+        }
+      ]
+    },
+    {
+      "session_id": "history-016",
+      "date": "2025-03-24",
+      "kind": "history_message",
+      "messages": [
+        {
+          "message_id": "H038",
+          "role": "user",
+          "content": "中午把本周待办列了一下：V2.0原型图要出两套备选方案，周三组织技术评审，SQL第五章多表连接练习要做完，竞品报告素材要整理。"
+        },
+        {
+          "message_id": "H039",
+          "role": "user",
+          "content": "Inner Join和Left Join的业务场景分不清，今晚打算专项训练并整理笔记。减少对数据分析师的依赖是核心目标。"
+        }
+      ]
+    },
+    {
+      "session_id": "supplement-001",
+      "date": "2025-03-25",
+      "kind": "synthetic_supplement",
+      "messages": [
+        {
+          "message_id": "S01",
+          "role": "user",
+          "content": "我补全一下家人的信息：我爸叫沈建国，生日是1972年3月20日；我妈叫王芳，生日是1974年8月5日，都住在石家庄。以后两人的生日都按每年重复，提前14天提醒我准备礼物，备注京东购买。给爸买颈椎按摩仪还是待办，计划4月初寄回去，不要误写成已经买好了。"
+        }
+      ]
+    },
+    {
+      "session_id": "supplement-002",
+      "date": "2025-03-25",
+      "kind": "synthetic_supplement",
+      "messages": [
+        {
+          "message_id": "S02",
+          "role": "user",
+          "content": "把之后的固定日程以这条为准：平日10:00到18:00工作，单程地铁通勤40分钟。每周二19:00到20:00做颈椎理疗，提前1小时提醒；诊所地点还没定，先写待确认。周二晚上只安排理疗，健身放周五晚上，周三晚上留给产品社群，周日20:00到21:00财务复盘，不要排学习。我一般8点起、凌晨1点睡，深度学习不要安排在早上。"
+        }
+      ]
+    },
+    {
+      "session_id": "supplement-003",
+      "date": "2025-03-25",
+      "kind": "synthetic_supplement",
+      "messages": [
+        {
+          "message_id": "S03",
+          "role": "user",
+          "content": "补充现在的学习约束：SQL进阶完成约20%，当前第5章是多表连接，重点练INNER JOIN和LEFT JOIN；窗口函数也是之后要补的内容，但不要把它当成第5章。目标是在7月1日前、也就是Q3开始前能独立跑数，用于推荐模块的数据分析。同时继续学Python数据分析和设计心理学。每次专注学习最多90分钟，要起来活动；每周总共最多安排6小时学习，用Notion记笔记。周二理疗、周三社群、周五健身和周日20:00到21:00复盘都避开。"
+        }
+      ]
+    },
+    {
+      "session_id": "supplement-004",
+      "date": "2025-03-25",
+      "kind": "synthetic_supplement",
+      "messages": [
+        {
+          "message_id": "S04",
+          "role": "user",
+          "content": "把我的项目背景补充完整：我在创想科技做P5产品经理，负责V2.0效率工具，Q2争取独立带推荐模块全链路，6月底前完成一个功能模块。当前原型有两套备选，推荐模块面临研发排期紧、新用户引导和数据准备的依赖。风险沿用团队Jira的P0红、P1黄、P2灰；整理到Notion数据库看板，字段要有风险项、负责人、状态、到期日。具体负责人和截止日尚未分配，写角色加待确认即可，不要编造承诺。"
+        }
+      ]
+    },
+    {
+      "session_id": "supplement-005",
+      "date": "2025-03-25",
+      "kind": "synthetic_supplement",
+      "messages": [
+        {
+          "message_id": "S05",
+          "role": "user",
+          "content": "确认财务复盘的口径：截至3月25日，我的存款按30000元作为基准，2025年底目标80000元，五年目标300000元。周日做复盘，模板用Notion数据库属性和表格表示，包含本周与上周对比、异常支出、本周反思和下周调整。分类记得覆盖京东Plus和盒马X会员、外卖和咖啡、与表哥聚餐、通勤。没有实际账单金额的项目留空或标待填写，别帮我编消费记录。"
+        }
+      ]
+    }
+  ]
+}

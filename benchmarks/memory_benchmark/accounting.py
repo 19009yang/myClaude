@@ -1,0 +1,128 @@
+"""逐次调用记账；无 usage 和调用失败均不冒充零成本。"""
+from collections import defaultdict
+import json
+import math
+import time
+
+from core.lamemory.context import estimate_tokens
+from .settings import digest, load_json
+
+
+class CostLimit(RuntimeError):
+    pass
+
+
+class Prices:
+    def __init__(self, path):
+        self.data = load_json(path)
+        self.currency = self.data["currency"]
+        for role in ("agent", "memory", "judge"):
+            row = self.data[role]
+            for name in ("input", "output", "cache_read", "cache_write"):
+                value = row.get(name)
+                if not isinstance(value, (int, float)) or isinstance(value, bool) or not math.isfinite(value) or value < 0:
+                    raise ValueError(f"{role}.{name}: 需要非负有限单价 / 1M tokens")
+
+    def check_models(self, configs):
+        for role, cfg in configs.items():
+            row = self.data[role]
+            if (row["provider"], row["model"]) != (cfg.provider, cfg.model):
+                raise ValueError(f"{role} 定价与实际模型不匹配，请更新价格文件")
+
+    def cost(self, role, tokens):
+        row = self.data[role]
+        return sum(tokens.get(k, 0) * row[k] / 1_000_000
+                   for k in ("input", "output", "cache_read", "cache_write"))
+
+
+def normalized_usage(usage):
+    if not isinstance(usage, dict) or not any(usage.get(k, 0) for k in ("prompt_tokens", "completion_tokens")):
+        return None
+    for key in ("prompt_tokens", "completion_tokens", "cache_read_tokens", "cache_write_tokens"):
+        v = usage.get(key, 0)
+        if not isinstance(v, int) or isinstance(v, bool) or v < 0:
+            raise ValueError("模型 usage 包含非法 token 数")
+    read, write = usage.get("cache_read_tokens", 0), usage.get("cache_write_tokens", 0)
+    if read + write > usage.get("prompt_tokens", 0):
+        raise ValueError("缓存 token 超过输入 token")
+    return {"input": usage.get("prompt_tokens", 0) - read - write,
+            "output": usage.get("completion_tokens", 0), "cache_read": read, "cache_write": write}
+
+
+class Ledger:
+    def __init__(self, path, prices, *, max_cost=None, input_budget=None):
+        self.path, self.prices, self.max_cost = path, prices, max_cost
+        self.input_budget = input_budget
+        self.cost_exhausted = False
+        self.events = []
+        self.tags = {}
+
+    def total(self):
+        return sum(e["cost"] for e in self.events)
+
+    def wrap(self, chat, role):
+        def call(messages, tools=None, **kwargs):
+            purpose = role
+            if role == "memory":
+                first = str(messages[0].get("content", ""))
+                last = str(messages[-1].get("content", ""))
+                purpose = "summary" if (messages[0].get("role") == "system" and
+                                          ("跨会话摘要" in first or "将历史对话概括为" in first)
+                                          or "请压缩以上对话历史" in last) else "extraction"
+            prompt_estimate = estimate_tokens(messages) + (estimate_tokens(tools) if tools else 0)
+            if self.input_budget is not None and prompt_estimate > self.input_budget:
+                raise ValueError("模型请求超过共同输入预算；未发送")
+            max_output = kwargs.get("max_tokens") or chat.config.max_tokens
+            reservation = self.prices.cost(role, {"input": prompt_estimate, "output": max_output})
+            if self.max_cost is not None and self.total() + reservation > self.max_cost:
+                self.cost_exhausted = True
+                raise CostLimit("达到费用预算；新请求未发送")
+            start = time.monotonic()
+            event = {**self.tags, "role": role, "purpose": purpose,
+                     "request_sha256": digest({"messages": messages, "tools": tools}),
+                     "model": chat.config.model, "provider": chat.config.provider}
+            try:
+                response = chat(messages=messages, tools=tools, **kwargs)
+                event["raw_usage"] = response.get("usage", {})
+                tokens = normalized_usage(event["raw_usage"])
+                event["status"] = "complete"
+                if tokens is None:
+                    tokens = {"input": prompt_estimate, "output": max_output}
+                    event["usage_mode"] = "reserved_estimate_missing_usage"
+                else:
+                    event["usage_mode"] = "provider_usage"
+                return response
+            except BaseException as exc:
+                event["status"] = "error"
+                event["error_type"] = type(exc).__name__
+                event["usage_mode"] = "reserved_estimate_failed_request"
+                tokens = {"input": prompt_estimate, "output": max_output}
+                raise
+            finally:
+                event["tokens"] = tokens
+                event["cost"] = self.prices.cost(role, tokens)
+                event["elapsed_seconds"] = time.monotonic() - start
+                self.events.append(event)
+                with self.path.open("a", encoding="utf-8") as f:
+                    f.write(json.dumps(event, ensure_ascii=False, allow_nan=False) + "\n")
+        return call
+
+    def summary(self):
+        buckets = defaultdict(lambda: {"calls": 0, "input": 0, "output": 0, "cache_read": 0,
+                                       "cache_write": 0, "cost": 0, "estimated_calls": 0, "error_calls": 0})
+        for event in self.events:
+            key = "/".join(str(event.get(k, "-")) for k in ("stage", "group", "purpose"))
+            bucket = buckets[key]
+            bucket["calls"] += 1
+            bucket["cost"] += event["cost"]
+            bucket["estimated_calls"] += event["usage_mode"] != "provider_usage"
+            bucket["error_calls"] += event["status"] == "error"
+            for k, v in event["tokens"].items():
+                bucket[k] += v
+        inputs = sum(e["tokens"].get(k, 0) for e in self.events for k in ("input", "cache_read", "cache_write"))
+        outputs = sum(e["tokens"].get("output", 0) for e in self.events)
+        return {"currency": self.prices.currency, "cost": self.total(), "calls": len(self.events),
+                "input_tokens": inputs, "output_tokens": outputs, "total_tokens": inputs + outputs,
+                "estimated_calls": sum(e["usage_mode"] != "provider_usage" for e in self.events),
+                "buckets": dict(buckets),
+                "billing_note": "费用按配置快照核算；失败/缺 usage 的调用使用输入估算及输出上限预留，非供应商账单。"}

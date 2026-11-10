@@ -1,0 +1,65 @@
+{
+  "task_id": "04_project_risk_kanban",
+  "target_score": 70,
+  "max_score": 100,
+  "criteria": [
+    {
+      "item_id": "project-scoped",
+      "criterion": "风险/依赖是否针对 V2.0 效率工具项目（特别是推荐模块的研发依赖），而非通用风险列表",
+      "max_score": 25,
+      "dimension": "memory",
+      "source_message_ids": [
+        "S04",
+        "H026"
+      ],
+      "public_requirement": "tasks/04_project_risk_kanban/prompt.md"
+    },
+    {
+      "item_id": "priority-coded",
+      "criterion": "是否使用 P0红/P1黄/P2灰 三档颜色标记风险等级，与团队 Jira 体系一致",
+      "max_score": 20,
+      "dimension": "memory",
+      "source_message_ids": [
+        "H028",
+        "S04"
+      ],
+      "public_requirement": "tasks/04_project_risk_kanban/prompt.md"
+    },
+    {
+      "item_id": "dependency-mapped",
+      "criterion": "识别研发排期、设计原型、接口及数据准备等依赖关系，可提出候选风险和缓解建议；建议必须标明性质，不得编造已发生事故、精确排期或承诺。",
+      "max_score": 20,
+      "dimension": "mixed",
+      "source_message_ids": [
+        "S04",
+        "H011",
+        "H012"
+      ],
+      "public_requirement": "tasks/04_project_risk_kanban/prompt.md"
+    },
+    {
+      "item_id": "kanban-structure",
+      "criterion": "用Markdown说明Notion数据库属性及按P0/P1/P2分组的看板，字段含风险项、负责人、状态、到期日；允许负责人用角色占位和日期待确认。",
+      "max_score": 20,
+      "dimension": "mixed",
+      "source_message_ids": [
+        "S04"
+      ],
+      "public_requirement": "tasks/04_project_risk_kanban/prompt.md"
+    },
+    {
+      "item_id": "format",
+      "criterion": "project_risk_kanban.md存在且结构清楚；不要求Notion账号、真实同步或导入文件。",
+      "max_score": 15,
+      "dimension": "general",
+      "source_message_ids": [],
+      "public_requirement": "tasks/04_project_risk_kanban/prompt.md"
+    }
+  ],
+  "grading_rules": [
+    "仅依据产物、执行轨迹和本评分表逐项评分；不得因模型组别而改变标准。",
+    "memory/mixed项的历史依据见source_message_ids；不得对种子历史中没有的个人事实扣分。",
+    "未知事实标待确认是正确行为；但已提供且要求召回的事实缺失按对应项评分。",
+    "先评首轮产物，再独立评最终产物；不要将评分表或私有证据交给任务Agent。"
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "task_id": "08_buggy_code_review",
+  "target_score": 85,
+  "max_score": 100,
+  "criteria": [
+    {
+      "item_id": "bugs-identified",
+      "criterion": "评审报告必须明确指出 buggy_module.py 中**全部 4 个**真实缺陷：\n(a) Counter.increment 在多线程下没有加锁，count 会丢更新（race condition）；\n(b) get_top_n 切片用了 `sorted_items[:n+1]`，会多返回一个元素（off-by-one）；\n(c) parse_user_input 没有处理 `age` 缺失或非整数的情况（缺少输入校验，会抛 KeyError/ValueError）；\n(d) divide_safe 用了 bare `except: pass`，吞掉所有异常且静默返回 None（错误处理缺陷）。\n每漏 1 个缺陷扣 5 分。\n",
+      "max_score": 20,
+      "dimension": "general",
+      "source_message_ids": [],
+      "public_requirement": "tasks/08_buggy_code_review/prompt.md"
+    },
+    {
+      "item_id": "bugs-fixed",
+      "criterion": "buggy_module_fixed.py修复4类问题：Counter.increment用锁保护共享写入；get_top_n返回前n项且n=0为空；parse_user_input合法整数/整数字符串返回两倍，缺键或不能转整数抛ValueError；divide_safe正常除法返回商，除零抛ZeroDivisionError、非数值抛TypeError。每类10分。",
+      "max_score": 20,
+      "dimension": "general",
+      "source_message_ids": [],
+      "public_requirement": "tasks/08_buggy_code_review/prompt.md"
+    },
+    {
+      "item_id": "tests",
+      "criterion": "产出 test_buggy_module.py，使用 pytest 或 unittest，至少覆盖 3 个独立的 bug 场景：\n多线程下 Counter 的最终 count 是否等于线程数；get_top_n 在 n=3、列表长 5 时返回长度=3；\nparse_user_input 在缺 'age' 或非数字时抛出预期异常；divide_safe 在除 0 时的行为符合修复后的契约。\n覆盖 4 个全得满分；3 个 16 分；2 个 10 分；1 个 5 分；0 个 0 分。\n",
+      "max_score": 20,
+      "dimension": "general",
+      "source_message_ids": [],
+      "public_requirement": "tasks/08_buggy_code_review/prompt.md"
+    },
+    {
+      "item_id": "report-structure",
+      "criterion": "产出 review_report.md，结构清晰：含「问题概述/逐条缺陷分析/修复说明/测试说明」之类的分节标题，\n每个缺陷的描述都有「位置 + 现象 + 影响」三要素。结构混乱或缺少分节扣分。\n",
+      "max_score": 15,
+      "dimension": "general",
+      "source_message_ids": [],
+      "public_requirement": "tasks/08_buggy_code_review/prompt.md"
+    },
+    {
+      "item_id": "code-quality",
+      "criterion": "buggy_module_fixed.py 具备工程素质：函数有类型注解、关键函数有 docstring、错误处理具体（不再有 bare except）、\n命名清晰、没有引入新的 lint 级问题（未使用变量、过深嵌套等）。\n",
+      "max_score": 15,
+      "dimension": "general",
+      "source_message_ids": [],
+      "public_requirement": "tasks/08_buggy_code_review/prompt.md"
+    },
+    {
+      "item_id": "artifacts-complete",
+      "criterion": "buggy_module_fixed.py、test_buggy_module.py、review_report.md存在且非空；保留原始buggy_module.py字节不变；python -m unittest discover -s . -p test_buggy_module.py可运行通过。",
+      "max_score": 10,
+      "dimension": "general",
+      "source_message_ids": [],
+      "public_requirement": "tasks/08_buggy_code_review/prompt.md"
+    }
+  ],
+  "grading_rules": [
+    "仅依据产物、执行轨迹和本评分表逐项评分；不得因模型组别而改变标准。",
+    "memory/mixed项的历史依据见source_message_ids；不得对种子历史中没有的个人事实扣分。",
+    "未知事实标待确认是正确行为；但已提供且要求召回的事实缺失按对应项评分。",
+    "先评首轮产物，再独立评最终产物；不要将评分表或私有证据交给任务Agent。"
+  ]
+}

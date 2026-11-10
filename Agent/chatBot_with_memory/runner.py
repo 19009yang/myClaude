@@ -8,18 +8,24 @@ from tools.executor import ToolExecutor
 
 
 class ChatRunner:
-    def __init__(self, memory, *, chat=call_llm, tools=None, system_prompt="你是一个具备长期记忆的助手。"):
+    def __init__(self, memory, *, chat=call_llm, tools=None, system_prompt="你是一个具备长期记忆的助手。",
+                 memory_tools=True):
         self.memory = memory
         self.chat = chat
         self.system_prompt = system_prompt
-        self.executor = ToolExecutor(tools=[*(tools or []), *get_memory_tools(memory)], interactive=False)
+        self.executor = ToolExecutor(tools=[*(tools or []), *(get_memory_tools(memory) if memory_tools else [])],
+                                     interactive=False)
         self.tools = [tool.to_llm_format() for tool in self.executor.tools]
         self.usage_events = []
 
-    def send(self, content, *, max_rounds=8, timeout=60, on_event=None, cancelled=None):
+    def send(self, content, *, max_rounds=8, timeout=60, on_event=None, cancelled=None,
+             max_tool_calls=None):
         if max_rounds < 1 or timeout <= 0:
             raise ValueError("轮数和超时必须为正数")
+        if max_tool_calls is not None and max_tool_calls < 1:
+            raise ValueError("工具调用上限必须为正数")
         deadline = time.monotonic() + timeout
+        tool_count = 0
         emit = on_event or (lambda event, data: None)
 
         def check_cancelled():
@@ -40,6 +46,8 @@ class ChatRunner:
             response = self.chat(messages=context.messages, tools=self.tools, timeout=remaining,
                                   max_tokens=self.memory.config.reserved_output or None)
             self.usage_events.append({"purpose": "agent", "usage": response.get("usage", {})})
+            if time.monotonic() > deadline:
+                raise TimeoutError("模型响应超过聊天时间上限")
             try:
                 self.memory.append_message(response)
                 if not response.get("tool_calls"):
@@ -53,6 +61,9 @@ class ChatRunner:
                 return {"message": response, "errors": [], "memory_diagnostics": context.diagnostics}
             calls = self.executor.parse_tool_calls(response)
             for call in calls:
+                tool_count += 1
+                if max_tool_calls is not None and tool_count > max_tool_calls:
+                    raise RuntimeError("工具调用达到次数上限；原始消息仍已留档")
                 check_cancelled()
                 if time.monotonic() >= deadline:
                     raise TimeoutError("执行工具前已达到聊天时间上限")

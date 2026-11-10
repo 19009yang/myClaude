@@ -1,0 +1,74 @@
+{
+  "task_id": "02_therapy_schedule",
+  "target_score": 70,
+  "max_score": 100,
+  "criteria": [
+    {
+      "item_id": "correct-day",
+      "criterion": "日历事件设在周二。设在其他日期扣 20 分。\n",
+      "max_score": 20,
+      "dimension": "memory",
+      "source_message_ids": [
+        "S02"
+      ],
+      "public_requirement": "tasks/02_therapy_schedule/prompt.md"
+    },
+    {
+      "item_id": "evening-time",
+      "criterion": "理疗固定19:00至20:00，符合18:00下班和40分钟通勤。时间有误不得满分。",
+      "max_score": 20,
+      "dimension": "memory",
+      "source_message_ids": [
+        "S02"
+      ],
+      "public_requirement": "tasks/02_therapy_schedule/prompt.md"
+    },
+    {
+      "item_id": "recurring",
+      "criterion": "设置为每周重复事件，而不是单次。未设重复扣 15 分。\n",
+      "max_score": 15,
+      "dimension": "memory",
+      "source_message_ids": [
+        "S02"
+      ],
+      "public_requirement": "tasks/02_therapy_schedule/prompt.md"
+    },
+    {
+      "item_id": "reminder",
+      "criterion": "设置提前1小时提醒，即18:00。无提醒0分，时刻错误不得满分。",
+      "max_score": 15,
+      "dimension": "memory",
+      "source_message_ids": [
+        "S02"
+      ],
+      "public_requirement": "tasks/02_therapy_schedule/prompt.md"
+    },
+    {
+      "item_id": "event-details",
+      "criterion": "therapy_schedule.md包含颈椎理疗标题、下一次2025-04-01日期、19:00至20:00时间段和地点待确认备注。不要虚构诊所。",
+      "max_score": 15,
+      "dimension": "mixed",
+      "source_message_ids": [
+        "S02"
+      ],
+      "public_requirement": "tasks/02_therapy_schedule/prompt.md"
+    },
+    {
+      "item_id": "commute-buffer",
+      "criterion": "明确安排至少40分钟通勤缓冲，例如18:00至18:40；不能把缓冲缩成30分钟。",
+      "max_score": 15,
+      "dimension": "memory",
+      "source_message_ids": [
+        "S02",
+        "H004"
+      ],
+      "public_requirement": "tasks/02_therapy_schedule/prompt.md"
+    }
+  ],
+  "grading_rules": [
+    "仅依据产物、执行轨迹和本评分表逐项评分；不得因模型组别而改变标准。",
+    "memory/mixed项的历史依据见source_message_ids；不得对种子历史中没有的个人事实扣分。",
+    "未知事实标待确认是正确行为；但已提供且要求召回的事实缺失按对应项评分。",
+    "先评首轮产物，再独立评最终产物；不要将评分表或私有证据交给任务Agent。"
+  ]
+}

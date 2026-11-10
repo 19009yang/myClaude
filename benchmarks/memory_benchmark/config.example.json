@@ -1,0 +1,19 @@
+{
+  "groups": ["none", "legacy", "lamemory"],
+  "repeats": 3,
+  "context_window": 32768,
+  "max_output_tokens": 4096,
+  "memory_token_budget": 2048,
+  "max_model_calls": 8,
+  "max_tool_calls": 24,
+  "memory_timeout": 60,
+  "judge_timeout": 120,
+  "job_attempts": 3,
+  "hierarchy": true,
+  "sandbox": "seatbelt",
+  "docker_image": "python:3.13-slim",
+  "expected_calls_per_round": 3,
+  "expected_output_tokens": 900,
+  "expected_artifact_tokens": 2400,
+  "seed_memory_tokens_per_message": 80
+}

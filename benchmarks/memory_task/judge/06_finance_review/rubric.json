@@ -1,0 +1,75 @@
+{
+  "task_id": "06_finance_review",
+  "target_score": 70,
+  "max_score": 100,
+  "criteria": [
+    {
+      "item_id": "expense-sections",
+      "criterion": "模板包含至少 4 个支出分类（如固定支出、餐饮、社交、通勤、购物等），\n而不是只有\"收入\"和\"支出\"两栏。分类少于 3 个扣 15 分。\n",
+      "max_score": 20,
+      "dimension": "general",
+      "source_message_ids": [],
+      "public_requirement": "tasks/06_finance_review/prompt.md"
+    },
+    {
+      "item_id": "savings-tracker",
+      "criterion": "以30000元基准和2025年底80000元目标展示进度37.5%、缺口50000元，给出可更新的追踪字段或公式；不要求预测投资收益。",
+      "max_score": 20,
+      "dimension": "memory",
+      "source_message_ids": [
+        "H033",
+        "S05"
+      ],
+      "public_requirement": "tasks/06_finance_review/prompt.md"
+    },
+    {
+      "item_id": "weekly-compare",
+      "criterion": "提供本周/上周数值及差额或环比字段；没有实际数值时留空或写公式，不虚构账单。",
+      "max_score": 15,
+      "dimension": "mixed",
+      "source_message_ids": [
+        "S05"
+      ],
+      "public_requirement": "tasks/06_finance_review/prompt.md"
+    },
+    {
+      "item_id": "notion-format",
+      "criterion": "模板格式适配 Notion（表格/数据库结构/属性字段），而非纯文本流水账。\n格式不适配 Notion 扣 15 分。\n",
+      "max_score": 15,
+      "dimension": "memory",
+      "source_message_ids": [
+        "H035",
+        "S05"
+      ],
+      "public_requirement": "tasks/06_finance_review/prompt.md"
+    },
+    {
+      "item_id": "actionable-fields",
+      "criterion": "模板包含可操作字段：本周反思、下周调整计划、异常支出标注。\n缺少可操作字段扣 10 分。\n",
+      "max_score": 15,
+      "dimension": "mixed",
+      "source_message_ids": [
+        "S05"
+      ],
+      "public_requirement": "tasks/06_finance_review/prompt.md"
+    },
+    {
+      "item_id": "realistic-categories",
+      "criterion": "分类至少覆盖京东Plus/盒马X会员、外卖/咖啡、与表哥聚餐、通勤；可增补可选分类，但不得虚构已发生房贷、养车等支出。",
+      "max_score": 15,
+      "dimension": "mixed",
+      "source_message_ids": [
+        "S05",
+        "H016",
+        "H018"
+      ],
+      "public_requirement": "tasks/06_finance_review/prompt.md"
+    }
+  ],
+  "grading_rules": [
+    "仅依据产物、执行轨迹和本评分表逐项评分；不得因模型组别而改变标准。",
+    "memory/mixed项的历史依据见source_message_ids；不得对种子历史中没有的个人事实扣分。",
+    "未知事实标待确认是正确行为；但已提供且要求召回的事实缺失按对应项评分。",
+    "先评首轮产物，再独立评最终产物；不要将评分表或私有证据交给任务Agent。"
+  ]
+}

@@ -1,0 +1,89 @@
+{
+  "task_id": "03_sql_study_blocks",
+  "target_score": 70,
+  "max_score": 100,
+  "criteria": [
+    {
+      "item_id": "evening-blocks",
+      "criterion": "深度学习放晚间，不安排早晨；全部学习合计每周不超过6小时。不要求每天学习。",
+      "max_score": 20,
+      "dimension": "memory",
+      "source_message_ids": [
+        "S02",
+        "S03"
+      ],
+      "public_requirement": "tasks/03_sql_study_blocks/prompt.md"
+    },
+    {
+      "item_id": "avoid-tuesday",
+      "criterion": "不安排在周二晚上（用户有颈椎理疗）。\n安排在周二晚该项 0 分。\n",
+      "max_score": 15,
+      "dimension": "memory",
+      "source_message_ids": [
+        "S02",
+        "S03"
+      ],
+      "public_requirement": "tasks/03_sql_study_blocks/prompt.md"
+    },
+    {
+      "item_id": "avoid-sunday-evening",
+      "criterion": "不占用周日20:00至21:00财务复盘。周日其他晚间时段不应仅因是周日而扣分。",
+      "max_score": 10,
+      "dimension": "memory",
+      "source_message_ids": [
+        "S02",
+        "S03"
+      ],
+      "public_requirement": "tasks/03_sql_study_blocks/prompt.md"
+    },
+    {
+      "item_id": "session-duration",
+      "criterion": "每个专注学习块最多90分钟，并安排休息活动；超过90分钟不得满分。",
+      "max_score": 15,
+      "dimension": "memory",
+      "source_message_ids": [
+        "S03"
+      ],
+      "public_requirement": "tasks/03_sql_study_blocks/prompt.md"
+    },
+    {
+      "item_id": "chapter5-context",
+      "criterion": "内容对应SQL第5章多表连接（INNER JOIN、LEFT JOIN），体现当前20%进度以及7月1日前独立跑数的目标；不得将窗口函数当成当前第5章。",
+      "max_score": 15,
+      "dimension": "memory",
+      "source_message_ids": [
+        "S03",
+        "H038",
+        "H039"
+      ],
+      "public_requirement": "tasks/03_sql_study_blocks/prompt.md"
+    },
+    {
+      "item_id": "notion-notes",
+      "criterion": "提到使用Notion记录学习笔记，符合用户的工具偏好。\n未提及Notion扣 5 分。\n",
+      "max_score": 10,
+      "dimension": "memory",
+      "source_message_ids": [
+        "H003",
+        "S03"
+      ],
+      "public_requirement": "tasks/03_sql_study_blocks/prompt.md"
+    },
+    {
+      "item_id": "specific-schedule",
+      "criterion": "在2025-03-31至2025-04-06至少排两次具体日期、时段和内容，并说明每周重复；避开周二晚理疗、周三晚社群、周五晚健身及周日20:00至21:00复盘。",
+      "max_score": 15,
+      "dimension": "mixed",
+      "source_message_ids": [
+        "S03"
+      ],
+      "public_requirement": "tasks/03_sql_study_blocks/prompt.md"
+    }
+  ],
+  "grading_rules": [
+    "仅依据产物、执行轨迹和本评分表逐项评分；不得因模型组别而改变标准。",
+    "memory/mixed项的历史依据见source_message_ids；不得对种子历史中没有的个人事实扣分。",
+    "未知事实标待确认是正确行为；但已提供且要求召回的事实缺失按对应项评分。",
+    "先评首轮产物，再独立评最终产物；不要将评分表或私有证据交给任务Agent。"
+  ]
+}

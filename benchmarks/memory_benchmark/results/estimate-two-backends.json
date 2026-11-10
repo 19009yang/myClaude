@@ -1,0 +1,289 @@
+{
+  "status": "estimate_only",
+  "suite_id": "lamemory-basic-8-v2",
+  "tasks": 8,
+  "groups": [
+    "legacy",
+    "lamemory"
+  ],
+  "repeats": 3,
+  "task_runs": 48,
+  "seed_user_messages_per_backend": 44,
+  "seed_sessions": 21,
+  "currency": "USD",
+  "pricing": {
+    "currency": "USD",
+    "checked_at": "2026-11-10",
+    "source": "https://api-docs.deepseek.com/quick_start/pricing/",
+    "note": "DeepSeek 官方直连 deepseek-flash 高峰价快照，输入按缓存未命中预估；非高峰费率减半。自定义网关/其他模型须替换。运行按此静态表核算，不自动根据请求时刻切价。",
+    "agent": {
+      "provider": "deepseek",
+      "model": "deepseek-flash",
+      "input": 0.3,
+      "output": 1.2,
+      "cache_read": 0.006,
+      "cache_write": 0.3
+    },
+    "memory": {
+      "provider": "deepseek",
+      "model": "deepseek-flash",
+      "input": 0.3,
+      "output": 1.2,
+      "cache_read": 0.006,
+      "cache_write": 0.3
+    },
+    "judge": {
+      "provider": "deepseek",
+      "model": "deepseek-flash",
+      "input": 0.3,
+      "output": 1.2,
+      "cache_read": 0.006,
+      "cache_write": 0.3
+    }
+  },
+  "settings": {
+    "groups": [
+      "legacy",
+      "lamemory"
+    ],
+    "repeats": 3,
+    "tasks": [],
+    "context_window": 32768,
+    "max_output_tokens": 4096,
+    "memory_token_budget": 2048,
+    "max_model_calls": 8,
+    "max_tool_calls": 24,
+    "memory_timeout": 60,
+    "judge_timeout": 120,
+    "job_attempts": 3,
+    "hierarchy": true,
+    "sandbox": "seatbelt",
+    "docker_image": "python:3.13-slim",
+    "expected_calls_per_round": 3,
+    "expected_output_tokens": 900,
+    "expected_artifact_tokens": 2400,
+    "seed_memory_tokens_per_message": 80,
+    "max_cost": null
+  },
+  "scenarios": {
+    "low": {
+      "calls": 737,
+      "input_tokens": 4380742,
+      "output_tokens": 512920,
+      "cost": 1.9297266,
+      "buckets": {
+        "build/legacy/extraction": {
+          "calls": 44,
+          "input": 100790,
+          "output": 7040,
+          "cost": 0.038685000000000004
+        },
+        "online/legacy/agent": {
+          "calls": 144,
+          "input": 1141002,
+          "output": 129600,
+          "cost": 0.49782059999999995
+        },
+        "online/legacy/extraction": {
+          "calls": 72,
+          "input": 678501,
+          "output": 11520,
+          "cost": 0.21737429999999996
+        },
+        "judge/legacy/judge": {
+          "calls": 72,
+          "input": 424521,
+          "output": 86400,
+          "cost": 0.23103629999999994
+        },
+        "build/lamemory/extraction": {
+          "calls": 44,
+          "input": 25110,
+          "output": 7040,
+          "cost": 0.015981000000000006
+        },
+        "build/lamemory/summary": {
+          "calls": 1,
+          "input": 4520,
+          "output": 600,
+          "cost": 0.002076
+        },
+        "online/lamemory/agent": {
+          "calls": 144,
+          "input": 929034,
+          "output": 129600,
+          "cost": 0.4342302
+        },
+        "online/lamemory/extraction": {
+          "calls": 72,
+          "input": 68103,
+          "output": 11520,
+          "cost": 0.03425489999999999
+        },
+        "online/lamemory/summary": {
+          "calls": 72,
+          "input": 584640,
+          "output": 43200,
+          "cost": 0.22723200000000007
+        },
+        "judge/lamemory/judge": {
+          "calls": 72,
+          "input": 424521,
+          "output": 86400,
+          "cost": 0.23103629999999994
+        }
+      }
+    },
+    "expected": {
+      "calls": 881,
+      "input_tokens": 6970960,
+      "output_tokens": 642520,
+      "cost": 2.8623119999999997,
+      "buckets": {
+        "build/legacy/extraction": {
+          "calls": 44,
+          "input": 100790,
+          "output": 7040,
+          "cost": 0.038685000000000004
+        },
+        "online/legacy/agent": {
+          "calls": 216,
+          "input": 2100303,
+          "output": 194400,
+          "cost": 0.8633708999999998
+        },
+        "online/legacy/extraction": {
+          "calls": 72,
+          "input": 851301,
+          "output": 11520,
+          "cost": 0.2692143000000001
+        },
+        "judge/legacy/judge": {
+          "calls": 72,
+          "input": 597321,
+          "output": 86400,
+          "cost": 0.2828762999999999
+        },
+        "build/lamemory/extraction": {
+          "calls": 44,
+          "input": 25110,
+          "output": 7040,
+          "cost": 0.015981000000000006
+        },
+        "build/lamemory/summary": {
+          "calls": 1,
+          "input": 4520,
+          "output": 600,
+          "cost": 0.002076
+        },
+        "online/lamemory/agent": {
+          "calls": 216,
+          "input": 1782351,
+          "output": 194400,
+          "cost": 0.7679852999999999
+        },
+        "online/lamemory/extraction": {
+          "calls": 72,
+          "input": 68103,
+          "output": 11520,
+          "cost": 0.03425489999999999
+        },
+        "online/lamemory/summary": {
+          "calls": 72,
+          "input": 843840,
+          "output": 43200,
+          "cost": 0.304992
+        },
+        "judge/lamemory/judge": {
+          "calls": 72,
+          "input": 597321,
+          "output": 86400,
+          "cost": 0.2828762999999999
+        }
+      }
+    },
+    "configured_ceiling": {
+      "calls": 2283,
+      "input_tokens": 45584544,
+      "output_tokens": 9351168,
+      "cost": 24.896764799999985,
+      "buckets": {
+        "build/legacy/extraction": {
+          "calls": 132,
+          "input": 302370,
+          "output": 540672,
+          "cost": 0.7395173999999997
+        },
+        "online/legacy/agent": {
+          "calls": 576,
+          "input": 16220160,
+          "output": 2359296,
+          "cost": 7.697203199999995
+        },
+        "online/legacy/extraction": {
+          "calls": 216,
+          "input": 3934575,
+          "output": 884736,
+          "cost": 2.2420556999999994
+        },
+        "online/legacy/summary": {
+          "calls": 72,
+          "input": 2027520,
+          "output": 294912,
+          "cost": 0.9621503999999994
+        },
+        "judge/legacy/judge": {
+          "calls": 72,
+          "input": 2027520,
+          "output": 294912,
+          "cost": 0.9621503999999994
+        },
+        "build/lamemory/extraction": {
+          "calls": 132,
+          "input": 75330,
+          "output": 540672,
+          "cost": 0.6714054000000002
+        },
+        "build/lamemory/summary": {
+          "calls": 3,
+          "input": 13560,
+          "output": 12288,
+          "cost": 0.0188136
+        },
+        "online/lamemory/agent": {
+          "calls": 576,
+          "input": 16220160,
+          "output": 2359296,
+          "cost": 7.697203199999995
+        },
+        "online/lamemory/extraction": {
+          "calls": 216,
+          "input": 204309,
+          "output": 884736,
+          "cost": 1.1229758999999997
+        },
+        "online/lamemory/summary": {
+          "calls": 216,
+          "input": 2531520,
+          "output": 884736,
+          "cost": 1.8211391999999995
+        },
+        "judge/lamemory/judge": {
+          "calls": 72,
+          "input": 2027520,
+          "output": 294912,
+          "cost": 0.9621503999999994
+        }
+      }
+    }
+  },
+  "assumptions": [
+    "UTF-8/3 粗估，非精确 tokenizer；所有输入按缓存未命中计价。",
+    "每组仅建库一次；每题/重复克隆同一冻结快照。固定3轮，每轮独立评分。",
+    "low/expected 使用配置中的产物/输出假设，并计入历史与工具结果重发。",
+    "configured_ceiling 按调用/输出上限和记忆重试估算；摘要源大小随模型输出变化，非账单保证上限。",
+    "分层摘要开启时保守预留每个在线轮次一次刷新；无记忆变化时实际可能不调用。",
+    "固定追问无用户模拟模型费用；无 embedding/rerank/外部账号费用。",
+    "代码执行/容器成本不计入模型费用；推理 token 包含在供应商 output usage 中。"
+  ]
+}

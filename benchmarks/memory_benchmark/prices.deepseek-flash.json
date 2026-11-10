@@ -1,0 +1,9 @@
+{
+  "currency": "USD",
+  "checked_at": "2026-11-10",
+  "source": "https://api-docs.deepseek.com/quick_start/pricing/",
+  "note": "DeepSeek 官方直连 deepseek-flash 高峰价快照，输入按缓存未命中预估；非高峰费率减半。自定义网关/其他模型须替换。运行按此静态表核算，不自动根据请求时刻切价。",
+  "agent": {"provider": "deepseek", "model": "deepseek-flash", "input": 0.3, "output": 1.2, "cache_read": 0.006, "cache_write": 0.3},
+  "memory": {"provider": "deepseek", "model": "deepseek-flash", "input": 0.3, "output": 1.2, "cache_read": 0.006, "cache_write": 0.3},
+  "judge": {"provider": "deepseek", "model": "deepseek-flash", "input": 0.3, "output": 1.2, "cache_read": 0.006, "cache_write": 0.3}
+}

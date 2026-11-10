@@ -1,0 +1,76 @@
+{
+  "task_id": "05_quarter_learning_plan",
+  "target_score": 70,
+  "max_score": 100,
+  "criteria": [
+    {
+      "item_id": "career-goal",
+      "criterion": "计划是否围绕用户的具体职业晋升目标（如升P6、独立负责产品线、做出日活过亿的产品），而非泛泛的\"提升能力\"",
+      "max_score": 20,
+      "dimension": "memory",
+      "source_message_ids": [
+        "H024",
+        "H026",
+        "S04"
+      ],
+      "public_requirement": "tasks/05_quarter_learning_plan/prompt.md"
+    },
+    {
+      "item_id": "skill-status",
+      "criterion": "是否基于用户当前正在学习的技能（SQL、Python、设计心理学等）制定学习内容，而非凭空推荐",
+      "max_score": 20,
+      "dimension": "memory",
+      "source_message_ids": [
+        "H007",
+        "H020",
+        "S03"
+      ],
+      "public_requirement": "tasks/05_quarter_learning_plan/prompt.md"
+    },
+    {
+      "item_id": "personal-context",
+      "criterion": "结合与研发负责人张伟协调需求、摆脱数据分析师依赖、提升UI沟通等已有场景，至少落实为可执行学习实践；不引入没有来源的同事信息。",
+      "max_score": 10,
+      "dimension": "memory",
+      "source_message_ids": [
+        "H012",
+        "H007",
+        "H020"
+      ],
+      "public_requirement": "tasks/05_quarter_learning_plan/prompt.md"
+    },
+    {
+      "item_id": "actionable",
+      "criterion": "每项学习任务是否有明确的学习内容、时间节点和预期产出（如\"第2周完成XX课程并输出笔记\"），而非只列方向",
+      "max_score": 20,
+      "dimension": "general",
+      "source_message_ids": [],
+      "public_requirement": "tasks/05_quarter_learning_plan/prompt.md"
+    },
+    {
+      "item_id": "timeline",
+      "criterion": "覆盖2025-04-01至2025-06-30，按周或月分阶段；学习总投入每周不超过6小时、单次最多90分钟，并避开已知固定日程。",
+      "max_score": 15,
+      "dimension": "mixed",
+      "source_message_ids": [
+        "S02",
+        "S03"
+      ],
+      "public_requirement": "tasks/05_quarter_learning_plan/prompt.md"
+    },
+    {
+      "item_id": "format",
+      "criterion": "quarter_learning_plan.md存在，结构清晰，有标题、表格或列表，便于Notion记录及跟踪。",
+      "max_score": 15,
+      "dimension": "general",
+      "source_message_ids": [],
+      "public_requirement": "tasks/05_quarter_learning_plan/prompt.md"
+    }
+  ],
+  "grading_rules": [
+    "仅依据产物、执行轨迹和本评分表逐项评分；不得因模型组别而改变标准。",
+    "memory/mixed项的历史依据见source_message_ids；不得对种子历史中没有的个人事实扣分。",
+    "未知事实标待确认是正确行为；但已提供且要求召回的事实缺失按对应项评分。",
+    "先评首轮产物，再独立评最终产物；不要将评分表或私有证据交给任务Agent。"
+  ]
+}

@@ -1,0 +1,109 @@
+[
+  {
+    "path": "app.version",
+    "action": "changed",
+    "old_value": "2.1.0",
+    "new_value": "2.2.0"
+  },
+  {
+    "path": "app.shutdown_timeout_sec",
+    "action": "added",
+    "new_value": 30
+  },
+  {
+    "path": "database.pool.min_connections",
+    "action": "changed",
+    "old_value": 10,
+    "new_value": 20
+  },
+  {
+    "path": "database.pool.max_connections",
+    "action": "changed",
+    "old_value": 100,
+    "new_value": 200
+  },
+  {
+    "path": "database.pool.idle_timeout_sec",
+    "action": "changed",
+    "old_value": 60,
+    "new_value": 45
+  },
+  {
+    "path": "database.read_replicas",
+    "action": "changed",
+    "old_value": [
+      "pg-replica-01.prod.internal",
+      "pg-replica-02.prod.internal"
+    ],
+    "new_value": [
+      "pg-replica-01.prod.internal",
+      "pg-replica-02.prod.internal",
+      "pg-replica-03.prod.internal"
+    ]
+  },
+  {
+    "path": "cache.ttl_sec",
+    "action": "changed",
+    "old_value": 1800,
+    "new_value": 900
+  },
+  {
+    "path": "logging.level",
+    "action": "changed",
+    "old_value": "WARNING",
+    "new_value": "INFO"
+  },
+  {
+    "path": "logging.outputs",
+    "action": "changed",
+    "old_value": [
+      "stdout",
+      "elk"
+    ],
+    "new_value": [
+      "stdout",
+      "elk",
+      "datadog"
+    ]
+  },
+  {
+    "path": "logging.trace_enabled",
+    "action": "added",
+    "new_value": true
+  },
+  {
+    "path": "features.enable_gesture_nav",
+    "action": "changed",
+    "old_value": false,
+    "new_value": true
+  },
+  {
+    "path": "features.enable_eye_tracking",
+    "action": "changed",
+    "old_value": false,
+    "new_value": true
+  },
+  {
+    "path": "features.max_concurrent_sessions",
+    "action": "changed",
+    "old_value": 200,
+    "new_value": 500
+  },
+  {
+    "path": "features.enable_haptic_feedback",
+    "action": "added",
+    "new_value": true
+  },
+  {
+    "path": "rate_limit.requests_per_minute",
+    "action": "changed",
+    "old_value": 600,
+    "new_value": 1200
+  },
+  {
+    "path": "rate_limit.burst_size",
+    "action": "changed",
+    "old_value": 50,
+    "new_value": 100
+  }
+]

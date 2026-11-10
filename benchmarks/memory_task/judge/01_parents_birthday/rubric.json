@@ -1,0 +1,83 @@
+{
+  "task_id": "01_parents_birthday",
+  "target_score": 70,
+  "max_score": 100,
+  "criteria": [
+    {
+      "item_id": "father-birthday",
+      "criterion": "正确记录父亲沈建国的生日为3月20日，名字和日期都准确。\n日期错误该项 0 分。\n",
+      "max_score": 20,
+      "dimension": "memory",
+      "source_message_ids": [
+        "S01"
+      ],
+      "public_requirement": "tasks/01_parents_birthday/prompt.md"
+    },
+    {
+      "item_id": "mother-birthday",
+      "criterion": "正确记录母亲王芳的生日为8月5日，名字和日期都准确。\n日期错误该项 0 分。\n",
+      "max_score": 20,
+      "dimension": "memory",
+      "source_message_ids": [
+        "S01"
+      ],
+      "public_requirement": "tasks/01_parents_birthday/prompt.md"
+    },
+    {
+      "item_id": "advance-reminder",
+      "criterion": "每个生日事件明确提前14天提醒，且下一次生日与提醒日期计算正确。缺少提醒或提前天数错误不得满分。父亲下一次生日2026-03-20，提醒2026-03-06；母亲下一次生日2025-08-05，提醒2025-07-22。",
+      "max_score": 15,
+      "dimension": "memory",
+      "source_message_ids": [
+        "S01"
+      ],
+      "public_requirement": "tasks/01_parents_birthday/prompt.md"
+    },
+    {
+      "item_id": "gift-note",
+      "criterion": "提醒备注中包含礼物相关信息，特别是给父亲买颈椎按摩仪的待办。\n无礼物备注扣 10 分。\n",
+      "max_score": 15,
+      "dimension": "memory",
+      "source_message_ids": [
+        "S01",
+        "H031"
+      ],
+      "public_requirement": "tasks/01_parents_birthday/prompt.md"
+    },
+    {
+      "item_id": "shopping-channel",
+      "criterion": "备注中提到了京东作为购买渠道（用户的常用购物平台）。\n未提及得 0 分。\n",
+      "max_score": 10,
+      "dimension": "memory",
+      "source_message_ids": [
+        "S01",
+        "H030"
+      ],
+      "public_requirement": "tasks/01_parents_birthday/prompt.md"
+    },
+    {
+      "item_id": "recurring-annual",
+      "criterion": "日历事件设置为每年重复，而非一次性事件。\n未设置重复扣 10 分。\n",
+      "max_score": 10,
+      "dimension": "memory",
+      "source_message_ids": [
+        "S01"
+      ],
+      "public_requirement": "tasks/01_parents_birthday/prompt.md"
+    },
+    {
+      "item_id": "file-output",
+      "criterion": "birthday_reminders.md存在，包含两个完整事件的标题、日期、下一次发生日期、提醒日期和备注；不要求真实日历API或年龄。",
+      "max_score": 10,
+      "dimension": "general",
+      "source_message_ids": [],
+      "public_requirement": "tasks/01_parents_birthday/prompt.md"
+    }
+  ],
+  "grading_rules": [
+    "仅依据产物、执行轨迹和本评分表逐项评分；不得因模型组别而改变标准。",
+    "memory/mixed项的历史依据见source_message_ids；不得对种子历史中没有的个人事实扣分。",
+    "未知事实标待确认是正确行为；但已提供且要求召回的事实缺失按对应项评分。",
+    "先评首轮产物，再独立评最终产物；不要将评分表或私有证据交给任务Agent。"
+  ]
+}

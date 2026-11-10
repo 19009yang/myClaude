@@ -1,0 +1,53 @@
+{
+  "task_id": "07_json_config_diff",
+  "target_score": 80,
+  "max_score": 100,
+  "criteria": [
+    {
+      "item_id": "parse-all",
+      "criterion": "脚本能成功解析两个 JSON 配置文件（current.json 和 proposed.json），不能因为解析错误而失败。\n注意：这些配置文件使用了类 JSONC 的非标准特性——包含 // 行注释、/* */ 块注释、\n以及对象/数组末尾的尾逗号。标准 json.loads() 无法直接解析，需要先做预处理\n或使用支持这些特性的库。两个文件都成功解析得满分；只成功 1 个得 10 分；0 个得 0 分。\n",
+      "max_score": 25,
+      "dimension": "general",
+      "source_message_ids": [],
+      "public_requirement": "tasks/07_json_config_diff/prompt.md"
+    },
+    {
+      "item_id": "diff-correct",
+      "criterion": "diff 结果正确识别出所有变更：新增的键、删除的键、值被修改的键。\n对于嵌套对象，应递归 diff 并用点号路径表示（如 database.pool.max_connections）。\n对于数组变更，标明整个数组被替换即可，不需要逐元素 diff。\n正确识别全部变更得满分；遗漏 1-2 处扣 5 分；遗漏 3 处以上扣 15 分。\n",
+      "max_score": 25,
+      "dimension": "general",
+      "source_message_ids": [],
+      "public_requirement": "tasks/07_json_config_diff/prompt.md"
+    },
+    {
+      "item_id": "output-format",
+      "criterion": "diff_report.json为合法标准JSON，顶层为条目数组，每项含path、action及适用的old_value/new_value；与judge保存的参考结果按内容比较、不依赖条目顺序。同时有diff_report.md摘要。",
+      "max_score": 20,
+      "dimension": "general",
+      "source_message_ids": [],
+      "public_requirement": "tasks/07_json_config_diff/prompt.md"
+    },
+    {
+      "item_id": "runnable",
+      "criterion": "产出的 diff_configs.py 是完整可运行的脚本。可以通过\n`python diff_configs.py current.json proposed.json` 执行。\n",
+      "max_score": 15,
+      "dimension": "general",
+      "source_message_ids": [],
+      "public_requirement": "tasks/07_json_config_diff/prompt.md"
+    },
+    {
+      "item_id": "code-quality",
+      "criterion": "代码结构清晰：JSONC 解析逻辑独立封装为可复用函数，diff 逻辑独立封装，\n有基本的类型注解。没有硬编码文件名。\n",
+      "max_score": 15,
+      "dimension": "general",
+      "source_message_ids": [],
+      "public_requirement": "tasks/07_json_config_diff/prompt.md"
+    }
+  ],
+  "grading_rules": [
+    "仅依据产物、执行轨迹和本评分表逐项评分；不得因模型组别而改变标准。",
+    "memory/mixed项的历史依据见source_message_ids；不得对种子历史中没有的个人事实扣分。",
+    "未知事实标待确认是正确行为；但已提供且要求召回的事实缺失按对应项评分。",
+    "先评首轮产物，再独立评最终产物；不要将评分表或私有证据交给任务Agent。"
+  ]
+}

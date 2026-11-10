@@ -1,0 +1,61 @@
+// SmartLens v2.1.0 — current production configuration
+// Deployed: 2026-04-15 by CI/CD pipeline #3847
+{
+  "app": {
+    "name": "SmartLens",
+    "version": "2.1.0",
+    "port": 443,
+    "internal_port": 8080,
+    "debug": false,
+  },
+  "database": {
+    "host": "pg-primary.prod.internal",
+    "port": 5432,
+    "name": "smartlens_prod",
+    "pool": {
+      "min_connections": 10,
+      "max_connections": 100,
+      "idle_timeout_sec": 60,
+    },
+    "read_replicas": [
+      "pg-replica-01.prod.internal",
+      "pg-replica-02.prod.internal",
+    ],
+  },
+  "cache": {
+    "driver": "redis",
+    "host": "redis-cluster.prod.internal",
+    "port": 6380,
+    "ttl_sec": 1800,
+    "prefix": "sl:",
+    /* Sentinel HA configuration */
+    "sentinel": {
+      "enabled": true,
+      "master_name": "mymaster",
+      "nodes": [
+        "sentinel-01.prod.internal:26379",
+        "sentinel-02.prod.internal:26379",
+        "sentinel-03.prod.internal:26379",
+      ],
+    },
+  },
+  "logging": {
+    "level": "WARNING",
+    "format": "json",
+    "outputs": ["stdout", "elk"],
+    "elk_url": "https://elk.prod.internal:9200",
+  },
+  "features": {
+    "enable_ar_overlay": true,
+    "enable_voice_control": true,  // Beta 30%
+    "enable_gesture_nav": false,
+    "enable_spatial_audio": true,
+    "enable_eye_tracking": false,
+    "max_concurrent_sessions": 200,
+  },
+  "rate_limit": {
+    "enabled": true,
+    "requests_per_minute": 600,
+    "burst_size": 50,
+  },
+}

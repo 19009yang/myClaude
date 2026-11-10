@@ -1,0 +1,69 @@
+// SmartLens v2.2.0 — proposed configuration changes
+// PR #412: Scale-up for AR overlay GA + eye tracking beta
+// Reviewer: @lchen, @devops-bot
+{
+  "app": {
+    "name": "SmartLens",
+    "version": "2.2.0",  // Version bump
+    "port": 443,
+    "internal_port": 8080,
+    "debug": false,
+    // New: graceful shutdown timeout
+    "shutdown_timeout_sec": 30,
+  },
+  "database": {
+    "host": "pg-primary.prod.internal",
+    "port": 5432,
+    "name": "smartlens_prod",
+    "pool": {
+      "min_connections": 20,  // Doubled for AR load
+      "max_connections": 200, // Doubled for AR load
+      "idle_timeout_sec": 45, // Tightened
+    },
+    "read_replicas": [
+      "pg-replica-01.prod.internal",
+      "pg-replica-02.prod.internal",
+      "pg-replica-03.prod.internal",  // New replica for read scaling
+    ],
+  },
+  "cache": {
+    "driver": "redis",
+    "host": "redis-cluster.prod.internal",
+    "port": 6380,
+    "ttl_sec": 900,  // Reduced: fresher data for AR features
+    "prefix": "sl:",
+    /* Sentinel HA configuration — unchanged */
+    "sentinel": {
+      "enabled": true,
+      "master_name": "mymaster",
+      "nodes": [
+        "sentinel-01.prod.internal:26379",
+        "sentinel-02.prod.internal:26379",
+        "sentinel-03.prod.internal:26379",
+      ],
+    },
+  },
+  "logging": {
+    "level": "INFO",  // Temporarily lowered for rollout monitoring
+    "format": "json",
+    "outputs": ["stdout", "elk", "datadog"],  // Added datadog
+    "elk_url": "https://elk.prod.internal:9200",
+    // New: structured trace context
+    "trace_enabled": true,
+  },
+  "features": {
+    "enable_ar_overlay": true,
+    "enable_voice_control": true,
+    "enable_gesture_nav": true,   // HW-2847 fixed, re-enabled
+    "enable_spatial_audio": true,
+    "enable_eye_tracking": true,  // Beta launch 10%
+    "max_concurrent_sessions": 500,  // Scaled up
+    // New feature
+    "enable_haptic_feedback": true,
+  },
+  "rate_limit": {
+    "enabled": true,
+    "requests_per_minute": 1200,  // Doubled
+    "burst_size": 100,  // Doubled
+  },
+}

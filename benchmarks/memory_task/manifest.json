@@ -1,0 +1,129 @@
+{
+  "schema_version": 1,
+  "suite_id": "lamemory-basic-8-v2",
+  "evaluation_date": "2025-03-26",
+  "timezone": "Asia/Shanghai",
+  "groups": [
+    "none",
+    "legacy",
+    "lamemory"
+  ],
+  "task_count": 8,
+  "seed": "seed/sessions.json",
+  "prompt_output_placeholder": "{{output_dir}}",
+  "tasks": [
+    {
+      "task_id": "01_parents_birthday",
+      "name": "日历添加父母生日提醒",
+      "category": "memory",
+      "prompt": "tasks/01_parents_birthday/prompt.md",
+      "rubric": "judge/01_parents_birthday/rubric.json",
+      "follow_ups": "judge/01_parents_birthday/follow_ups.json",
+      "max_user_rounds": 3,
+      "timeout_seconds_per_user_round": 300,
+      "seed": "seed/sessions.json",
+      "assets": []
+    },
+    {
+      "task_id": "02_therapy_schedule",
+      "name": "帮我把理疗时间加到日历里",
+      "category": "memory",
+      "prompt": "tasks/02_therapy_schedule/prompt.md",
+      "rubric": "judge/02_therapy_schedule/rubric.json",
+      "follow_ups": "judge/02_therapy_schedule/follow_ups.json",
+      "max_user_rounds": 3,
+      "timeout_seconds_per_user_round": 300,
+      "seed": "seed/sessions.json",
+      "assets": []
+    },
+    {
+      "task_id": "03_sql_study_blocks",
+      "name": "安排SQL学习时间块",
+      "category": "memory",
+      "prompt": "tasks/03_sql_study_blocks/prompt.md",
+      "rubric": "judge/03_sql_study_blocks/rubric.json",
+      "follow_ups": "judge/03_sql_study_blocks/follow_ups.json",
+      "max_user_rounds": 3,
+      "timeout_seconds_per_user_round": 300,
+      "seed": "seed/sessions.json",
+      "assets": []
+    },
+    {
+      "task_id": "04_project_risk_kanban",
+      "name": "把 V2.0 风险/依赖项列成 Notion 看板",
+      "category": "memory",
+      "prompt": "tasks/04_project_risk_kanban/prompt.md",
+      "rubric": "judge/04_project_risk_kanban/rubric.json",
+      "follow_ups": "judge/04_project_risk_kanban/follow_ups.json",
+      "max_user_rounds": 3,
+      "timeout_seconds_per_user_round": 600,
+      "seed": "seed/sessions.json",
+      "assets": []
+    },
+    {
+      "task_id": "05_quarter_learning_plan",
+      "name": "制定季度学习计划",
+      "category": "memory",
+      "prompt": "tasks/05_quarter_learning_plan/prompt.md",
+      "rubric": "judge/05_quarter_learning_plan/rubric.json",
+      "follow_ups": "judge/05_quarter_learning_plan/follow_ups.json",
+      "max_user_rounds": 3,
+      "timeout_seconds_per_user_round": 300,
+      "seed": "seed/sessions.json",
+      "assets": []
+    },
+    {
+      "task_id": "06_finance_review",
+      "name": "做一个周日财务复盘模板",
+      "category": "partial_memory",
+      "prompt": "tasks/06_finance_review/prompt.md",
+      "rubric": "judge/06_finance_review/rubric.json",
+      "follow_ups": "judge/06_finance_review/follow_ups.json",
+      "max_user_rounds": 3,
+      "timeout_seconds_per_user_round": 300,
+      "seed": "seed/sessions.json",
+      "assets": []
+    },
+    {
+      "task_id": "07_json_config_diff",
+      "name": "JSON Config Diff Tool",
+      "category": "generic",
+      "prompt": "tasks/07_json_config_diff/prompt.md",
+      "rubric": "judge/07_json_config_diff/rubric.json",
+      "follow_ups": "judge/07_json_config_diff/follow_ups.json",
+      "max_user_rounds": 3,
+      "timeout_seconds_per_user_round": 300,
+      "seed": "seed/sessions.json",
+      "assets": [
+        {
+          "path": "tasks/07_json_config_diff/assets/current.json",
+          "destination": "current.json",
+          "sha256": "a32751a6ffab04a15cdea2db4692fb11f9896bd1e06253395e108a7b8136a221"
+        },
+        {
+          "path": "tasks/07_json_config_diff/assets/proposed.json",
+          "destination": "proposed.json",
+          "sha256": "44405bdd678bb2bedc14cc827d4f92ab50a4bbcaabddd807927d3d221f64bd91"
+        }
+      ]
+    },
+    {
+      "task_id": "08_buggy_code_review",
+      "name": "Code Review with Bug Hunt",
+      "category": "generic",
+      "prompt": "tasks/08_buggy_code_review/prompt.md",
+      "rubric": "judge/08_buggy_code_review/rubric.json",
+      "follow_ups": "judge/08_buggy_code_review/follow_ups.json",
+      "max_user_rounds": 3,
+      "timeout_seconds_per_user_round": 300,
+      "seed": "seed/sessions.json",
+      "assets": [
+        {
+          "path": "tasks/08_buggy_code_review/assets/buggy_module.py",
+          "destination": "buggy_module.py",
+          "sha256": "50e12f552a0b3b6560485f5b02babc12b8c759dc4000658455a3ae7cb85b4aa3"
+        }
+      ]
+    }
+  ]
+}
