@@ -91,4 +91,4 @@ python -m benchmarks.lamemory.smoke --real --output benchmarks/lamemory/results/
 
 所有测试和 smoke 都使用临时数据库及合成消息，不读取 `core/chat_memory/`。真实 smoke 使用环境中的模型配置；缺少配置时以退出码 2 和 blocked 状态报告，不能当作通过。带来源的小型关键词验证集位于 `tests/lamemory/fixtures/retrieval.json`，包含 20 条事实/偏好/事件及 3 个无答案查询。
 
-离线与真实 smoke 结果见 [验证记录](../benchmarks/lamemory/README.md)。此前真实 smoke 通过表示该配置的 M0/M1 基础调用和记忆流程可用。M2/M3 本次通过离线行为测试，覆盖摘要失效、反馈晋升及撤销；尚未形成真实模型的摘要质量、经验迁移收益或完整对照评测结论。
+离线与真实 smoke 结果见 [验证记录](../benchmarks/lamemory/README.md)。此前真实 smoke 覆盖 M0/M1；2026-11-10 补充的 DeepSeek `deepseek-flash` 在线交付 smoke 已通过 M2 9 项、M3 15 项检查，包括真实摘要重建、候选提取、实际工具执行反馈晋升、跨会话召回及显式撤销。可运行 `uv run python -m benchmarks.lamemory.live_m2_m3 --output /tmp/lamemory-m2-m3-live-new.json` 复现，输出需使用新路径。当前结果支持合成场景的功能闭环，尚未形成系统摘要质量、复杂任务经验迁移收益或完整对照评测结论。

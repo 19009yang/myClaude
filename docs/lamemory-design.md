@@ -4,7 +4,7 @@
 
 **Layered Aggregated Memory（简称 LaMemory）** 是 myClaude 计划开发的分层聚合记忆系统。本文描述目标架构、现有代码缺口和实施边界，配套执行步骤见 [LaMemory 开发指南](lamemory-development-guide.md)。
 
-M0–M3 的单机运行时已实现，`core/memory.py` 作为 `core/lamemory/` 的兼容门面。当前采用关键词模式；M2/M3 已完成离线功能验证，真实模型效果与完整对照评测仍待实施。启用方式和验收限制见 [使用与验证](lamemory-usage.md) 与 [M2/M3 开发交付](lamemory-m2-m3.md)。
+M0–M3 的单机运行时已实现，`core/memory.py` 作为 `core/lamemory/` 的兼容门面。当前采用关键词模式；M2/M3 已完成离线功能验证与 DeepSeek 在线交付 smoke，系统效果评估与完整对照评测仍待实施。启用方式和验收限制见 [使用与验证](lamemory-usage.md) 与 [M2/M3 开发交付](lamemory-m2-m3.md)。
 
 ## 1. 目标
 
@@ -112,4 +112,4 @@ M1 可先启用关键词模式；真实语义检索必须接入可用 embedding�
 
 报告任务得分、通过率、轮数、时间、错误率、检索指标及全部模型用量。提取与摘要成本单独统计，建库成本与在线成本分别呈现。经验学习另设训练/测试划分，不能用测试答案训练后续测试任务。
 
-当前关键词模式引擎的 M0–M3 已通过离线回归，原有 fake 聊天 smoke 已重跑通过；此前 DeepSeek `deepseek-flash` 的真实记忆 smoke 覆盖 M0/M1。测试记录位于 `benchmarks/lamemory/` 和 `benchmarks/providers/`，M2/M3 尚未进行真实模型效果验证，也未取得 LaMemory 正式对照评测分数。
+当前关键词模式引擎的 M0–M3 已通过离线回归，原有 fake 聊天 smoke 已重跑通过；此前 DeepSeek `deepseek-flash` 的真实记忆 smoke 覆盖 M0/M1。2026-11-10 补充的 DeepSeek 在线交付 smoke 通过 M2 9 项、M3 15 项检查，包含真实摘要、经验候选和实际执行反馈闭环。测试记录位于 `benchmarks/lamemory/` 和 `benchmarks/providers/`；合成场景的在线功能验证不代表系统摘要质量或复杂任务迁移收益，尚未取得 LaMemory 正式对照评测分数。

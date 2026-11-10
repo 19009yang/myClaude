@@ -8,7 +8,7 @@
 
 **Layered Aggregated Memory（简称 LaMemory）** 是 myClaude 的记忆系统名称。本文定义适合个人项目的开发任务：以结构化记录为基础，逐步形成主题摘要和用户概览，并通过检索与预算管理支持长期使用。
 
-**状态说明：M0–M3 的关键词模式单机运行时已实现。M2/M3 本次完成离线行为验证；此前 DeepSeek `deepseek-flash` 的真实记忆 smoke 只验证 M0/M1，不能作为 M2/M3 的真实模型或效果证据。具体接口、启用方式与限制见 [使用与验证](lamemory-usage.md) 及 [M2/M3 开发交付](lamemory-m2-m3.md)。embedding 和完整对照评测尚未实施。**
+**状态说明：M0–M3 的关键词模式单机运行时已实现。M2/M3 已完成离线行为验证，并于 2026-11-10 补充 DeepSeek `deepseek-flash` 在线交付 smoke：M2 9 项、M3 15 项检查通过。历史真实记忆 smoke 仍只覆盖 M0/M1，新增在线证据见 [验证记录](../benchmarks/lamemory/README.md)；在线功能闭环不代表复杂任务收益或完整效果评测结论。具体接口、启用方式与限制见 [使用与验证](lamemory-usage.md) 及 [M2/M3 开发交付](lamemory-m2-m3.md)。embedding 和完整对照评测尚未实施。**
 
 配套文档：[LaMemory 架构与实施方案](lamemory-design.md)。
 

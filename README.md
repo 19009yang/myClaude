@@ -1,300 +1,246 @@
-# Learn — LLM Agent 实验项目
+# myClaude
 
-一个基于 Python 的 LLM Agent 实验项目，包含对话记忆管理、工具调用安全校验、工作流编排、技能系统等核心能力的实现。项目从零构建了一个类 Claude Code 的智能助手框架，适合学习 Agent 开发的核心概念。
+一个用 Python 实现的 LLM Agent 实验项目，重点探索 **Agent loop 如何运行**，以及 **记忆如何在多轮、跨会话交互中保持可追溯和一致**。
 
-> 模型接口支持 OpenAI、Anthropic 原生 Messages、DeepSeek、Qwen 和自定义 OpenAI 兼容服务，配置与验证范围见 [模型提供商适配层](docs/model-providers.md)。
+项目将模型调用、工具执行、消息留档、上下文组装与长期记忆拆成可阅读、可替换的模块。核心设计围绕两条链路展开：
 
-## ✨ 核心特性
+- **执行闭环**：构造上下文 → 调用模型 → 执行工具 → 回传结果 → 继续推理，直到生成最终回复。
+- **记忆闭环**：保存原始证据 → 提取结构化记录 → 聚合分层摘要 → 按需召回 → 根据更正、遗忘和反馈更新状态。
 
-- **🧠 记忆管理** — LaMemory：SQLite 原文留档、跨会话关键词检索、来源追溯、更正/遗忘和上下文预算
-- **🔧 工具调用** — 内置 7 种工具（read/search/bash/ls/edit/grep/write），支持 LLM function calling
-- **🛡️ 安全校验** — 分级拦截策略（blocked/confirm/pass），YAML 配置，防止危险操作
-- **🔄 工作流编排** — Node/Flow 模式，支持条件分支、指数退避重试与节点回退，用 `>>` 语法链式定义 DAG
-- **🧩 技能系统** — Markdown frontmatter 格式的 Skill 文件，支持动态加载与激活
-- **🤖 Agent 示例** — 带记忆与工具的对话机器人、搜索摘要工作流、论文研究助手（搜索→下载→解析→选题→写作→渲染）
-- **📄 PDF 处理** — 基于 PyMuPDF 的 PDF 文本与图片提取
+记忆系统命名为 **Layered Aggregated Memory（LaMemory）**。当前已实现 M0–M3 的单机运行时，使用 SQLite 持久化和关键词检索；验证范围与后续规划见文末。
 
-## 📁 项目结构
+## 整体结构
 
-```
-learn/
-├── core/               # 核心模块（框架层）
-│   ├── llm.py          # LLM 调用封装（文本生成 + 工具调用模式）
-│   ├── providers/    # 供应商注册、模型配置和协议转换
-│   ├── memory.py       # LaMemory 兼容入口
-│   ├── lamemory/      # SQLite 存储、提取任务、检索、预算和迁移
-│   ├── node.py         # 工作流编排（Node/Flow + 重试 + 回退 + RetryableError）
-│   └── chat_memory/    # 记忆存储目录
-├── tools/              # 工具系统
-│   ├── builtins/       # 内置工具实现
-│   │   ├── bash.py     # 命令执行
-│   │   ├── read.py     # 文件读取
-│   │   ├── write.py    # 文件写入
-│   │   ├── edit.py     # 文件编辑
-│   │   ├── ls.py       # 目录列表
-│   │   ├── grep.py     # 内容搜索
-│   │   ├── search.py   # 网络搜索（DuckDuckGo）
-│   │   ├── paper_search.py  # 论文搜索与下载（arxiv API + PDF 批量下载）
-│   │   ├── latex_render.py  # LaTeX 渲染为 PDF（自动检测编译器）
-│   │   └── tool_def.py # Tool 定义与注册
-│   ├── executor.py     # 工具执行器（解析 + 执行 + 安全校验）
-│   ├── guard.py        # 安全校验器
-│   ├── safety_policy.yaml  # 安全策略配置
-│   ├── skill_loader.py # Skill 加载器（frontmatter 解析 + 注册表）
-│   └── skills/         # 自定义 Skill 目录
-│       ├── hello/              # 示例技能
-│       ├── content-research-writer/  # 内容调研与写作技能
-│       └── pdf-image-text-extractor/ # PDF 文本与图片提取技能
-├── Agent/              # Agent 应用（基于框架搭建的实际应用）
-│   ├── chatBot_with_memory/    # 带记忆和工具的对话机器人
-│   ├── workflow/                # 搜索摘要工作流示例
-│   └── ResearchAssistant/       # 论文研究助手（完整工作流应用）
-│       ├── main.py              # 工作流节点定义与 DAG 编排
-│       └── prompts.py           # LLM Prompt 模板与格式化函数
-├── pdf/                # PDF 处理示例
-│   ├── transformer_zh_cn.pdf # Transformer 论文中文翻译
-│   ├── transformer_zh_cn.txt # 提取的文本结果
-│   ├── extract_result.json   # 提取结构化结果
-│   └── images/               # 提取的图片
-├── main.py             # 入口文件
-└── pyproject.toml      # 项目配置
+```mermaid
+flowchart TD
+    U[用户输入] --> A[原始消息留档]
+    A --> C[上下文组装与预算控制]
+    M[(LaMemory)] -->|有效记忆、摘要、经验| C
+    C --> L[模型适配层]
+    L --> D{是否包含 tool_calls}
+    D -->|是| S[保存 assistant 工具调用]
+    S --> G[工具解析与安全校验]
+    G --> T[执行工具并保存 tool 结果]
+    T --> C
+    D -->|否| F[保存最终回复并提交完整轮次]
+    F --> O[展示回复]
+    F --> J[幂等记忆任务]
+    O --> P[有界消费任务]
+    J --> P
+    P --> M
 ```
 
-## 🚀 快速开始
+Agent 每次调用模型时使用受预算约束的工作上下文，原始消息和工具结果则独立留档。历史裁剪、摘要生成和检索选择都基于这份证据构建视图。
 
-### 环境准备
+## Agent loop：从消息到行动
+
+### 循环与状态推进
+
+终端入口在 [`Agent/chatBot_with_memory/main.py`](Agent/chatBot_with_memory/main.py) 中通过 `Node / Flow` 表达循环：
+
+```python
+chat = ChatNode()
+tool_call = ToolCallNode()
+output = OutputNode()
+
+chat - "tool_call" >> tool_call
+tool_call - "chat" >> chat
+tool_call - "output" >> output
+chat - "output" >> output
+```
+
+`ChatNode` 负责组装上下文、调用模型并保存 assistant 消息；`ToolCallNode` 执行工具、保存结果，再将控制权交回模型；没有工具调用时进入 `OutputNode` 展示回复并有界处理记忆任务。
+
+[`core/node.py`](core/node.py) 提供同步的 action 路由：节点返回 `(action, payload)`，`Flow` 根据 action 选择后继节点。路由允许回边，因此可以表达工具循环和失败回退。节点仅对 `RetryableError` 做指数退避，耗尽后走配置的回退或错误路径；其他异常直接抛出。
+
+[`ChatRunner`](Agent/chatBot_with_memory/runner.py) 提供独立于终端 UI 和全局 `shared` 的运行入口，用于 Web 工作台、嵌入和隔离 smoke：
+
+- 通过实例注入记忆服务、模型调用函数和工具集合。
+- `send()` 限制模型调用轮数，检查截止时间与取消信号。
+- 通过事件回调输出消息、上下文诊断和工具执行轨迹，记录模型 usage。
+- 默认只注册绑定当前身份的记忆工具，普通工具由宿主显式传入。
+
+当前工具按顺序同步执行。Runner 的截止时间在调用边界检查，模型请求会收到剩余时间；宿主添加的同步工具需要自行遵守超时。
+
+### 工具调用是消息协议的一部分
+
+[`ToolExecutor`](tools/executor.py) 将模型返回的工具调用解析为统一结构，经过 [`SafetyGuard`](tools/guard.py) 检查后执行，再将结果转换为带 `tool_call_id` 的 `tool` 消息。
+
+执行链路保留以下约束：
+
+1. **先记录调用，再执行工具**：assistant 工具调用保存失败时停止本轮工具执行。
+2. **结果与调用对应**：工具结果携带原调用 ID；未知工具、拦截、拒绝及执行异常均返回可回传的错误结果。
+3. **上下文保留完整工具链**：按完整轮次裁剪历史，检查调用与结果的对应关系；超长工具结果可生成有限视图，原文继续留档。
+4. **持久化失败可观察**：最终回复保存失败会报告本轮未完整保存；工具结果留档失败会中止后续循环。
+
+安全策略在 [`tools/safety_policy.yaml`](tools/safety_policy.yaml) 中配置，分为 `blocked / confirm / pass`。终端模式对需确认操作请求用户输入；无人值守 Runner 返回“未执行”。这层校验用于工具执行前的策略检查，运行环境隔离由宿主负责。
+
+### 模型协议在边界适配
+
+[`core/providers/`](core/providers/) 统一处理供应商配置、消息转换、工具协议、错误和用量；Agent loop 使用统一的消息与工具结构。当前支持 OpenAI Chat Completions、Anthropic 原生 Messages，以及 DeepSeek、Qwen 和自定义 OpenAI 兼容接口。
+
+主对话与记忆任务可使用不同模型，也可注入本地替代实现进行验证。配置方式和协议覆盖范围见 [模型提供商适配层](docs/model-providers.md)。
+
+## LaMemory：从原始证据到可复用记忆
+
+### 分层存储与职责
+
+[`LaMemoryService`](core/lamemory/service.py) 绑定用户、会话与可选项目，统一管理写入、检索、上下文和维护任务。各层通过来源关系关联：
+
+| 层次 | 保存内容 | 作用 |
+|---|---|---|
+| 原始证据 | user / assistant / tool 消息、完整工具结构、轮次 | 恢复会话，追溯事实与执行过程 |
+| 结构化记忆 | 事实、偏好、事件、范围、时间、状态与版本 | 跨会话检索、精确更正与遗忘 |
+| 聚合摘要 | 用户概览、项目摘要、手动主题摘要及来源版本 | 提供背景与主题导航，控制上下文体积 |
+| 程序经验 | 任务类型、适用条件、步骤、结果依据与反馈 | 在证据验证后复用任务经验 |
+
+SQLite 是当前持久化存储，数据表使用 `lamemory_` 前缀。默认数据库为项目内 `.myclaude/lamemory/lamemory.sqlite3`，已加入 Git 忽略。[`core/memory.py`](core/memory.py) 保留旧 `Memory` 接口，内部委托给 LaMemory。
+
+### 写入：完整轮次驱动，显式操作即时返回
+
+自动提取与主动管理共用同一个服务：
+
+```text
+append_message(user)
+  → append_message(assistant tool_calls)
+  → append_message(tool results)
+  → append_message(assistant final)
+  → commit_turn()
+  → 持久化提取任务
+  → process_pending() / flush()
+```
+
+`append_message()` 只保存原文；`commit_turn()` 校验最终回复与完整工具链，在同一事务中提交轮次并创建幂等任务。重复提交不会重复提取，任务创建也不依赖模型是否返回 usage。
+
+终端在主回复展示后至多处理一个任务。独立 Runner 只提交任务，由宿主安排后续消费；服务本身不会自动启动后台 worker。提取失败保留错误和重试状态，可通过维护接口检查、重试或等待完成。
+
+用户明确要求记住、更正或忘记时，模型可调用 `lamemory_store`、`lamemory_search`、`lamemory_update` 和 `lamemory_forget`。工具绑定当前身份和来源，写入结果区分 `saved`、`duplicate`、`conflict`、`suppressed`；冲突待裁决或被抑制的内容不能报告为已生效。
+
+### 一致性：来源、版本与失效传播
+
+LaMemory 的管理规则围绕“信息来自哪里、现在是否有效”展开：
+
+- **范围隔离**：用户级记忆跨会话共享，session 记忆限定原会话，项目事实与经验限定绑定的项目；按 ID 查看和操作同样检查归属。
+- **更正留痕**：更新创建新版本并保留替代关系，默认检索使用有效记录；待裁决冲突保留供检查。
+- **遗忘防重放**：遗忘使记忆失效，并抑制从旧来源再次提取。原始会话留档继续保留，删除原文需要单独流程。
+- **摘要随来源失效**：来源新增、更正、遗忘或补充时，在写事务中将相关摘要标脏并投递重建任务。脏摘要暂停注入，重建发布前复核来源版本与哈希。
+- **失败可恢复**：任务持久化，支持有限重试和重启后继续处理；`flush()` 跟踪相关任务及消费期间新增的摘要任务，明确返回完成、失败或超时。
+
+首次调用 `refresh_summaries()` 或 `consolidate()` 可建立用户概览及配置项目的固定摘要，`define_topic()` 管理手动主题。未提供分层摘要模型时使用有长度限制的原文摘录。接口与维护流程见 [M2/M3 开发交付](docs/lamemory-m2-m3.md)。
+
+### 读取：按需召回与上下文预算
+
+当前检索模式为 `keyword`，先按身份、范围、状态和时间过滤，再做关键词匹配与排序。返回结果包含记忆 ID、来源和命中原因；当前用户请求作为召回依据，同一轮复用事实检索缓存，相关写入会使缓存失效。
+
+[`context.py`](core/lamemory/context.py) 将有效事实、相关主题、用户概览、已验证经验和近期对话组装为模型输入，统一约束预算：
+
+```text
+允许输入 = 模型窗口 − 输出预留 − 安全余量
+实际输入 = 系统提示 + 工具 schema + 历史/工作摘要 + 当前轮次 + 召回记忆
+```
+
+召回内容另受 `memory_token_budget` 限制。超预算时依次减少召回内容、移除旧的完整轮次、舍弃工作摘要，再截短工具结果视图；仍无法容纳当前轮次时抛出 `BudgetError`。Token 数使用保守估算，诊断会标明计量方式、输入预算、选中记忆、丢弃轮次和工具视图裁剪情况。
+
+召回内容在上下文中明确标注为历史参考数据。工作摘要由 `compress()` 显式触发，原始证据继续保留。
+
+### 程序经验：候选经过反馈验证后复用
+
+经验学习默认关闭，可通过 `auto_learn_experiences=True` 或终端 `--learn-experiences` 启用候选提取，也可由宿主手动提交：
+
+```text
+完成任务 → 提取 candidate → 独立用户/测试反馈 → active → 检索与复用
+                                                ↓ 失败反馈
+                                             revoked
+```
+
+默认需要两个独立任务的成功证据，或用户明确认可，才能晋升为有效经验。模型自评仅留档，训练轨迹与重复反馈不累加独立成功次数；用户或测试失败反馈会撤销有效经验，替代版本重新从候选验证。提交测试证据和用户认可由可信宿主负责，模型工具只提供搜索、查看和撤销等受限操作。
+
+## 快速开始
+
+需要 Python ≥ 3.13，推荐使用 uv。在项目根目录执行：
 
 ```bash
-# 安装依赖（推荐使用 uv）
 uv sync
-
-# 配置 LLM API（在项目根目录创建 .env 文件）
-# 可参考 .env.example，选择供应商并配置以下环境变量：
-# LLM_PROVIDER=openai-compatible # 或 openai / anthropic / deepseek / qwen
-# LLM_API_KEY=your_api_key
-# LLM_BASE_URL=your_base_url       # 如 https://api.openai.com/v1 或 DeepSeek 等
-# LLM_MODEL_NAME=your_model_name
+cp .env.example .env
 ```
 
-### 运行示例
+在 `.env` 中填写实际可用的供应商、模型 ID 和密钥；自定义兼容服务同时配置完整 API base URL：
+
+```dotenv
+LLM_PROVIDER=openai-compatible
+LLM_MODEL_NAME=your-model-id
+LLM_API_KEY=your-api-key
+LLM_BASE_URL=https://your-provider.example/v1
+LLM_CONTEXT_WINDOW=32768
+LLM_MAX_TOKENS=4096
+```
+
+`MEMORY_LLM_*` 可独立配置记忆提取与摘要模型，未填写时共用主模型。完整变量见 [`.env.example`](.env.example)。
 
 ```bash
-# 带记忆和工具的对话机器人
-python -m Agent.chatBot_with_memory.main
+# 启动终端对话；留空 --session 时创建新会话
+uv run python -m Agent.chatBot_with_memory.main --user local-user
 
-# 可视化 Web 工作台（浏览器打开 http://127.0.0.1:3080）
-python -m Agent.chatBot_with_memory.web
+# 将 session-example 替换为终端打印的会话 ID，恢复历史
+uv run python -m Agent.chatBot_with_memory.main --user local-user --session session-example
 
-# 搜索摘要工作流
-python Agent/workflow/main.py
-
-# 论文研究助手（搜索→下载→解析→选题→写作→渲染）
-python Agent/ResearchAssistant/main.py
+# Web 工作台：http://127.0.0.1:3080
+uv run python -m Agent.chatBot_with_memory.web
 ```
 
-## 🧩 核心模块说明
+可使用 `--database /absolute/path/memory.sqlite3` 隔离数据，使用 `--project <project-id>` 绑定项目。记忆维护、迁移预览与旧数据导入见 [LaMemory 使用与验证](docs/lamemory-usage.md)，Web 配置见 [工作台使用说明](docs/chat-web.md)。
 
-Web 工作台支持会话恢复、工具执行轨迹、模型配置和 LaMemory 来源查看、更正/遗忘。启动选项、离线演示及功能范围见 [Web 工作台使用说明](docs/chat-web.md)。
+## 代码阅读入口
 
-### Memory — 记忆管理
-
-记忆系统统一命名为 **Layered Aggregated Memory（LaMemory）**。M0/M1 关键词模式已实现，使用方法、迁移步骤、离线验证和限制见 [LaMemory 使用与验证](docs/lamemory-usage.md)。架构与后续阶段见 [架构方案](docs/lamemory-design.md) 和 [开发指南](docs/lamemory-development-guide.md)。
-
-`core/memory.py` 作为 `core/lamemory/LaMemoryService` 的兼容门面：
-
-- **原文留档**：SQLite 按用户、会话、轮次保存消息与完整工具结构；工作视图裁剪不改写证据
-- **长期记忆**：完整轮次创建幂等提取任务；主回复展示后有界处理，支持失败检查与重试
-- **主动管理**：`lamemory_store/search/update/forget` 工具绑定当前用户和来源，返回真实保存状态
-- **按需召回**：关键词检索返回有效记忆、来源和命中原因；更正保留历史版本，遗忘抑制旧来源重放
-- **上下文预算**：包含系统提示、工具 schema、当前请求和记忆；保留合法工具链，超限抛出明确错误
-
-数据默认保存至项目 `.myclaude/lamemory/`。不指定 session 时新建会话；使用相同用户可以跨会话召回，指定已有 session ID 可以恢复历史。可选工作摘要由 `compress()` 显式触发，旧 JSONL/Markdown 通过预览导入；默认不读取真实旧会话。M2/M3 已支持主题聚合、用户概览、增量整理与反馈验证的经验学习，启用方式见 [开发交付](docs/lamemory-m2-m3.md)；embedding 尚未实现。此前 DeepSeek `deepseek-flash` 已通过真实文本、工具回传与 M0/M1 记忆 smoke，结果见 [测试记录](benchmarks/providers/README.md)。
-
-```python
-from core import Memory
-
-memory = Memory()
-memory.add_message({"role": "user", "content": "你好"})
-# 构建带长期记忆的上下文
-messages = memory.build_context(system_prompt="你是一个助手")
+```text
+myClaude/
+├── core/
+│   ├── node.py                 # Node / Flow：同步路由、重试、回退
+│   ├── llm.py                  # 模型调用兼容入口
+│   ├── providers/              # 配置、供应商适配、消息与工具协议
+│   ├── memory.py               # 旧 Memory 接口兼容门面
+│   └── lamemory/
+│       ├── service.py          # 记忆生命周期与持久化任务
+│       ├── store.py            # SQLite 存储与版本迁移
+│       ├── extraction.py       # 提取结果校验
+│       ├── retrieval.py        # 关键词检索与排序
+│       ├── context.py          # 上下文预算与工具链完整性
+│       ├── hierarchy.py        # 分层摘要及来源失效传播
+│       ├── consolidation.py    # 精确去重与整理
+│       ├── procedural.py       # 经验候选、反馈、晋升与撤销
+│       └── tools.py            # 绑定身份的主动记忆工具
+├── tools/                      # 工具定义、执行器、安全策略、Skill 加载
+├── Agent/chatBot_with_memory/
+│   ├── main.py                 # Node / Flow 终端循环
+│   ├── runner.py               # 可注入、带事件回调的独立循环
+│   └── web.py                  # Web 交互入口
+├── tests/                      # 记忆行为、协议与集成回归
+├── benchmarks/                 # 隔离 smoke 与验证证据
+└── docs/                       # 架构、开发指南和使用说明
 ```
 
-### Node / Flow — 工作流编排
+建议从 `runner.py → tools/executor.py → core/lamemory/service.py → context.py` 阅读执行与记忆闭环，再看 `hierarchy.py / procedural.py` 的派生数据管理。
 
-`core/node.py` 实现了简洁的 DAG 工作流，支持条件分支、指数退避重试和节点回退：
+仓库另保留搜索摘要工作流（`Agent/workflow/`）和论文研究助手（`Agent/ResearchAssistant/`）作为组合示例。文件读写、搜索、命令执行等内置工具和 Markdown Skill 加载器为这些入口提供扩展能力。
 
-- **Node**：每个节点实现 `exec(payload)` 返回 `(action, next_payload)`
-- **Flow**：按 action 路由到下一个节点，构成有向无环图（DAG）
-- **链式语法**：用 `>>` 和 `-` 操作符定义节点关系
-- **重试机制**：`max_retries` + `wait` 实现指数退避（`wait × 2^cur_try`），仅对 `RetryableError` 触发重试
-- **回退机制**：`fallback_action` 指定重试耗尽后的回退路径，沿 DAG 跳回前序节点而非崩溃终止
-- **RetryableError**：可重试异常，用于区分瞬态错误（网络超时）与永久错误（用户取消）
+## 验证与实现边界
 
-```python
-from core import Node, Flow, RetryableError
-
-class SearchNode(Node):
-    def exec(self, payload):
-        try:
-            result = search(payload["query"])
-        except Exception as e:
-            raise RetryableError(f"搜索失败: {e}")  # 瞬态错误 → 触发重试
-        return "next", result
-
-# 重试耗尽后回退到 InputNode（重新输入关键词）
-search = SearchNode(max_retries=5, wait=2, fallback_action="fallback")
-input_node - "search" >> search
-search - "fallback" >> input_node  # 回退路径
-
-flow = Flow(input_node)
-flow.run({})
-```
-
-### LLM — 大模型调用
-
-`core/llm.py` 提供两个调用接口：
-
-- `call_llm_chat(prompt)` — 简单文本生成
-- `call_llm(messages, tools, system_prompt)` — 完整消息模式，支持 function calling 和 reasoning_content
-
-两者共用 `core/providers/` 适配层，可使用 `ModelConfig`、`ChatModel` 和实例级注册表。原有 `LLM_*` 配置继续有效，新增 `LLM_PROVIDER` 选择协议；`MEMORY_LLM_*` 可单独配置记忆提取和摘要模型。用法、模型能力覆盖和离线验证见 [模型提供商文档](docs/model-providers.md)。
-
-### Tools — 工具系统
-
-`tools/` 模块实现了完整的工具调用生命周期：
-
-| 工具 | 说明 |
-|------|------|
-| `read` | 读取文件内容，支持 offset/limit 分段读取 |
-| `write` | 写入/创建文件 |
-| `edit` | 替换文件中的文本片段 |
-| `ls` | 列出目录内容 |
-| `grep` | 搜索文件内容，支持正则、glob 过滤、上下文行 |
-| `bash` | 执行终端命令 |
-| `search` | DuckDuckGo 网络搜索 |
-| `paper_search.py` | 论文搜索与下载（arxiv API + PDF 批量下载） |
-| `latex_render.py` | LaTeX 渲染为 PDF（自动检测编译器） |
-
-
-```python
-from tools import get_tools, execute_tool
-
-# 获取工具列表（可直接传给 LLM API）
-tools = get_tools()
-
-# 执行单个工具
-result = execute_tool("ls", {"path": "."})
-```
-
-### SafetyGuard — 安全校验
-
-`tools/guard.py` 在工具执行前进行分级拦截：
-
-- **blocked**：绝对拦截（如 `rm -rf /`、写入系统目录）
-- **confirm**：需用户确认（如 `sudo`、删除文件、修改敏感配置）
-- **pass**：安全放行
-
-策略通过 `safety_policy.yaml` 配置，支持正则匹配 bash 命令和路径校验。
-
-### Skill — 技能系统
-
-`tools/skill_loader.py` 支持加载 Markdown frontmatter 格式的技能文件，并提供注册表（SkillRegistry）管理技能的注册、摘要生成与激活：
-
-```markdown
----
-name: hello
-description: 示例技能
----
-技能正文内容...
-```
-
-当前内置三个示例技能：
-
-| Skill | 说明 |
-|-------|------|
-| `hello` | 最简示例技能，演示 frontmatter 格式 |
-| `content-research-writer` | 内容调研与写作技能，按步骤调研并生成文章 |
-| `pdf-image-text-extractor` | PDF 文本与图片提取技能，基于 PyMuPDF |
-
-在带工具的对话机器人中，可通过 `activate_skill(name)` 工具动态激活技能，获取其完整操作指南后按步骤执行。
-
-## 🧪 框架应用 — ResearchAssistant
-
-`Agent/ResearchAssistant` 是基于本框架的 Node/Flow 工作流引擎搭建的**论文研究助手**，完整展示了框架能力的实际应用：从 DAG 编排、指数退避重试、节点回退，到 LLM 调用、工具集成、人机交互审批，全部使用框架原生能力实现。
-
-### 工作流 DAG
-
-```
-InputNode ──search──→ SearchNode ──select──→ SelectNode ──download──→ DownloadNode ──parse──→ ParseNode ──topic──→ TopicNode ──review──→ ReviewGateNode ──write──→ WritingNode ──render──→ RenderNode ──end──→ EndNode
-     ↑                     │                     ↑                       │
-     └───fallback_search───┘                     └───fallback_download───┘
-```
-
-- **搜索失败回退**：SearchNode 重试 5 次耗尽 → 回退到 InputNode，提示用户换关键词重新搜索
-- **下载失败回退**：DownloadNode 重试 5 次耗尽 → 回退到 SelectNode，重新筛选推荐论文 ID
-- **用户主动回退**：ReviewGateNode 中输入 `back` → 回退到 TopicNode 重新提出写作主题
-
-### 节点一览
-
-| 节点 | 职责 | 框架能力 |
-|------|------|---------|
-| InputNode | 提示用户输入搜索关键词 | DAG 起始节点，接收回退 payload 提示换关键词 |
-| SearchNode | 调用 arxiv API 搜索论文 | `RetryableError` + `max_retries=5` + `fallback_action` |
-| SelectNode | LLM 分析搜索结果，推荐论文 ID | `call_llm` 调用 + JSON 解析降级 |
-| DownloadNode | 逐篇下载 PDF（失败单篇重试 5 次） | `RetryableError` + 逐篇指数退避 + `fallback_action` |
-| ParseNode | 解析 PDF 为文本 | `RetryableError` + `max_retries=5` |
-| TopicNode | LLM 阅读论文，提出写作主题 | `call_llm` 调用 + JSON 解析降级 |
-| ReviewGateNode | 展示主题建议，用户选择/回退 | 人机交互审批点，支持 `back` 回退 |
-| WritingNode | LLM 生成 LaTeX 论文 | `call_llm` 调用 + LaTeX 内容清理 |
-| RenderNode | LaTeX 编译为 PDF | `RetryableError` + 区分瞬态/永久错误 |
-| EndNode | 输出最终报告 | 终止节点 |
-
-### 依赖的框架工具
-
-ResearchAssistant 使用了两个新增的内置工具：
-
-- **`paper_search.py`** — arxiv 论文搜索与 PDF 批量下载，基于 httpx 实现，支持搜索参数（关键词、排序、分页）和逐篇下载
-- **`latex_render.py`** — LaTeX 源码编译为 PDF，自动检测系统编译器（MiKTeX / TeX Live），运行两遍 pdflatex 确保引用正确
-
-### 运行
+离线回归使用临时目录、临时数据库和替代模型，避免改写真实会话数据：
 
 ```bash
-python Agent/ResearchAssistant/main.py
+uv run python -m unittest discover -s tests/lamemory -p 'test_*.py'
+uv run python -m unittest discover -s tests/providers -p 'test_*.py'
+uv run python -m benchmarks.lamemory.smoke --output /tmp/lamemory-fake-smoke.json
 ```
 
-交互示例：
-```
-📚 研究助手工作流
-流程: 输入关键词 → 搜索论文 → 选择下载 → 解析论文 → 提出主题 → 评审 → 写作 → 渲染PDF
-支持: 重试(指数退避) + 回退(搜索失败→重新输入, 下载失败→重新筛选)
-输入 'quit' 或 'exit' 退出
+最新[验证记录](benchmarks/lamemory/README.md)包含 69 项 LaMemory 行为回归、20 项 provider 测试，以及 DeepSeek `deepseek-flash` 的 M2/M3 在线交付 smoke：M2 9 项、M3 15 项检查通过，覆盖真实摘要、来源变更、经验提取、独立执行反馈晋升、跨会话召回和撤销。16 次模型调用共记录 13,891 tokens；原始证据与复现命令见验证记录。这是合成场景的功能验证，真实摘要质量的系统评估与复杂任务的经验迁移收益仍待验证。
 
-👤 输入研究主题关键词（输入 quit/exit退出）: large language model
-🔍 正在搜索论文: large language model
-  ✅ 找到 10 篇论文
-📋 分析搜索结果，推荐论文...
-  是否确认下载以上论文？(y/修改/n): y
-📥 下载 3 篇论文...
-📖 解析 3 篇论文...
-💡 分析论文内容，提出写作主题...
-📝 写作主题建议
-  👤 你的选择: 1
-✍️ 撰写论文: ...
-🖨️ 渲染 LaTeX 为 PDF...
-✅ PDF 渲染成功
+```bash
+# 在线 M2/M3 smoke：读取项目已配置的 DeepSeek 模型，使用临时数据库
+# output 使用新路径，避免覆盖既有证据
+uv run python -m benchmarks.lamemory.live_m2_m3 --output /tmp/lamemory-m2-m3-live-new.json
 ```
 
-## 📋 依赖
+当前运行方式为单机、串行任务消费。Embedding / 混合检索、自动主题聚类、并发后台 worker、跨机器同步和自动 Skill 生成尚未实现；完整任务对照基准也尚未运行，现有结果只支持对应范围内的行为验证。
 
-- Python ≥ 3.13
-- openai — LLM API 调用（OpenAI 格式）
-- httpx — HTTP 客户端（arxiv API 调用与 PDF 下载）
-- python-dotenv — 环境变量管理
-- ddgs — DuckDuckGo 搜索
-- pyyaml — YAML 解析
-- chardet — 编码检测
-- pymupdf — PDF 文本与图片提取
-
-## 📝 License
-
-本项目仅供学习实验使用。
+进一步阅读：[LaMemory 架构与实施方案](docs/lamemory-design.md) · [LaMemory 开发指南](docs/lamemory-development-guide.md) · [模型协议验证记录](benchmarks/providers/README.md)。
