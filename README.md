@@ -96,6 +96,8 @@ chat - "output" >> output
 
 SQLite 是当前持久化存储，数据表使用 `lamemory_` 前缀。默认数据库为项目内 `.myclaude/lamemory/lamemory.sqlite3`，已加入 Git 忽略。[`core/memory.py`](core/memory.py) 保留旧 `Memory` 接口，内部委托给 LaMemory。
 
+完整的数据表关系、记忆生成、更正、遗忘与召回链路见 [LaMemory 存储结构与记忆生命周期](docs/lamemory-storage-and-lifecycle.md)。
+
 ### 写入：完整轮次驱动，显式操作即时返回
 
 自动提取与主动管理共用同一个服务：
