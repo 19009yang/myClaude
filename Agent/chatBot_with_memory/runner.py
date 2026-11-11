@@ -3,7 +3,7 @@ import time
 from concurrent.futures import CancelledError
 
 from core.llm import call_llm
-from core.lamemory.tools import get_memory_tools
+from core.lamemory.integration.tools import get_memory_tools
 from tools.executor import ToolExecutor
 
 

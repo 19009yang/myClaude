@@ -2,8 +2,8 @@
 import json
 import math
 from typing import Protocol
-from .embedding_space import digest
-from .providers import ChatMemoryProvider
+from ..embedding.space import digest
+from ..generation.providers import ChatMemoryProvider
 
 
 class Reranker(Protocol):

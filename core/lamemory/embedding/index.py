@@ -3,10 +3,10 @@ import struct
 import math
 import time
 import uuid
-from .fusion import unit_vector
-from .retrieval_sources import documents, visible_ledger
-from .store import utc_now
-from .retrieval_types import error_kind
+from ..retrieval.fusion import unit_vector
+from ..retrieval.sources import documents, visible_ledger
+from ..storage.store import utc_now
+from ..retrieval.types import error_kind
 
 
 def pack(vector, dimensions):

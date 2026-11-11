@@ -4,9 +4,9 @@ import math
 import time
 from typing import Protocol
 from urllib.parse import urlsplit
-from .embedding_space import EmbeddingDescriptor, digest
-from .fusion import unit_vector
-from .retrieval_types import EmbeddingProviderError
+from .space import EmbeddingDescriptor, digest
+from ..retrieval.fusion import unit_vector
+from ..retrieval.types import EmbeddingProviderError
 
 
 class EmbeddingProvider(Protocol):

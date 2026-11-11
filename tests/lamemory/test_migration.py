@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 
 from common import MemoryTestCase
-from core.lamemory.migration import discover_legacy_paths, import_legacy, preview_legacy
+from core.lamemory.storage.legacy import discover_legacy_paths, import_legacy, preview_legacy
 from core.memory import Memory
 
 

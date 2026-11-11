@@ -62,7 +62,7 @@ LaMemory 以 **SQLite 为持久化存储，以原始消息为证据，以结构�
 | `lamemory_imports` | `user_id, session_id, batch_id, manifest_json` | 旧数据导入清单和批次幂等记录 |
 | `lamemory_migrations` | `version, applied_at` | 数据库迁移版本 |
 
-Schema 原文见 [001 初始表](../core/lamemory/migrations/001_initial.sql)、[002 分层摘要](../core/lamemory/migrations/002_hierarchy.sql)、[003 程序经验](../core/lamemory/migrations/003_procedural.sql)。`002` 已将 `lamemory_items.scope_kind` 扩展为 `user/session/project`，不能仅根据 `001` 判断当前范围。
+Schema 原文见 [001 初始表](../core/lamemory/storage/migrations/001_initial.sql)、[002 分层摘要](../core/lamemory/storage/migrations/002_hierarchy.sql)、[003 程序经验](../core/lamemory/storage/migrations/003_procedural.sql)。`002` 已将 `lamemory_items.scope_kind` 扩展为 `user/session/project`，不能仅根据 `001` 判断当前范围。
 
 ### 3.2 核心关系图
 
@@ -176,7 +176,7 @@ flowchart TD
   → 返回状态、memory_id 和来源
 ```
 
-主动工具定义见 [tools.py](../core/lamemory/tools.py)。模型不能通过工具参数选择其他用户或伪造来源。当前 `lamemory_store` 暴露内容和范围，类型使用 `store()` 默认的 `fact`；宿主 Python API 还能显式传入 `type`、`slot_key`、`occurred_at` 等字段。
+主动工具定义见 [tools.py](../core/lamemory/integration/tools.py)。模型不能通过工具参数选择其他用户或伪造来源。当前 `lamemory_store` 暴露内容和范围，类型使用 `store()` 默认的 `fact`；宿主 Python API 还能显式传入 `type`、`slot_key`、`occurred_at` 等字段。
 
 | 返回状态 | 含义 |
 |---|---|
@@ -189,7 +189,7 @@ flowchart TD
 
 ### 4.3 聚合摘要如何生成
 
-[hierarchy.py](../core/lamemory/hierarchy.py) 管理跨会话摘要：
+[hierarchy.py](../core/lamemory/generation/hierarchy.py) 管理跨会话摘要：
 
 ```text
 refresh_summaries() / consolidate() / define_topic()
@@ -209,7 +209,7 @@ refresh_summaries() / consolidate() / define_topic()
 
 ### 4.4 程序经验如何生成和晋升
 
-[procedural.py](../core/lamemory/procedural.py) 走独立链路：
+[procedural.py](../core/lamemory/generation/procedural.py) 走独立链路：
 
 ```text
 已完成任务轨迹
@@ -293,7 +293,7 @@ lamemory_forget(memory_id) → forget()
           主模型回答
 ```
 
-结构化记忆检索见 [retrieval.py](../core/lamemory/retrieval.py) 和 `LaMemoryService.search()`：
+结构化记忆检索见 [keyword.py](../core/lamemory/retrieval/keyword.py) 和 `LaMemoryService.search()`：
 
 1. 按 `user_id`、可见 `scope`、状态过滤，默认只取 `active`。可选过滤 `type`、`scope_kind`、`status`、`occurred_after/before`。
 2. 规范化查询与内容：英文/数字按词，中文按连续双字片段；单个中文字符也支持匹配。
@@ -309,7 +309,7 @@ lamemory_forget(memory_id) → forget()
 
 服务从历史中取**最近一条用户消息**作为查询，最多截取 `max_content_chars` 个字符。工具循环沿用该请求，不将工具输出作为新的事实检索查询。三类对象使用一次 retrieve，共享一次 query embedding。实例内仅缓存 64 条查询向量，不缓存最终排名或旧来源包；每次检索重读权威候选，在所有外部调用结束后统一复核。事务内 retrieval generation 与 SQLite data_version 都可观察，覆盖同连接索引发布、反馈、遗忘和跨连接变更。
 
-[context.py](../core/lamemory/context.py) 的预算分为两层：
+[context.py](../core/lamemory/integration/context.py) 的预算分为两层：
 
 ```text
 总输入预算 = context_window - reserved_output - safety_margin
@@ -347,13 +347,13 @@ lamemory_forget(memory_id) → forget()
 | 阅读目标 | 文件与入口 |
 |---|---|
 | 对外服务与主要事务 | [service.py](../core/lamemory/service.py)：`LaMemoryService` |
-| SQLite、迁移与原始消息 | [store.py](../core/lamemory/store.py)、[migrations/](../core/lamemory/migrations/) |
+| SQLite、迁移与原始消息 | [store.py](../core/lamemory/storage/store.py)、[migrations/](../core/lamemory/storage/migrations/) |
 | 数据对象与默认值 | [models.py](../core/lamemory/models.py)、[config.py](../core/lamemory/config.py) |
-| 抽取请求与字段校验 | [providers.py](../core/lamemory/providers.py)、[extraction.py](../core/lamemory/extraction.py) |
-| 关键词召回与预算组装 | [retrieval.py](../core/lamemory/retrieval.py)、[context.py](../core/lamemory/context.py) |
-| 分层摘要与精确整理 | [hierarchy.py](../core/lamemory/hierarchy.py)、[consolidation.py](../core/lamemory/consolidation.py) |
-| 程序经验与反馈 | [procedural.py](../core/lamemory/procedural.py) |
-| 主动工具与兼容入口 | [tools.py](../core/lamemory/tools.py)、[core/memory.py](../core/memory.py) |
+| 抽取请求与字段校验 | [providers.py](../core/lamemory/generation/providers.py)、[extraction.py](../core/lamemory/generation/extraction.py) |
+| 关键词召回与预算组装 | [keyword.py](../core/lamemory/retrieval/keyword.py)、[context.py](../core/lamemory/integration/context.py) |
+| 分层摘要与精确整理 | [hierarchy.py](../core/lamemory/generation/hierarchy.py)、[consolidation.py](../core/lamemory/generation/consolidation.py) |
+| 程序经验与反馈 | [procedural.py](../core/lamemory/generation/procedural.py) |
+| 主动工具与兼容入口 | [tools.py](../core/lamemory/integration/tools.py)、[core/memory.py](../core/memory.py) |
 | Agent / 终端 / Web 调用 | [runner.py](../Agent/chatBot_with_memory/runner.py)、[main.py](../Agent/chatBot_with_memory/main.py)、[web.py](../Agent/chatBot_with_memory/web.py) |
 
 本文以代码实现为依据，没有读取真实记忆数据库，也不报告真实用户记忆的数量或内容。相关离线行为测试位于 [tests/lamemory/](../tests/lamemory/)，使用临时目录、临时数据库和可替换模型，可运行：

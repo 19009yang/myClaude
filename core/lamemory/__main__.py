@@ -5,9 +5,9 @@ import json
 from pathlib import Path
 
 from . import LaMemoryConfig, LaMemoryService
-from .migration import discover_legacy_paths, import_legacy, preview_legacy
-from .providers import ChatMemoryProvider
-from .runtime import create_memory
+from .storage.legacy import discover_legacy_paths, import_legacy, preview_legacy
+from .generation.providers import ChatMemoryProvider
+from .integration.runtime import create_memory
 
 
 def main():

@@ -1,6 +1,6 @@
 import unittest
 from types import SimpleNamespace as NS
-from core.lamemory.embeddings import EmbeddingConfig, OpenAIEmbeddingProvider
+from core.lamemory.embedding.provider import EmbeddingConfig, OpenAIEmbeddingProvider
 
 
 class EmbeddingTests(unittest.TestCase):

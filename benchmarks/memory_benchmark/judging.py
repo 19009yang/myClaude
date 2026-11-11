@@ -4,7 +4,7 @@ import math
 from pathlib import Path
 import tempfile
 
-from core.lamemory.context import estimate_tokens
+from core.lamemory.integration.context import estimate_tokens
 from .sandbox import files_in
 from .settings import SUITE, load_json, save_json
 

@@ -4,9 +4,9 @@ from tools import get_tools, ToolExecutor, SafetyGuard
 from tools.skill_loader import get_default_registry
 from core import  call_llm, Node, Flow, shared, Memory
 from core.lamemory import LaMemoryConfig
-from core.lamemory.tools import get_memory_tools
+from core.lamemory.integration.tools import get_memory_tools
 from core.providers import ModelConfig
-from core.lamemory.runtime import maintain_embeddings
+from core.lamemory.integration.runtime import maintain_embeddings
 
 """
 带有长期记忆和工具调用的对话机器人工作流程(带skill激活功能)

@@ -2,8 +2,8 @@ from dataclasses import replace
 import unittest
 import test_embedding_index as index_cases
 from core.lamemory import LaMemoryService
-from core.lamemory.retrieval_types import RetrievalUnavailableError
-from core.lamemory.runtime import create_memory
+from core.lamemory.retrieval.types import RetrievalUnavailableError
+from core.lamemory.integration.runtime import create_memory
 
 
 class HybridTests(index_cases.IndexFixture):

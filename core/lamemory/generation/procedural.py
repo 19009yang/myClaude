@@ -4,8 +4,8 @@ import json
 import uuid
 from types import SimpleNamespace
 
-from .retrieval import normalized, rank
-from .store import utc_now
+from ..retrieval.keyword import normalized, rank
+from ..storage.store import utc_now
 
 
 class ProceduralMemory:

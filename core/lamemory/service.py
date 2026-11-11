@@ -6,13 +6,13 @@ import uuid
 from collections import OrderedDict
 
 from .config import LaMemoryConfig
-from .context import build_context, valid_chain
-from .extraction import normalize_time, validate_batch, validate_candidate
+from .integration.context import build_context, valid_chain
+from .generation.extraction import normalize_time, validate_batch, validate_candidate
 from .models import FlushResult, MemoryItem, SearchHit, WriteResult
-from .retrieval import normalized, rank
-from .store import SQLiteStore, utc_now
-from .hierarchy import Hierarchy
-from .procedural import ProceduralMemory
+from .retrieval.keyword import normalized, rank
+from .storage.store import SQLiteStore, utc_now
+from .generation.hierarchy import Hierarchy
+from .generation.procedural import ProceduralMemory
 
 
 def new_id(prefix):
@@ -37,7 +37,7 @@ class LaMemoryService:
         self.db = SQLiteStore(self.config.database_path)
         self.hierarchy = Hierarchy(self)
         self.procedural = ProceduralMemory(self)
-        from .embedding_index import EmbeddingIndex
+        from .embedding.index import EmbeddingIndex
         try:
             self.embedding_index = EmbeddingIndex(self, embedding_provider) if embedding_provider else None
         except Exception:
@@ -328,7 +328,7 @@ class LaMemoryService:
         return {"item": item.to_dict(), "sources": sources, "versions": versions}
 
     def retrieve(self, query, *, kinds=("item", "summary", "experience"), filters=None, top_k=None):
-        from .retrieval_engine import retrieve
+        from .retrieval.engine import retrieve
         return retrieve(self, query, kinds=kinds, filters=filters, top_k=top_k)
 
     def search(self, query, filters=None, top_k=None):
@@ -423,7 +423,7 @@ class LaMemoryService:
         return self.retrieve(query, kinds=("experience",), top_k=top_k).experiences
 
     def consolidate(self, *, max_jobs=100):
-        from .consolidation import consolidate
+        from .generation.consolidation import consolidate
         return consolidate(self, max_jobs=max_jobs)
 
     def build_context(self, system_prompt="", budget=None, *, tools=None):

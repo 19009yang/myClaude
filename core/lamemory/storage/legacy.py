@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 import shutil
 
-from .extraction import validate_candidate
+from ..generation.extraction import validate_candidate
 from .store import utc_now
 
 

@@ -1,6 +1,25 @@
 """离线协议验证替身；不产生可用于比较记忆效果的分数。"""
 import json
+import hashlib
 from types import SimpleNamespace
+from core.lamemory.embedding.space import EmbeddingDescriptor
+
+
+class FakeEmbedding:
+    """确定性假向量，只覆盖索引/查询协议，不表示真实语义质量。"""
+    def __init__(self):
+        self.descriptor = EmbeddingDescriptor("offline-fake-embedding", 8, "offline", "protocol-smoke")
+        self.usage_events = []
+
+    def embed_documents(self, texts, *, timeout):
+        self.usage_events.append({"usage": {"prompt_tokens": len(texts) * 10}})
+        return [[b + 1 for b in hashlib.sha256(t.encode()).digest()[:8]] for t in texts]
+
+    def embed_query(self, text, *, timeout):
+        return self.embed_documents([text], timeout=timeout)[0]
+
+    def close(self):
+        pass
 
 
 class FakeModel:

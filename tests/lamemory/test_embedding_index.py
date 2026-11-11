@@ -2,7 +2,7 @@ import tempfile
 import unittest
 from pathlib import Path
 from core.lamemory import LaMemoryConfig, LaMemoryService
-from core.lamemory.embedding_space import EmbeddingDescriptor
+from core.lamemory.embedding.space import EmbeddingDescriptor
 
 
 class FakeEmbedding:
@@ -89,7 +89,7 @@ class IndexTests(IndexFixture):
     def test_actual_input_prefix_truncation_and_hash(self):
         self.s.close()
         from dataclasses import replace
-        from core.lamemory.embedding_space import digest
+        from core.lamemory.embedding.space import digest
         self.fake.descriptor = replace(self.fake.descriptor, max_embedding_chars=5, document_prefix='D:')
         self.s = LaMemoryService(replace(self.cfg, max_embedding_chars=5), user_id='u', session_id='s', embedding_provider=self.fake)
         self.item('abcdef')

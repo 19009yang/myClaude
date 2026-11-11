@@ -4,7 +4,7 @@ from pathlib import Path
 import warnings
 
 from .lamemory import LaMemoryConfig, LaMemoryService
-from .lamemory.providers import ChatMemoryProvider
+from .lamemory.generation.providers import ChatMemoryProvider
 
 
 class Memory:
@@ -22,13 +22,13 @@ class Memory:
         cfg = config or LaMemoryConfig()
         if database_path is not None:
             cfg = replace(cfg, database_path=database_path)
-        from .lamemory.runtime import create_memory
+        from .lamemory.integration.runtime import create_memory
         self.service = create_memory(cfg, user_id=user_id, session_id=session_id,
             provider=provider if provider is not None else (None if offline else ChatMemoryProvider()),
             embedding_provider=embedding_provider, reranker=reranker, env=env, offline=offline,
             retrieval_mode=retrieval_mode, rerank=rerank)
         if memory_path is not None and legacy.is_file():
-            from .lamemory.migration import import_legacy
+            from .lamemory.storage.legacy import import_legacy
             import_legacy(self.service, session_path=legacy)
 
     @property

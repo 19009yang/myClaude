@@ -1,7 +1,7 @@
 """只从权威表物化当前可见、有效的候选，top-k 在此之后执行。"""
 import json
-from .embedding_space import digest
-from .retrieval_types import RetrievalDocument
+from ..embedding.space import digest
+from .types import RetrievalDocument
 
 
 def documents(service, descriptor, kinds=('item', 'summary', 'experience'), filters=None):

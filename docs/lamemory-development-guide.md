@@ -88,38 +88,26 @@ M0 不引入新架构也能独立提交。先为已经复现的缺陷添加回�
 
 ## 4. 模块组织与依赖
 
-建议目录：
+当前目录按功能分组（完整文件导航见 [模块导航](../core/lamemory/README.md)）：
 
 ```text
 core/
   memory.py                       # 兼容门面
   lamemory/
-    __init__.py
-    config.py                     # 显式配置与默认值
-    models.py                     # 数据对象、状态与结果
-    store.py                      # SQLite、事务、查询和迁移
-    service.py                    # 对 Agent 的统一入口
-    extraction.py                 # 原始对话 → 候选记忆
-    conflicts.py                  # 去重、更正和版本替代
-    retrieval.py                  # 召回、融合和过滤
-    context.py                    # 上下文预算与工作摘要
-    jobs.py                       # 持久化任务与重试
-    providers.py                  # chat / embedding / token 接口
-    migrations/
-      001_initial.sql
-    hierarchy.py                  # M2 新增
-    consolidation.py              # M2 新增
-    procedural.py                 # M3 新增
+    __init__.py                   # 公共导出
+    __main__.py                   # 维护 CLI
+    config.py                     # 配置与默认路径
+    models.py                     # 公共返回模型
+    service.py                    # 统一服务与事务编排
+    generation/                   # 提取、摘要、经验与整理
+    retrieval/                    # 关键词、候选、融合与重排
+    embedding/                    # 向量空间、provider、索引任务
+    storage/                      # SQLite 与旧数据导入
+      migrations/                 # 版本化 SQL
+    integration/                  # 上下文、主动工具与宿主工厂
 tests/
-  lamemory/
-    fixtures/
-    test_store.py
-    test_ingest.py
-    test_conflicts.py
-    test_retrieval.py
-    test_context.py
-    test_migration.py
-    test_chat_integration.py
+  lamemory/                       # 临时数据库行为与集成测试
+    fixtures/                     # 合成检索样本
 ```
 
 依赖方向：Agent / 工具 → `LaMemoryService` → 业务模块 → Store / Provider。业务模块不依赖终端 `input()` 或全局 `shared`；provider 不读写业务表；工具不直接拼 SQL。

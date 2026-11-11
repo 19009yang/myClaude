@@ -4,7 +4,7 @@ import json
 import math
 import time
 
-from core.lamemory.context import estimate_tokens
+from core.lamemory.integration.context import estimate_tokens
 from .settings import digest, load_json
 
 
@@ -22,6 +22,16 @@ class Prices:
                 value = row.get(name)
                 if not isinstance(value, (int, float)) or isinstance(value, bool) or not math.isfinite(value) or value < 0:
                     raise ValueError(f"{role}.{name}: 需要非负有限单价 / 1M tokens")
+        if "embedding" in self.data:
+            row = self.data["embedding"]
+            value = row.get("input")
+            if not isinstance(value, (int, float)) or isinstance(value, bool) or not math.isfinite(value) or value < 0:
+                raise ValueError("embedding.input: 需要非负有限单价 / 1M tokens")
+
+    def check_embedding(self, config):
+        row = self.data.get("embedding")
+        if not row or (row.get("provider"), row.get("model")) != (config.provider, config.model):
+            raise ValueError("hybrid 需要与实际 embedding 模型匹配的价格条目，请通过 --prices 指定")
 
     def check_models(self, configs):
         for role, cfg in configs.items():
@@ -31,6 +41,8 @@ class Prices:
 
     def cost(self, role, tokens):
         row = self.data[role]
+        if role == "embedding":
+            return tokens.get("input", 0) * row["input"] / 1_000_000
         return sum(tokens.get(k, 0) * row[k] / 1_000_000
                    for k in ("input", "output", "cache_read", "cache_write"))
 
@@ -60,6 +72,11 @@ class Ledger:
     def total(self):
         return sum(e["cost"] for e in self.events)
 
+    def reserve(self, cost):
+        if self.cost_exhausted or (self.max_cost is not None and self.total() + cost > self.max_cost):
+            self.cost_exhausted = True
+            raise CostLimit("达到费用预算；新请求未发送")
+
     def wrap(self, chat, role):
         def call(messages, tools=None, **kwargs):
             purpose = role
@@ -74,9 +91,7 @@ class Ledger:
                 raise ValueError("模型请求超过共同输入预算；未发送")
             max_output = kwargs.get("max_tokens") or chat.config.max_tokens
             reservation = self.prices.cost(role, {"input": prompt_estimate, "output": max_output})
-            if self.max_cost is not None and self.total() + reservation > self.max_cost:
-                self.cost_exhausted = True
-                raise CostLimit("达到费用预算；新请求未发送")
+            self.reserve(reservation)
             start = time.monotonic()
             event = {**self.tags, "role": role, "purpose": purpose,
                      "request_sha256": digest({"messages": messages, "tools": tools}),
@@ -106,6 +121,60 @@ class Ledger:
                 with self.path.open("a", encoding="utf-8") as f:
                     f.write(json.dumps(event, ensure_ascii=False, allow_nan=False) + "\n")
         return call
+
+    def wrap_embedding(self, provider, *, simulated=False):
+        """在真实请求前预留费用；索引重试与查询失败也逐次记账。"""
+        ledger = self
+
+        class CountedEmbedding:
+            descriptor = provider.descriptor
+
+            def invoke(self, texts, purpose, timeout):
+                materialized = texts if purpose == "embedding_documents" else [
+                    self.descriptor.query_prefix + texts[0]]
+                estimated = sum(estimate_tokens(t) for t in materialized)
+                reservation = 0 if simulated else ledger.prices.cost("embedding", {"input": estimated})
+                ledger.reserve(reservation)
+                event = {**ledger.tags, "role": "embedding", "purpose": purpose,
+                         "provider": "fake" if simulated else provider.config.provider,
+                         "model": self.descriptor.model, "space_id": self.descriptor.space_id,
+                         "request_sha256": digest(materialized), "documents": len(texts),
+                         "simulated": simulated, "raw_usage": {}, "tokens": {"input": estimated},
+                         "usage_mode": "reserved_estimate_failed_request", "status": "error"}
+                before = len(provider.usage_events)
+                start = time.monotonic()
+                try:
+                    result = (provider.embed_documents(texts, timeout=timeout) if purpose == "embedding_documents"
+                              else provider.embed_query(texts[0], timeout=timeout))
+                    event["status"] = "complete"
+                    event["usage_mode"] = "reserved_estimate_missing_usage"
+                    return result
+                except BaseException as exc:
+                    event["error_type"] = type(exc).__name__
+                    raise
+                finally:
+                    # Even invalid vectors can have billable usage from a completed HTTP request.
+                    events = provider.usage_events[before:]
+                    if events:
+                        usage = events[-1].get("usage", {})
+                        event["raw_usage"] = usage
+                        count = usage.get("prompt_tokens", usage.get("total_tokens"))
+                        if type(count) is int and count >= 0:
+                            event["tokens"] = {"input": count}
+                            event["usage_mode"] = "provider_usage"
+                    event["cost"] = 0 if simulated else ledger.prices.cost("embedding", event["tokens"])
+                    event["elapsed_seconds"] = time.monotonic() - start
+                    ledger.events.append(event)
+                    with ledger.path.open("a", encoding="utf-8") as f:
+                        f.write(json.dumps(event, ensure_ascii=False, allow_nan=False) + "\n")
+
+            def embed_documents(self, texts, *, timeout):
+                return self.invoke(texts, "embedding_documents", timeout)
+
+            def embed_query(self, text, *, timeout):
+                return self.invoke([text], "embedding_query", timeout)
+
+        return CountedEmbedding()
 
     def summary(self):
         buckets = defaultdict(lambda: {"calls": 0, "input": 0, "output": 0, "cache_read": 0,

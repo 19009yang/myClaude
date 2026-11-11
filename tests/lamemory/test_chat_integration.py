@@ -7,8 +7,8 @@ from unittest.mock import Mock, patch
 
 from common import MemoryTestCase
 from Agent.chatBot_with_memory.runner import ChatRunner
-from core.lamemory.providers import ChatMemoryProvider
-from core.lamemory.tools import get_memory_tools
+from core.lamemory.generation.providers import ChatMemoryProvider
+from core.lamemory.integration.tools import get_memory_tools
 from core.llm import call_llm
 from core.providers import ModelConfig
 from tools.builtins.tool_def import Tool

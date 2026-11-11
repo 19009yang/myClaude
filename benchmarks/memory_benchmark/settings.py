@@ -37,6 +37,7 @@ class Settings:
     judge_timeout: float = 120
     job_attempts: int = 3
     hierarchy: bool = True
+    retrieval_mode: str = "hybrid"
     sandbox: str = "seatbelt"
     docker_image: str = "python:3.13-slim"
     expected_calls_per_round: int = 3
@@ -46,6 +47,8 @@ class Settings:
     max_cost: float | None = None
 
     def __post_init__(self):
+        if self.retrieval_mode not in {"keyword", "hybrid"}:
+            raise ValueError("retrieval_mode 必须为 keyword/hybrid")
         if not self.groups or len(set(self.groups)) != len(self.groups) or set(self.groups) - {"none", "legacy", "lamemory"}:
             raise ValueError("groups 必须是 none/legacy/lamemory 的非空无重复子集")
         for key in ("repeats", "context_window", "max_output_tokens", "max_model_calls", "max_tool_calls",

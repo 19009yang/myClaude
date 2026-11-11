@@ -8,14 +8,16 @@
 
 `retrieve()` 返回 items/summaries/experiences/diagnostics；`search()` 等包装保留旧返回类型。`build_context()` 和 `lamemory_search` 使用一次 bundle，共用一次查询 embedding。通道宽度及重排前缀至少覆盖本次 top_k，最多 100。空白 hybrid 查询、top_k=0 或无有效向量不调用模型；关键词模式保留原有空查询概览行为。历史状态查询仅走关键词。排名元数据包含 keyword/semantic rank 与原分数、rrf_score、rerank_score、score_kind；分数不是可信度，不能跨种类、算法比较。
 
+文件路径相对于 `core/lamemory/`，另注明的仓库路径除外。完整目录见 [模块导航](../core/lamemory/README.md)。
+
 | 文件 | 核心职责 |
 |---|---|
-| `config.py`、`models.py`、`retrieval_types.py`、`fusion.py` | 算法约束、兼容返回、cosine 验证、稳定 RRF |
-| `retrieval_sources.py`、`retrieval_engine.py` | 权限/状态/来源检查、三类融合、实际模式与降级诊断 |
-| `embedding_space.py`、`embeddings.py` | 独立模型配置、空间指纹、SDK 适配、响应顺序与向量校验 |
-| `migrations/004_hybrid_retrieval.sql`、`embedding_index.py` | 事务内失效账本、独立持久化任务、回填、CAS 发布、repair、retry |
-| `reranking.py`、`runtime.py` | 可选 LLM JSON 重排、独立配置、客户端所有权、宿主工厂 |
-| `service.py`、`hierarchy.py`、`context.py`、`tools.py`、`core/memory.py` | 兼容接口、有效主题、预算渲染、主动工具与门面 |
+| `config.py`、`models.py`、`retrieval/types.py`、`retrieval/fusion.py` | 算法约束、兼容返回、cosine 验证、稳定 RRF |
+| `retrieval/sources.py`、`retrieval/engine.py` | 权限/状态/来源检查、三类融合、实际模式与降级诊断 |
+| `embedding/space.py`、`embedding/provider.py` | 独立模型配置、空间指纹、SDK 适配、响应顺序与向量校验 |
+| `storage/migrations/004_hybrid_retrieval.sql`、`embedding/index.py` | 事务内失效账本、独立持久化任务、回填、CAS 发布、repair、retry |
+| `retrieval/reranking.py`、`integration/runtime.py` | 可选 LLM JSON 重排、独立配置、客户端所有权、宿主工厂 |
+| `service.py`、`generation/hierarchy.py`、`integration/context.py`、`integration/tools.py`、`core/memory.py` | 兼容接口、有效主题、预算渲染、主动工具与门面 |
 | 终端、Web、维护 CLI | 相同工厂与开关、回复后索引维护、检索与覆盖率展示 |
 | `benchmarks/lamemory/hybrid_*.py`、新测试及 fixture | 临时合成数据验收、真实 smoke 与可重复检索评测 |
 
@@ -82,7 +84,7 @@ python -m Agent.chatBot_with_memory.web --database /tmp/lamemory-demo.sqlite3 --
 import tempfile
 from pathlib import Path
 from core.lamemory import LaMemoryConfig
-from core.lamemory.runtime import create_memory
+from core.lamemory.integration.runtime import create_memory
 
 with tempfile.TemporaryDirectory() as directory:
     config = LaMemoryConfig(database_path=Path(directory) / 'demo.sqlite3')

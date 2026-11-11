@@ -18,8 +18,8 @@ import uuid
 from Agent.chatBot_with_memory.main import SYSTEM_PROMPT
 from Agent.chatBot_with_memory.runner import ChatRunner
 from core.lamemory import LaMemoryConfig, LaMemoryService
-from core.lamemory.providers import ChatMemoryProvider
-from core.lamemory.runtime import create_memory, maintain_embeddings
+from core.lamemory.generation.providers import ChatMemoryProvider
+from core.lamemory.integration.runtime import create_memory, maintain_embeddings
 from core.llm import call_llm
 from core.providers import ModelConfig, create_default_registry
 from tools import get_tools, get_default_registry

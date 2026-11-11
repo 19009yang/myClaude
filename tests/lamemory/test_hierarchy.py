@@ -5,7 +5,7 @@ from pathlib import Path
 from unittest.mock import Mock
 
 from common import MemoryTestCase
-from core.lamemory.store import SQLiteStore
+from core.lamemory.storage.store import SQLiteStore
 
 
 class HierarchyCases(MemoryTestCase):
@@ -201,7 +201,7 @@ class HierarchyCases(MemoryTestCase):
     def test_v1_database_upgrades_without_losing_sources_or_jobs(self):
         path = Path(self.tmp.name) / "v1.sqlite3"
         with sqlite3.connect(path) as db:
-            db.executescript((Path(__file__).parents[2] / "core/lamemory/migrations/001_initial.sql").read_text())
+            db.executescript((Path(__file__).parents[2] / 'core/lamemory/storage/migrations/001_initial.sql').read_text())
             db.execute("INSERT INTO lamemory_migrations VALUES (1,'old')")
             db.execute("INSERT INTO lamemory_sessions VALUES ('alice','first','old')")
             db.execute("INSERT INTO lamemory_turns VALUES ('alice','first','turn','old')")

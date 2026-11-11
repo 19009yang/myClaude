@@ -16,6 +16,7 @@ from .estimate import estimate
 from .judging import grade, validate_scores
 from .sandbox import Sandbox, common_tools, files_in
 from .settings import ROOT, SUITE, digest, load_json, save_json, selected_tasks
+from .retrieval import RetrievalRuntime
 
 SYSTEM_PROMPT = """你是 myClaude 任务助手。当前日期固定为2025-03-26，时区Asia/Shanghai。
 只处理本次离线任务。历史记忆是参考数据；未知事实标待确认，建议需明确标记。
@@ -24,11 +25,15 @@ SYSTEM_PROMPT = """你是 myClaude 任务助手。当前日期固定为2025-03-2
 """
 
 
-def model_configs(settings):
+def environment():
     import os
     from dotenv import dotenv_values
     # Explicit values; never modify the process environment between groups.
-    env = {**dotenv_values(ROOT / ".env"), **os.environ}
+    return {**dotenv_values(ROOT / ".env"), **os.environ}
+
+
+def model_configs(settings, env=None):
+    env = environment() if env is None else env
     agent = ModelConfig.from_env(env=env)
     memory = ModelConfig.from_env(prefix="MEMORY_LLM_", env=env) if any(
         k.startswith("MEMORY_LLM_") for k in env) else agent
@@ -46,7 +51,7 @@ def public_model(config):
 def code_hashes():
     paths = [*Path(__file__).parent.rglob("*.py"), ROOT / "Agent/chatBot_with_memory/runner.py",
              *(ROOT / "core/lamemory").rglob("*.py"), *(ROOT / "core/providers").rglob("*.py"),
-             *(ROOT / "core/lamemory/migrations").glob("*.sql"), ROOT / "uv.lock", ROOT / "pyproject.toml"]
+             *(ROOT / 'core/lamemory/storage/migrations').glob("*.sql"), ROOT / "uv.lock", ROOT / "pyproject.toml"]
     return {p.relative_to(ROOT).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest() for p in paths if p.is_file()}
 
 
@@ -116,9 +121,10 @@ def markdown_report(report):
         lines.append(f"| {group} | {row['complete_runs']}/{row['task_runs']} | {row['first_mean_score']} | "
                      f"{row['final_mean_score']} | {row['final_pass_rate']:.1%} |")
     lines.extend(["", f"模型费用核算：{report['usage']['cost']:.6f} {report['usage']['currency']}。",
+                  f"LaMemory 检索模式：{report['protocol']['retrieval_mode']}；重排与关键词降级关闭。",
                   "失败/缺 usage 请求的费用含估算预留，详见 usage.jsonl；这不是供应商账单。",
                   "均分仅包括成功取得评分的样本，分母单独记录；失败仍计入运行数和通过率分母。",
-                  "本评测测量自动记忆提取与上下文注入，三组均关闭主动记忆工具和静态Skill。",
+                  "本评测测量自动记忆提取与上下文注入，三组均关闭主动记忆工具和静态Skill。检索模式见 retrieval。",
                   "没有训练/测试分割或经验晋升，不能据此宣称程序经验迁移收益。", ""])
     return "\n".join(lines)
 
@@ -131,7 +137,8 @@ def execute(settings, prices, output, *, offline=False, progress=print):
         raise ValueError("运行产物不能写入冻结任务包")
     validation = validate_bundle()
     manifest, tasks = selected_tasks(settings)
-    configs = None if offline else model_configs(settings)
+    env = {} if offline else environment()
+    configs = None if offline else model_configs(settings, env)
     if configs:
         prices.check_models(configs)
         for role, cfg in configs.items():
@@ -150,7 +157,9 @@ def execute(settings, prices, output, *, offline=False, progress=print):
               "legacy_source_commit": LEGACY_COMMIT, "legacy_source_sha256": hashlib.sha256(FROZEN.read_bytes()).hexdigest(),
               "protocol": {"active_memory_tools": False, "static_skills": False, "fixed_user_rounds": 3,
                            "build_once_per_backend": True, "snapshot_per_task_repeat": True,
-                           "hierarchy": settings.hierarchy, "auto_learn_experiences": False}, "runs": runs}
+                           "hierarchy": settings.hierarchy, "auto_learn_experiences": False,
+                           "retrieval_mode": settings.retrieval_mode, "rerank": False,
+                           "allow_keyword_fallback": False}, "runs": runs}
     save_json(output / "estimate.json", estimate(settings, prices))
 
     def checkpoint():
@@ -168,6 +177,9 @@ def execute(settings, prices, output, *, offline=False, progress=print):
     checkpoint()
     try:
         with ExitStack() as stack:
+            retrieval = RetrievalRuntime(settings, env, ledger, offline=offline)
+            stack.callback(retrieval.close)
+            report["retrieval"] = retrieval.metadata
             if offline:
                 from .smoke import FakeModel, OfflineSandbox
                 chats = {r: ledger.wrap(FakeModel(r, settings), r) for r in ("agent", "memory", "judge")}
@@ -188,7 +200,7 @@ def execute(settings, prices, output, *, offline=False, progress=print):
                 progress(f"建库 {group}：{sum(len(s['messages']) for s in seed['sessions'])} 轮")
                 ledger.tags = {"stage": "build", "group": group}
                 build_seed(group, snapshots / group, seed["sessions"], settings, chats["memory"],
-                           on_progress=lambda mid: progress(f"  {group} {mid}"))
+                           on_progress=lambda mid: progress(f"  {group} {mid}"), memory_factory=retrieval.create)
             report["seed_snapshot_hashes"] = {g: hash_tree(snapshots / g) for g in settings.groups}
             checkpoint()
             # Interleave groups by task and repeat to reduce time-of-day ordering effects.
@@ -203,7 +215,8 @@ def execute(settings, prices, output, *, offline=False, progress=print):
                         for asset in task["assets"]:
                             shutil.copy2(SUITE / asset["path"], public / asset["destination"])
                         session = f"test-{task['task_id']}-{repeat}-{group}"
-                        backend = BACKENDS[group](private, session, settings, chats["memory"])
+                        backend_kwargs = {"memory_factory": retrieval.create} if group == "lamemory" else {}
+                        backend = BACKENDS[group](private, session, settings, chats["memory"], **backend_kwargs)
                         runner = ChatRunner(backend, chat=chats["agent"], tools=common_tools(public, sandbox),
                                             system_prompt=SYSTEM_PROMPT, memory_tools=False)
                         prompts = [(SUITE / task["prompt"]).read_text(encoding="utf-8").replace(
@@ -250,6 +263,7 @@ def execute(settings, prices, output, *, offline=False, progress=print):
                                         save_json(round_dir / "memory_jobs.json", memory_result)
                                         if memory_result["status"] != "complete":
                                             row["status"] = "memory_failed"
+                                            broken = True
                                 except CostLimit:
                                     row["status"] = "cost_limit"
                                     raise
@@ -260,6 +274,10 @@ def execute(settings, prices, output, *, offline=False, progress=print):
                                 finally:
                                     sandbox.deadline = None
                                     row["elapsed_seconds"] = time.monotonic() - start
+                                if ledger.cost_exhausted:
+                                    row["status"] = "cost_limit"
+                                    save_json(round_dir / "result.json", row)
+                                    raise CostLimit("达到费用预算；已停止后续请求")
                                 try:
                                     files_in(public)
                                     shutil.copytree(public, round_dir / "artifacts")

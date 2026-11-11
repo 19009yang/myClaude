@@ -13,7 +13,7 @@ from urllib.parse import urlsplit
 
 from Agent.chatBot_with_memory.runner import ChatRunner
 from core.lamemory import LaMemoryConfig, LaMemoryService
-from core.lamemory.providers import ChatMemoryProvider
+from core.lamemory.generation.providers import ChatMemoryProvider
 from core.providers import ModelConfig, ProviderConfigError, create_default_registry
 
 

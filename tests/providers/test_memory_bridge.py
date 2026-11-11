@@ -10,7 +10,7 @@ from openai import OpenAI
 
 from Agent.chatBot_with_memory.runner import ChatRunner
 from core.lamemory import LaMemoryConfig, LaMemoryService
-from core.lamemory.providers import ChatMemoryProvider
+from core.lamemory.generation.providers import ChatMemoryProvider
 from core.providers import ChatModel, ModelConfig
 from test_protocols import completion
 

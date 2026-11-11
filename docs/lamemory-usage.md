@@ -25,7 +25,7 @@ python -m Agent.chatBot_with_memory.main --user local-user --session session-exa
 
 ```python
 from core.lamemory import LaMemoryConfig, LaMemoryService
-from core.lamemory.providers import ChatMemoryProvider
+from core.lamemory.generation.providers import ChatMemoryProvider
 
 config = LaMemoryConfig(database_path=".myclaude/example.sqlite3")
 with LaMemoryService(config, user_id="local-user", session_id="example",

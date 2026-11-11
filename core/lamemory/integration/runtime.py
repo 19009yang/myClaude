@@ -2,10 +2,10 @@
 from dataclasses import replace
 import os
 import time
-from .config import LaMemoryConfig
-from .embeddings import EmbeddingConfig, OpenAIEmbeddingProvider
-from .reranking import ChatReranker
-from .service import LaMemoryService
+from ..config import LaMemoryConfig
+from ..embedding.provider import EmbeddingConfig, OpenAIEmbeddingProvider
+from ..retrieval.reranking import ChatReranker
+from ..service import LaMemoryService
 
 
 def boolean(value):

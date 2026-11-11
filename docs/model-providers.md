@@ -100,7 +100,7 @@ DEEPSEEK_API_KEY=your-memory-key
 程序中可以传入独立配置，避免依赖进程环境：
 
 ```python
-from core.lamemory.providers import ChatMemoryProvider
+from core.lamemory.generation.providers import ChatMemoryProvider
 
 memory_provider = ChatMemoryProvider(model_config=config)
 ```

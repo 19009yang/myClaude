@@ -7,9 +7,9 @@ from pathlib import Path
 import time
 
 from core.lamemory import LaMemoryConfig, LaMemoryService
-from core.lamemory.context import estimate_tokens, MESSAGE_KEYS, valid_chain
+from core.lamemory.integration.context import estimate_tokens, MESSAGE_KEYS, valid_chain
 from core.lamemory.models import BudgetError, ContextResult
-from core.lamemory.providers import ChatMemoryProvider
+from core.lamemory.generation.providers import ChatMemoryProvider
 from .settings import save_json
 
 FROZEN = Path(__file__).parent / "frozen/legacy.py"
@@ -59,31 +59,47 @@ def memory_config(directory, settings):
     return LaMemoryConfig(database_path=directory / "lamemory.sqlite3",
                           context_window=settings.context_window, reserved_output=settings.max_output_tokens,
                           memory_token_budget=settings.memory_token_budget,
+                          retrieval_mode=settings.retrieval_mode, allow_keyword_fallback=False,
                           provider_timeout_seconds=settings.memory_timeout,
                           job_max_attempts=settings.job_attempts, auto_learn_experiences=False)
 
 
 class LaMemory:
-    def __init__(self, directory, session, settings, chat):
+    def __init__(self, directory, session, settings, chat, *, memory_factory=None):
         self.settings = settings
         self.config = memory_config(directory, settings)
         self.provider = ChatMemoryProvider(chat=chat)
-        self.service = LaMemoryService(self.config, user_id="memory-benchmark-user", session_id=session,
-                                       provider=self.provider)
+        factory = memory_factory or LaMemoryService
+        self.service = factory(self.config, user_id="memory-benchmark-user", session_id=session,
+                               provider=self.provider)
+        self.config = self.service.config
 
     def append_message(self, message):
         return self.service.append_message(message)
 
     def build_context(self, *args, **kwargs):
+        if self.config.retrieval_mode == "hybrid":
+            status = self.service.embedding_status()
+            if status["missing"] or status["invalid_vectors"] or status["failed"]:
+                raise RuntimeError("LaMemory 向量索引不完整；不能作为 hybrid 任务继续运行")
         return self.service.build_context(*args, **kwargs)
 
     def commit_turn(self):
         self.service.commit_turn()
 
-    def flush(self, timeout=None):
-        result = self.service.flush(min(self.settings.memory_timeout, timeout)
-                                    if timeout is not None else self.settings.memory_timeout)
-        return {**vars(result), "jobs": self.service.jobs()}
+    def flush(self, timeout=None, *, index=True):
+        deadline = time.monotonic() + (min(self.settings.memory_timeout, timeout)
+                                       if timeout is not None else self.settings.memory_timeout)
+        result = self.service.flush(max(0, deadline - time.monotonic()))
+        evidence = {**vars(result), "jobs": self.service.jobs()}
+        if index and result.status == "complete" and self.config.retrieval_mode == "hybrid":
+            remaining = deadline - time.monotonic()
+            embedding = (self.service.flush_embeddings(timeout=remaining) if remaining > 0 else
+                         {"status": "timeout", **self.service.embedding_status()})
+            evidence.update(embedding=embedding, embedding_jobs=self.service.embedding_index.jobs())
+            if embedding["status"] != "complete":
+                evidence["status"] = embedding["status"]
+        return evidence
 
     def close(self):
         self.service.close()
@@ -162,13 +178,14 @@ class Legacy(NoMemory):
 BACKENDS = {"none": NoMemory, "legacy": Legacy, "lamemory": LaMemory}
 
 
-def build_seed(group, directory, sessions, settings, chat, on_progress=None):
+def build_seed(group, directory, sessions, settings, chat, on_progress=None, *, memory_factory=None):
     """Seed each user message as a complete turn, retaining message provenance."""
     directory.mkdir(parents=True)
     mapping, results = {}, []
     started = time.monotonic()
     for session in sessions:
-        backend = BACKENDS[group](directory, session["session_id"], settings, chat)
+        kwargs = {"memory_factory": memory_factory} if group == "lamemory" else {}
+        backend = BACKENDS[group](directory, session["session_id"], settings, chat, **kwargs)
         try:
             for message in session["messages"]:
                 mid = backend.append_message({"role": "user", "content": message["content"]})
@@ -177,7 +194,7 @@ def build_seed(group, directory, sessions, settings, chat, on_progress=None):
                                                    "content_sha256": hashlib.sha256(message["content"].encode()).hexdigest()}
                 backend.append_message({"role": "assistant", "content": "已收到。"})
                 backend.commit_turn()
-                result = backend.flush()
+                result = backend.flush(index=False) if group == "lamemory" else backend.flush()
                 results.append({"message_id": message["message_id"], **result})
                 save_json(directory / "seed_evidence.json", mapping)
                 save_json(directory / "seed_jobs.json", results)
@@ -187,15 +204,19 @@ def build_seed(group, directory, sessions, settings, chat, on_progress=None):
                     on_progress(message["message_id"])
         finally:
             backend.close()
-    if group == "lamemory" and settings.hierarchy:
-        backend = BACKENDS[group](directory, "seed-maintenance", settings, chat)
+    if group == "lamemory":
+        backend = BACKENDS[group](directory, "seed-maintenance", settings, chat, memory_factory=memory_factory)
         try:
-            backend.service.refresh_summaries()
+            if settings.hierarchy:
+                backend.service.refresh_summaries()
             result = backend.flush()
-            save_json(directory / "hierarchy_jobs.json", result)
+            save_json(directory / "maintenance_jobs.json", result)
+            if settings.hierarchy:
+                save_json(directory / "hierarchy_jobs.json", result)
             if result["status"] != "complete":
-                raise RuntimeError("LaMemory 分层摘要未完成，不能冻结快照")
+                raise RuntimeError("LaMemory 分层摘要或向量索引未完成，不能冻结快照")
         finally:
             backend.close()
     save_json(directory / "snapshot.json", {"group": group, "status": "complete",
+                                             "retrieval_mode": settings.retrieval_mode if group == "lamemory" else group,
                                              "seed_turns": len(mapping), "elapsed_seconds": time.monotonic() - started})

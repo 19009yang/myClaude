@@ -1,5 +1,5 @@
 import unittest
-from core.lamemory.fusion import cosine, rrf, unit_vector
+from core.lamemory.retrieval.fusion import cosine, rrf, unit_vector
 
 
 class FusionTests(unittest.TestCase):

@@ -1,5 +1,5 @@
 """有界离线整理：精确去重、传播已确定状态、刷新摘要和报告积压。"""
-from .store import utc_now
+from ..storage.store import utc_now
 
 
 def consolidate(service, *, max_jobs=100):

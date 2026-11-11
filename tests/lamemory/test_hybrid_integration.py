@@ -8,9 +8,9 @@ from unittest.mock import patch
 from types import SimpleNamespace as NS
 import test_embedding_index as index_cases
 from core.lamemory import LaMemoryService
-from core.lamemory.embedding_space import EmbeddingDescriptor
-from core.lamemory.runtime import create_memory
-from core.lamemory.tools import get_memory_tools
+from core.lamemory.embedding.space import EmbeddingDescriptor
+from core.lamemory.integration.runtime import create_memory
+from core.lamemory.integration.tools import get_memory_tools
 from core.lamemory.__main__ import main
 from Agent.chatBot_with_memory.runner import ChatRunner
 from Agent.chatBot_with_memory.web import WebApp
@@ -174,7 +174,7 @@ class IntegrationTests(index_cases.IndexFixture):
     def test_sdk_http_transport(self):
         import httpx
         from openai import OpenAI
-        from core.lamemory.embeddings import EmbeddingConfig, OpenAIEmbeddingProvider
+        from core.lamemory.embedding.provider import EmbeddingConfig, OpenAIEmbeddingProvider
         requests = []
         def transport(request):
             requests.append(json.loads(request.content))
@@ -190,8 +190,8 @@ class IntegrationTests(index_cases.IndexFixture):
     def test_v2_v3_upgrade_and_ledger(self):
         import sqlite3
         from pathlib import Path
-        from core.lamemory.store import SQLiteStore
-        directory = Path(__file__).parents[2]/'core/lamemory/migrations'
+        from core.lamemory.storage.store import SQLiteStore
+        directory = Path(__file__).parents[2]/'core/lamemory/storage/migrations'
         for version in (2, 3):
             path = self.cfg.database_path.parent/('old-v'+str(version)+'.db')
             with sqlite3.connect(path) as db:
@@ -255,7 +255,7 @@ class IntegrationTests(index_cases.IndexFixture):
         env = {'LAMEMORY_RETRIEVAL_MODE': 'hybrid', 'LAMEMORY_EMBEDDING_MODEL': 'test',
                'LAMEMORY_EMBEDDING_BASE_URL': 'http://fixture.invalid/v1', 'LAMEMORY_EMBEDDING_DIMENSIONS': '2',
                'LAMEMORY_EMBEDDING_NAMESPACE': 'v1'}
-        with patch('core.lamemory.runtime.OpenAIEmbeddingProvider', side_effect=AssertionError('no SDK')):
+        with patch('core.lamemory.integration.runtime.OpenAIEmbeddingProvider', side_effect=AssertionError('no SDK')):
             with create_memory(self.cfg, env=env, offline=True, select_space=True, user_id='u', session_id='s') as memory:
                 self.assertIsNotNone(memory.embedding_status()['space_id'])
             with create_memory(self.cfg, env=env, offline=True, user_id='u', session_id='s') as memory:
@@ -269,7 +269,7 @@ class IntegrationTests(index_cases.IndexFixture):
         with create_memory(self.cfg, env={}, retrieval_mode='hybrid', embedding_provider=fake, user_id='u', session_id='s'):
             pass
         fake.close.assert_not_called()
-        with patch('core.lamemory.runtime.OpenAIEmbeddingProvider', side_effect=AssertionError('keyword must not construct SDK')):
+        with patch('core.lamemory.integration.runtime.OpenAIEmbeddingProvider', side_effect=AssertionError('keyword must not construct SDK')):
             facade = Memory(config=self.cfg, user_id='u', session_id='s', env={})
             facade.close()
 

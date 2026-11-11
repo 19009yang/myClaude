@@ -15,6 +15,7 @@ from benchmarks.memory_benchmark.run import execute, summarize_runs, validate_bu
 from benchmarks.memory_benchmark.sandbox import Sandbox, common_tools, files_in
 from benchmarks.memory_benchmark.settings import Settings, SUITE, load_json
 from benchmarks.memory_benchmark.smoke import FakeModel, OfflineSandbox
+from benchmarks.memory_benchmark.retrieval import RetrievalRuntime
 
 PRICES = Path(__file__).resolve().parents[2] / "benchmarks/memory_benchmark/prices.deepseek-flash.json"
 
@@ -24,6 +25,7 @@ class AccountingTests(unittest.TestCase):
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
         self.prices = Prices(PRICES)
+        self.prices.data["embedding"] = {"provider": "openai-compatible", "model": "test-embedding", "input": 0.1}
         self.ledger = Ledger(Path(self.tmp.name) / "usage.jsonl", self.prices)
 
     def model(self, response=None, error=None):
@@ -105,11 +107,15 @@ class ProtocolTests(unittest.TestCase):
             with self.subTest(group=group), tempfile.TemporaryDirectory() as tmp:
                 directory = Path(tmp) / group
                 model = FakeModel("memory", settings)
-                build_seed(group, directory, sessions, settings, model)
+                ledger = Ledger(Path(tmp) / "usage.jsonl", Prices(PRICES))
+                retrieval = RetrievalRuntime(settings, {}, ledger, offline=True)
+                self.addCleanup(retrieval.close)
+                build_seed(group, directory, sessions, settings, model, memory_factory=retrieval.create)
                 mapping = load_json(directory / "seed_evidence.json")
                 self.assertEqual(set(mapping), {"X1", "X2"})
                 self.assertEqual(mapping["X1"]["content_sha256"], hashlib.sha256("我住北京。".encode()).hexdigest())
-                backend = BACKENDS[group](directory, "fresh", settings, model)
+                kwargs = {"memory_factory": retrieval.create} if group == "lamemory" else {}
+                backend = BACKENDS[group](directory, "fresh", settings, model, **kwargs)
                 try:
                     backend.append_message({"role": "user", "content": "爸爸生日是什么时候？"})
                     context = backend.build_context("共同规则")
@@ -209,6 +215,13 @@ class ProtocolTests(unittest.TestCase):
             self.assertEqual(len(report["runs"]), 24)
             self.assertEqual(sum(len(r["rounds"]) for r in report["runs"]), 72)
             self.assertEqual(report["mode"], "offline_smoke")
+            self.assertEqual(report["retrieval"]["mode"], "hybrid")
+            self.assertTrue(report["retrieval"]["simulated"])
+            usage = [json.loads(line) for line in (output / "usage.jsonl").read_text().splitlines()]
+            embedding = [e for e in usage if e["role"] == "embedding"]
+            self.assertTrue(any(e["purpose"] == "embedding_documents" and e["stage"] == "build" for e in embedding))
+            self.assertTrue(any(e["purpose"] == "embedding_query" and e["stage"] == "online" for e in embedding))
+            self.assertTrue(all(e["group"] == "lamemory" and e["simulated"] for e in embedding))
             for group in report["groups"].values():
                 self.assertEqual(group["complete_runs"], 8)
                 self.assertEqual(group["final_mean_score"], 0)

@@ -2,8 +2,8 @@
 from unittest.mock import Mock, patch
 
 from common import MemoryTestCase
-from core.lamemory.providers import ChatMemoryProvider
-from core.lamemory.tools import get_memory_tools
+from core.lamemory.generation.providers import ChatMemoryProvider
+from core.lamemory.integration.tools import get_memory_tools
 
 
 class ProceduralCases(MemoryTestCase):

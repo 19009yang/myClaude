@@ -17,12 +17,13 @@ def main(argv=None):
     parser.add_argument("--groups", nargs="+", choices=("none", "legacy", "lamemory"))
     parser.add_argument("--tasks", nargs="+")
     parser.add_argument("--repeats", type=int)
+    parser.add_argument("--retrieval-mode", choices=("keyword", "hybrid"), help="LaMemory 检索模式，默认 hybrid")
     parser.add_argument("--max-cost", type=float, help="费用预算，币种与 prices 一致；按请求预留估算限制")
     parser.add_argument("--output", type=Path, help="estimate 是 JSON 文件；smoke/run 是新建的运行目录")
     args = parser.parse_args(argv)
     try:
         settings = read_settings(args.config, groups=args.groups, tasks=args.tasks, repeats=args.repeats,
-                                 max_cost=args.max_cost)
+                                 max_cost=args.max_cost, retrieval_mode=args.retrieval_mode)
         prices = Prices(args.prices)
         if args.mode == "estimate":
             from .run import validate_bundle

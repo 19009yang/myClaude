@@ -2,7 +2,7 @@
 
 这个运行器使用 `benchmarks/memory_task` 冻结的 8 题、历史种子、固定追问和评分标准，比较历史 Markdown 算法（`legacy`）与 LaMemory（`lamemory`），默认加上无长期记忆基线（`none`）。不修改任务资产，也不访问 `core/chat_memory/` 或默认 LaMemory 数据库。
 
-已完成的是运行脚本与离线验证。尚未执行真实模型的完整对照，不能将离线占位分数解释成记忆效果。
+已完成的是运行脚本与离线验证。LaMemory 默认使用 **hybrid：关键词 + 真实 embedding 余弦相似度召回 + RRF 融合**。尚未执行真实模型的完整对照，不能将离线占位分数解释成记忆效果。
 
 ## 运行
 
@@ -19,16 +19,41 @@
 .venv/bin/python -m benchmarks.memory_benchmark smoke --repeats 1
 
 # 真实模型单题试跑，校准 token、输出上限与评分质量
+# 先按下文补齐 .env 与自己的 prices.json
 .venv/bin/python -m benchmarks.memory_benchmark run \
-  --tasks 01_parents_birthday --repeats 1 --max-cost 1
+  --tasks 01_parents_birthday --repeats 1 --prices /absolute/prices.json --max-cost 1
 
 # 正式运行；实际支出按当前价格表估算并逐请求检查预算
-.venv/bin/python -m benchmarks.memory_benchmark run --max-cost 10
+.venv/bin/python -m benchmarks.memory_benchmark run --prices /absolute/prices.json --max-cost 10
 ```
 
 `run` 会发送付费模型请求。默认产物在 `.myclaude/benchmarks/<mode>-<timestamp>/`，可以用 `--output /absolute/new/directory` 指定。已存在目录不会覆盖。费用不足、建库失败、隔离失败或中断均保留已有报告与证据，退出码为 2；完整运行退出码为 0。当前没有断点续跑，失败后请使用新目录，避免在不同状态下续接实验。
 
-配置示例为 [config.example.json](config.example.json)。通过 `--config` 加载；`--groups`、`--tasks`、`--repeats`、`--max-cost` 可覆盖对应字段。所有组共用窗口、输出上限、工具定义、最大模型调用数、最大工具调用数和固定追问。默认每个用户轮次最多 8 次模型调用、24 次工具调用；不是把一次工具循环当作一个用户轮次。
+配置示例为 [config.example.json](config.example.json)。通过 `--config` 加载；`--groups`、`--tasks`、`--repeats`、`--max-cost`、`--retrieval-mode` 可覆盖对应字段。`retrieval_mode` 默认 `hybrid`，可显式使用 `--retrieval-mode keyword` 复现关键词协议。所有组共用窗口、输出上限、工具定义、最大模型调用数、最大工具调用数和固定追问。默认每个用户轮次最多 8 次模型调用、24 次工具调用；不是把一次工具循环当作一个用户轮次。
+
+## Hybrid 配置与索引
+
+真实 hybrid 运行除主聊天、提取和评分模型外，需要项目根目录 `.env` 中的独立 embedding 配置；同名进程环境变量优先：
+
+```dotenv
+LAMEMORY_EMBEDDING_PROVIDER=openai-compatible
+LAMEMORY_EMBEDDING_MODEL=your-embedding-model
+LAMEMORY_EMBEDDING_BASE_URL=https://your-embedding-endpoint.example/v1
+LAMEMORY_EMBEDDING_DIMENSIONS=1024
+LAMEMORY_EMBEDDING_NAMESPACE=memory-benchmark-v1
+LAMEMORY_EMBEDDING_API_KEY=your-embedding-key
+LAMEMORY_EMBEDDING_SEND_DIMENSIONS=false
+LAMEMORY_EMBEDDING_TIMEOUT=10
+LAMEMORY_EMBEDDING_MAX_RETRIES=0
+```
+
+模型、端点及维度须替换成实际服务参数；需鉴权时必须提供密钥，无鉴权的本地服务可留空。是否发送 dimensions 取决于端点支持情况。缺少 MODEL/BASE_URL/DIMENSIONS/NAMESPACE 或缺少匹配的 embedding 单价时，在付费调用前停止。
+
+评测通过共用 runtime 工厂接入当前 LaMemory。检索模式由 benchmark JSON/CLI 决定，覆盖 `LAMEMORY_RETRIEVAL_MODE`。其余候选数、RRF 权重、相似度阈值、查询超时等 `LAMEMORY_*` 检索参数按 runtime 规则读取，并保存实际配置。**本协议固定关闭 rerank 和关键词降级**，覆盖宿主的 `LAMEMORY_RERANK_ENABLED` / `LAMEMORY_ALLOW_KEYWORD_FALLBACK`，避免将向量失败当成完整 hybrid 结果；如需评估重排应另定义协议及价格。
+
+种子全部回放、分层摘要完成后统一建立向量索引；索引成功才冻结初始快照。每题/重复克隆数据库中的同一向量空间和投影，复用种子向量，不重复建库。每轮提取/摘要更新后，在轮次剩余时间和记忆超时内维护新增/失效投影。索引失败、部分覆盖或查询失败明确记为失败，保留索引任务和检索轨迹；后续轮次跳过。相似度阈值以下的正常空结果不是故障。
+
+`smoke` 同样执行 hybrid 索引、查询和更新流程，但只用离线假向量/假模型，不读真实模型环境、不访问网络，也不证明语义效果。
 
 ## 模型与价格
 
@@ -44,11 +69,19 @@ BENCH_JUDGE_LLM_API_KEY=...
 
 `--prices` 接受 JSON，格式见 [prices.deepseek-flash.json](prices.deepseek-flash.json)。每类角色（`agent` / `memory` / `judge`）分别填写 `provider`、`model` 及 `input`、`output`、`cache_read`、`cache_write` 的**每百万 token**单价，币种由 `currency` 指定。实际运行会核对定价的供应商/型号与模型配置。网关、自定义端点或合约价应使用自己的价格表；仅有相同模型名称不能证明网关收费相同。
 
+Hybrid 还要求一个 `embedding` 条目，填写 `provider`、`model` 和每百万输入 token 单价 `input`，所有角色必须使用同一币种。可复制 [prices.hybrid.example.json](prices.hybrid.example.json)，将 embedding 模型占位符和 `input: null` 替换为实际值，并核实聊天单价。模板故意不能直接运行，不自动猜测 embedding 价格。建库文档、在线新增文档、查询向量各自记录 usage、失败尝试和费用；每个请求发送前检查共同 `--max-cost` 预算。失败但有供应商 usage 的 embedding 仍按实际 usage 计量；缺 usage 时按输入粗估计费。
+
+默认价格表仅包含聊天角色。默认 hybrid 的 `estimate` 在未补齐 embedding 单价时返回 `unpriced_roles=["embedding"]`、总 `cost=null`，`priced_cost` 只表示已定价部分，不能作为完整预算；`run` 会拒绝该价格表。提供自定义价格表后再预估完整费用：
+
+```bash
+.venv/bin/python -m benchmarks.memory_benchmark estimate --prices /absolute/prices.json
+```
+
 默认表是 2026-11-10 查阅 [DeepSeek 官方价格](https://api-docs.deepseek.com/quick_start/pricing/) 的 Flash **高峰价**快照：未命中输入 $0.30/M、输出 $1.20/M、命中输入 $0.006/M。官方非高峰费率为其一半。脚本不自动按时段切价；全程按选定价格快照核算，报告保留价格来源与配置。
 
 预估分为 `low`、`expected`、`configured_ceiling`。常规假设是每轮 3 次模型调用、每次输出约 900 token、每轮交付物约 2400 token，另计前轮历史、工具参数和结果的重复输入。建库按 44 条用户消息、21 个会话计算；每个有记忆后端只建一次库，所有题与重复共享该初始快照。
 
-默认 **8题 × 3组 × 3次 = 72次任务运行、216个用户轮次、216次独立评分**：
+默认 **8题 × 3组 × 3次 = 72次任务运行、216个用户轮次、216次独立评分**。下表是原关键词协议的聊天费用历史预估，**不含 embedding，不是当前 hybrid 总价**：
 
 | 情景 | 输入 token | 输出 token | 费用（USD） |
 |---|---:|---:|---:|
@@ -62,14 +95,14 @@ BENCH_JUDGE_LLM_API_KEY=...
 
 `configured_ceiling` 把 Agent 调用、输出、记忆重试、分层刷新及旧算法可能触发的压缩计入。摘要源长度、推理长度和真实分词取决于模型，所以它是高用量情景，不能当作供应商账单的绝对上限。`--max-cost` 在发送每个请求前检查“累计核算费用 + 本次预留”；若配置币种为 USD，则数值单位为美元。它同样依赖 token 粗估和静态单价。
 
-建库、任务在线、评分分阶段计量；Agent、提取、摘要分开记录。固定追问直接使用资产包文本，不调用用户模拟模型；当前没有 embedding 或 rerank 费用。
+建库、任务在线、评分分阶段计量；Agent、提取、摘要、embedding 文档和查询分开记录。固定追问直接使用资产包文本，不调用用户模拟模型；rerank 关闭。embedding 实体数量由实际提取和摘要决定；预估按显式实体数量、输入长度及批次假设计算，详情见 estimate.json 的 assumptions，不能当作账单上限。
 
 ## 对照协议
 
 1. 启动时运行原任务包 `validate.py`，检查全部冻结 SHA-256、历史依据和参考差异结果。不会重新冻结任务资产。
 2. `legacy` 与 `lamemory` 按相同数组顺序回放全部种子。每条原始用户消息后追加固定确认“已收到。”，按后端正常流程提交并等待提取成功。跨会话只重置会话历史，长期记忆继续共享。保存本地消息 ID → 运行时来源 ID、原始日期/种类和正文 SHA-256 映射。LaMemory 默认在建库完成后显式启用用户概览（M2）；M3 自动经验学习关闭。
 3. 每个题目、每次重复、每组从对应初始快照克隆独立存储，并创建新会话、空交付目录。`none` 不导入种子，保留本题对话历史，完全不执行长期记忆提取或注入。冻结种子不会被任务中的新写入改动。
-4. 三组复用 `Agent.chatBot_with_memory.runner.ChatRunner` 和项目工具执行器，仅提供共同的 `read/write/ls/python` 工具。三组均关闭主动记忆工具与静态 Skill，因此这里测量的是**自动提取和上下文注入**，尚未评估主动搜索/更新工具的收益。LaMemory 使用现有关键词召回和预算策略；旧算法全量注入 Markdown。后者超出共同输入预算时明确失败，不偷偷改变其检索算法。
+4. 三组复用 `Agent.chatBot_with_memory.runner.ChatRunner` 和项目工具执行器，仅提供共同的 `read/write/ls/python` 工具。三组均关闭主动记忆工具与静态 Skill，因此这里测量的是**自动提取和上下文注入**，尚未评估主动搜索/更新工具的收益。LaMemory 默认使用当前 hybrid 召回和预算策略；用户概览仍按当前 runtime 作为背景注入，不参与向量排名。旧算法全量注入 Markdown。后者超出共同输入预算时明确失败，不偷偷改变其检索算法。
 5. 固定执行初始请求和两条追问，每轮保存完整工具轨迹、回复、产物快照与哈希。评分不会作为下一轮反馈；任务 Agent 看不到 rubric、私有证据和参考答案。为减少时间顺序影响，按任务/重复交错运行各组。若工具链因错误未完成，后续轮次标记为跳过，不拼接非法历史或把旧产物当成新一轮成功。
 6. 每轮由独立、无任务工具的评分调用逐项盲评。只提供当轮产物、正文/工具轨迹、该题 rubric、相关种子证据和执行结果；移除上下文诊断并把含组名的宿主交付路径归一化。宿主校验项 ID、分值范围、非有限数字和重复/缺失项，再自行求总分、维度分和阈值。
 7. 配置题在隔离环境重跑 `python diff_configs.py current.json proposed.json`，分别核对提交版/重跑版报告与 16 项参考变更。代码评审题实际执行提交的 unittest，另在只含原始提交修复模块的工作区执行独立契约检查，核对原文件字节不变。并发压力测试仅是执行证据，评审器仍需检查是否正确加锁。
@@ -98,13 +131,14 @@ Linux 或希望使用容器时，在配置副本中设置：
   report.json / report.md       # 配置/代码/资产哈希、组间汇总、错误、费用
   usage.jsonl                   # 每次调用的阶段、角色、模型、原 usage、缓存、成本与用量来源
   seeds/<group>/                # 冻结存储、来源映射、任务/重试记录
+    maintenance_jobs.json       # LaMemory 最终摘要/向量索引状态与任务（hybrid）
   runs/<task>/repeat-N/<group>/
     private/                    # 本题自己的记忆快照，模型文件工具不可见
     work/                       # 本题公开资产与产物
     round-N/
       prompt.md / trace.jsonl / response.json
       artifacts/                # 此轮产物快照
-      memory_jobs.json          # 本轮记忆处理与失败/重试记录
+      memory_jobs.json          # 本轮记忆处理、向量覆盖率与索引失败/重试记录
       judge_response.json       # 原始评分输出（无效 JSON 也保留）
       execution.json / result.json
 ```
@@ -117,3 +151,5 @@ Linux 或希望使用容器时，在配置副本中设置：
 ```
 
 2026-11-10：benchmark 回归 15 项、既有 LaMemory 回归 69 项、供应商回归 20 项全部通过。覆盖无模型的 24 次任务/72 轮完整流程、快照隔离、来源映射、盲评输入、费用与缓存计量、预算阻断、错误状态，以及 macOS 中的私有文件/网络阻断和实际 unittest 执行。假模型的所有任务评分固定为 0，真实模型调用数和实际费用均为 0。若宿主禁止嵌套沙箱，隔离项会明确跳过，不能当作隔离验证通过。
+
+2026-11-11：接入 hybrid 后，benchmark 回归 **23 项**与 LaMemory 回归 **108 项**全部通过。新增检查覆盖种子向量克隆复用、无关键词命中的向量通道、查询向量缓存、在线索引刷新、建库失败不冻结快照、查询失败不降级、embedding usage/缺 usage/失败计费和发送前预算拦截，以及替换 SDK 的真实运行分支配置读取。最初在宿主沙箱内，本地 HTTP 测试被端口权限阻断、Seatbelt 项跳过；经授权在沙箱外重跑后上述两组均无失败或跳过。全部使用临时目录/数据库与假模型/假向量，**未执行真实付费模型或真实 embedding 效果评测**；历史 results 文件保留原协议证据，不改写成 hybrid 结果。

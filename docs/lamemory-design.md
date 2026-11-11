@@ -62,7 +62,7 @@ LaMemory 要支持跨会话记忆，并能解释一条记忆的来源、当前�
 
 ## 4. 模块与接口
 
-新模块统一放在 `core/lamemory/`，`core/memory.py` 保留兼容门面。
+新模块统一放在 `core/lamemory/`，按 generation、retrieval、embedding、storage、integration 分组，具体文件见 [模块导航](../core/lamemory/README.md)。顶层保留统一服务、配置和公共返回模型，`core/memory.py` 保留兼容门面。
 
 ```text
 聊天流程 / 主动记忆工具

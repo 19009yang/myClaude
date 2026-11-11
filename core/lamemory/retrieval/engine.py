@@ -1,11 +1,11 @@
 """三类共享一次 query embedding；权限/状态先于候选截断，返回前复核。"""
 import time
-from .embedding_space import digest
+from ..embedding.space import digest
 from .fusion import cosine, rrf, unit_vector
-from .models import SearchHit
+from ..models import SearchHit
 from .reranking import validate_scores
-from .retrieval_sources import documents, hydrate
-from .retrieval_types import RetrievalBundle, RetrievalUnavailableError, error_kind
+from .sources import documents, hydrate
+from .types import RetrievalBundle, RetrievalUnavailableError, error_kind
 
 
 KINDS = ('item', 'summary', 'experience')

@@ -10,6 +10,7 @@
   "judge_timeout": 120,
   "job_attempts": 3,
   "hierarchy": true,
+  "retrieval_mode": "hybrid",
   "sandbox": "seatbelt",
   "docker_image": "python:3.13-slim",
   "expected_calls_per_round": 3,

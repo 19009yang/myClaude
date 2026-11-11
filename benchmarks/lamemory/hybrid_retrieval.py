@@ -11,7 +11,7 @@ import tempfile
 import time
 
 from core.lamemory import LaMemoryConfig, LaMemoryService
-from core.lamemory.runtime import create_memory
+from core.lamemory.integration.runtime import create_memory
 
 FIXTURE = Path(__file__).resolve().parents[2] / 'tests/lamemory/fixtures/hybrid_retrieval.json'
 USER, SESSION, PROJECT = 'benchmark-user', 'benchmark-session', 'demo-project'

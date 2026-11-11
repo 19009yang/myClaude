@@ -1,6 +1,6 @@
 from dataclasses import replace
 import test_hybrid_retrieval as hybrid_cases
-from core.lamemory.reranking import ChatReranker, validate_scores
+from core.lamemory.retrieval.reranking import ChatReranker, validate_scores
 
 
 class RerankTests(hybrid_cases.index_cases.IndexFixture):

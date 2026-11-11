@@ -138,7 +138,7 @@ LaMemory 的管理规则围绕“信息来自哪里、现在是否有效”展�
 
 默认检索模式为 `keyword`，先按身份、范围、状态和时间过滤，再匹配排序。`hybrid` 增加真实 embedding、按种类 RRF 和可选重排；返回实际模式、来源与覆盖率/降级诊断。当前请求作为召回依据，只缓存查询向量，每次重新读取并复核有效候选，评分诊断不占注入预算。
 
-[`context.py`](core/lamemory/context.py) 将有效事实、相关主题、用户概览、已验证经验和近期对话组装为模型输入，统一约束预算：
+[`context.py`](core/lamemory/integration/context.py) 将有效事实、相关主题、用户概览、已验证经验和近期对话组装为模型输入，统一约束预算：
 
 ```text
 允许输入 = 模型窗口 − 输出预留 − 安全余量
@@ -225,7 +225,7 @@ myClaude/
 └── docs/                       # 架构、开发指南和使用说明
 ```
 
-建议从 `runner.py → tools/executor.py → core/lamemory/service.py → context.py` 阅读执行与记忆闭环，再看 `hierarchy.py / procedural.py` 的派生数据管理。
+建议从 `runner.py → tools/executor.py → core/lamemory/service.py → integration/context.py` 阅读执行与记忆闭环，再看 `generation/hierarchy.py / generation/procedural.py` 的派生数据管理。LaMemory 的功能分组与文件说明见 [模块导航](core/lamemory/README.md)。
 
 仓库另保留搜索摘要工作流（`Agent/workflow/`）和论文研究助手（`Agent/ResearchAssistant/`）作为组合示例。文件读写、搜索、命令执行等内置工具和 Markdown Skill 加载器为这些入口提供扩展能力。
 

@@ -3,8 +3,8 @@ import hashlib
 import json
 import uuid
 
-from .retrieval import terms
-from .store import utc_now
+from ..retrieval.keyword import terms
+from ..storage.store import utc_now
 
 
 class Hierarchy:

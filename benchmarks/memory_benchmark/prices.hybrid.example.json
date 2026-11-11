@@ -1,0 +1,9 @@
+{
+  "currency": "USD",
+  "source": "填写实际服务价格来源及查询日期；网关请填写网关价格",
+  "note": "所有单价为每百万 token；必须把 embedding.model 和 input 的占位值替换为实际配置与数值。聊天条目也须与三个角色的实际供应商/模型/价格一致。",
+  "agent": {"provider": "deepseek", "model": "deepseek-flash", "input": 0.3, "output": 1.2, "cache_read": 0.006, "cache_write": 0.3},
+  "memory": {"provider": "deepseek", "model": "deepseek-flash", "input": 0.3, "output": 1.2, "cache_read": 0.006, "cache_write": 0.3},
+  "judge": {"provider": "deepseek", "model": "deepseek-flash", "input": 0.3, "output": 1.2, "cache_read": 0.006, "cache_write": 0.3},
+  "embedding": {"provider": "openai-compatible", "model": "your-embedding-model", "input": null}
+}
