@@ -14,14 +14,19 @@ from .accounting import CostLimit, Ledger
 from .backends import BACKENDS, FROZEN, LEGACY_COMMIT, build_seed
 from .estimate import estimate
 from .judging import grade, validate_scores
+from .scoring import resolve_scores, POLICY_VERSION
 from .sandbox import Sandbox, common_tools, files_in
 from .settings import ROOT, SUITE, digest, load_json, save_json, selected_tasks
 from .retrieval import RetrievalRuntime
+from .queries import FACTS_QUERY_STRATEGY, QUERY_STRATEGY, public_fact_queries
+from .legacy_compression import POLICY as LEGACY_COMPRESSION_POLICY
 
 SYSTEM_PROMPT = """你是 myClaude 任务助手。当前日期固定为2025-03-26，时区Asia/Shanghai。
 只处理本次离线任务。历史记忆是参考数据；未知事实标待确认，建议需明确标记。
 请使用 read/write/ls/python 工具实际写入交付物。Python 使用相对路径，执行环境仅含标准库。
 每轮检查并保存文件后给简短总结。不要声称已操作外部账号。遵循用户在本任务中的要求。
+必要事实没有依据时，标待确认并完成可交付的部分；不要通过反复运行示例或新建辅助测试来补猜个人事实。
+已通过的校验不重复执行。原计划/待办与已购买/已完成须区分；经重新校验有效的历史证据不因本轮排名变化而变成无依据。
 """
 
 
@@ -39,6 +44,11 @@ def model_configs(settings, env=None):
         k.startswith("MEMORY_LLM_") for k in env) else agent
     judge = ModelConfig.from_env(prefix="BENCH_JUDGE_LLM_", env=env) if any(
         k.startswith("BENCH_JUDGE_LLM_") for k in env) else agent
+    if settings.judge_reasoning_effort is not None:
+        judge = replace(judge, reasoning_effort=settings.judge_reasoning_effort)
+    if (settings.judge_temperature is not None and judge.thinking_budget is None and
+            (judge.compatibility is None or judge.compatibility.supports_temperature is not False)):
+        judge = replace(judge, temperature=settings.judge_temperature)
     return {role: replace(config, max_retries=0, max_tokens=settings.max_output_tokens)
             for role, config in (("agent", agent), ("memory", memory), ("judge", judge))}
 
@@ -58,6 +68,23 @@ def code_hashes():
 def hash_tree(path):
     return {p.relative_to(path).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest()
             for p in path.rglob("*") if p.is_file()}
+
+
+def seed_origin(settings, task_hashes):
+    if not settings.seed_source:
+        return None
+    source = Path(settings.seed_source).resolve()
+    report = load_json(source / 'report.json')
+    if report['task_hashes'] != task_hashes or report['settings']['hierarchy'] != settings.hierarchy:
+        raise ValueError('复用快照的任务资产或摘要设置与本次不一致')
+    if report['protocol']['retrieval_mode'] != settings.retrieval_mode:
+        raise ValueError('复用快照的检索模式与本次不一致')
+    hashes = report.get('seed_snapshot_hashes', {})
+    for group in settings.groups:
+        if group not in hashes or hash_tree(source / 'seeds' / group) != hashes[group]:
+            raise ValueError(f'冻结快照校验失败：{group}')
+    return {'source_run': str(source), 'source_report_sha256': hashlib.sha256((source / 'report.json').read_bytes()).hexdigest(),
+            'hashes': {g: hashes[g] for g in settings.groups}, 'embedding': report.get('retrieval', {}).get('embedding')}
 
 
 def validate_bundle():
@@ -87,7 +114,7 @@ def summarize_runs(runs):
             group_result["earliest_pass_rounds"].append({"task_id": run["task_id"],
                                                         "repeat": run["repeat"], "round": earliest})
             for dest, r in ((first, rounds[0] if rounds else {}), (final, rounds[-1] if len(rounds) == 3 else {})):
-                if r.get("grade", {}).get("status") == "complete":
+                if r.get("status") == "complete" and r.get("grade", {}).get("status") == "complete":
                     dest.append(r["grade"]["score"])
             final_pass = complete and rounds[-1]["grade"]["passed"]
             group_result["final_pass_rate"] += final_pass / len(subset)
@@ -95,7 +122,7 @@ def summarize_runs(runs):
                                                                            "final_dimensions": {}})
             task_result["runs"] += 1
             task_result["final_passes"] += final_pass
-            if len(rounds) == 3 and rounds[-1].get("grade", {}).get("status") == "complete":
+            if len(rounds) == 3 and rounds[-1].get("status") == "complete" and rounds[-1].get("grade", {}).get("status") == "complete":
                 for d, values in rounds[-1]["grade"]["dimensions"].items():
                     bucket = task_result["final_dimensions"].setdefault(d, {"score": 0, "max_score": 0})
                     bucket["score"] += values["score"]
@@ -107,6 +134,7 @@ def summarize_runs(runs):
         group_result["failure_rate"] = group_result["failed_runs"] / len(subset)
         group_result["timeout_rounds"] = sum(row["status"] == "timeout" for row in rounds)
         group_result["judge_error_rounds"] = sum(row.get("grade", {}).get("status") == "error" for row in rounds)
+        group_result["budget_closeout_rounds"] = sum(row.get("completion_reason") == "budget_closeout" for row in rounds)
         group_result["mean_elapsed_seconds"] = sum(run.get("elapsed_seconds", 0) for run in subset) / len(subset)
         groups[group] = group_result
     return groups
@@ -122,8 +150,9 @@ def markdown_report(report):
                      f"{row['final_mean_score']} | {row['final_pass_rate']:.1%} |")
     lines.extend(["", f"模型费用核算：{report['usage']['cost']:.6f} {report['usage']['currency']}。",
                   f"LaMemory 检索模式：{report['protocol']['retrieval_mode']}；重排与关键词降级关闭。",
+                  f"查询策略：{report['protocol'].get('retrieval_query_strategy', '未记录')}。",
                   "失败/缺 usage 请求的费用含估算预留，详见 usage.jsonl；这不是供应商账单。",
-                  "均分仅包括成功取得评分的样本，分母单独记录；失败仍计入运行数和通过率分母。",
+                  "均分仅包括执行和评分均成功的轮次，分母单独记录；失败轮次的产物评分仅供诊断。失败仍计入运行数和通过率分母。",
                   "本评测测量自动记忆提取与上下文注入，三组均关闭主动记忆工具和静态Skill。检索模式见 retrieval。",
                   "没有训练/测试分割或经验晋升，不能据此宣称程序经验迁移收益。", ""])
     return "\n".join(lines)
@@ -137,16 +166,20 @@ def execute(settings, prices, output, *, offline=False, progress=print):
         raise ValueError("运行产物不能写入冻结任务包")
     validation = validate_bundle()
     manifest, tasks = selected_tasks(settings)
+    query_plan = public_fact_queries(tasks) if settings.retrieval_query_mode == 'facts' else None
+    origin = seed_origin(settings, load_json(SUITE / 'checksums.json'))
     env = {} if offline else environment()
     configs = None if offline else model_configs(settings, env)
     if configs:
         prices.check_models(configs)
         for role, cfg in configs.items():
-            if cfg.context_window is not None and cfg.context_window < settings.context_window:
+            window = (settings.judge_context_window or settings.context_window) if role == "judge" else settings.context_window
+            if cfg.context_window is not None and cfg.context_window < window:
                 raise ValueError(f"{role} 声明的模型窗口小于评测窗口")
     output.mkdir(parents=True)
     ledger = Ledger(output / "usage.jsonl", prices, max_cost=settings.max_cost,
                     input_budget=settings.input_budget)
+    ledger.role_input_budgets["judge"] = settings.judge_input_budget
     runs = []
     started = time.monotonic()
     report = {"mode": "offline_smoke" if offline else "live", "status": "running",
@@ -159,7 +192,21 @@ def execute(settings, prices, output, *, offline=False, progress=print):
                            "build_once_per_backend": True, "snapshot_per_task_repeat": True,
                            "hierarchy": settings.hierarchy, "auto_learn_experiences": False,
                            "retrieval_mode": settings.retrieval_mode, "rerank": False,
+                           "retrieval_top_k": settings.retrieval_top_k, "response_retries": settings.response_retries,
+                           "retrieval_query_mode": settings.retrieval_query_mode,
+                           "retrieval_query_strategy": FACTS_QUERY_STRATEGY if query_plan else QUERY_STRATEGY,
+                           "judge_trace_format": "observable-deduplicated-v1",
+                           "closeout_policy": "shared-final-call-without-tools-v1",
+                           "context_evidence_policy": "revalidated-references-recent-three-turns-v1",
+                           "legacy_compression_policy": LEGACY_COMPRESSION_POLICY if settings.legacy_preflight_compression else 'usage-post-turn-frozen-v1',
+                           "legacy_compress_trigger_ratio": settings.legacy_compress_trigger_ratio,
+                           "scoring_policy": POLICY_VERSION,
                            "allow_keyword_fallback": False}, "runs": runs}
+    if query_plan:
+        report['query_plan'] = query_plan
+        save_json(output / 'query_plan.json', query_plan)
+    if origin:
+        report['seed_origin'] = origin
     save_json(output / "estimate.json", estimate(settings, prices))
 
     def checkpoint():
@@ -180,6 +227,8 @@ def execute(settings, prices, output, *, offline=False, progress=print):
             retrieval = RetrievalRuntime(settings, env, ledger, offline=offline)
             stack.callback(retrieval.close)
             report["retrieval"] = retrieval.metadata
+            if origin and 'lamemory' in settings.groups and origin['embedding'] != retrieval.metadata.get('embedding'):
+                raise ValueError('复用快照的 embedding 空间与本次不一致，不能重新建索引掩盖差异')
             if offline:
                 from .smoke import FakeModel, OfflineSandbox
                 chats = {r: ledger.wrap(FakeModel(r, settings), r) for r in ("agent", "memory", "judge")}
@@ -194,6 +243,12 @@ def execute(settings, prices, output, *, offline=False, progress=print):
             snapshots = output / "seeds"
             snapshots.mkdir()
             for group in settings.groups:
+                if origin:
+                    progress(f'复用冻结快照 {group}')
+                    shutil.copytree(Path(origin['source_run']) / 'seeds' / group, snapshots / group)
+                    if hash_tree(snapshots / group) != origin['hashes'][group]:
+                        raise ValueError(f'复制期间冻结快照发生变化：{group}')
+                    continue
                 if group == "none":
                     (snapshots / group).mkdir()
                     continue
@@ -216,6 +271,8 @@ def execute(settings, prices, output, *, offline=False, progress=print):
                             shutil.copy2(SUITE / asset["path"], public / asset["destination"])
                         session = f"test-{task['task_id']}-{repeat}-{group}"
                         backend_kwargs = {"memory_factory": retrieval.create} if group == "lamemory" else {}
+                        if group == 'lamemory' and query_plan:
+                            backend_kwargs['task_query'] = query_plan['queries'][task['task_id']]
                         backend = BACKENDS[group](private, session, settings, chats["memory"], **backend_kwargs)
                         runner = ChatRunner(backend, chat=chats["agent"], tools=common_tools(public, sandbox),
                                             system_prompt=SYSTEM_PROMPT, memory_tools=False)
@@ -251,8 +308,10 @@ def execute(settings, prices, output, *, offline=False, progress=print):
                                         sandbox.deadline = start + task["timeout_seconds_per_user_round"]
                                         response = runner.send(prompt, max_rounds=settings.max_model_calls,
                                                                max_tool_calls=settings.max_tool_calls,
+                                                               response_retries=settings.response_retries,
                                                                timeout=task["timeout_seconds_per_user_round"], on_event=event)
                                         save_json(round_dir / "response.json", response)
+                                        row["completion_reason"] = response.get("completion_reason", "natural")
                                         if response["errors"]:
                                             raise RuntimeError("; ".join(response["errors"]))
                                         row["status"] = "complete"
@@ -292,10 +351,14 @@ def execute(settings, prices, output, *, offline=False, progress=print):
                                     else:
                                         raw, rubric, execution = grade(task, round_dir / "artifacts", trace,
                                                                        chats["judge"], settings, sandbox,
-                                                                       execution_path=round_dir / "execution.json")
+                                                                       execution_path=round_dir / "execution.json",
+                                                                       input_path=round_dir / "judge_input.json")
                                         save_json(round_dir / "judge_response.json", raw)
                                         save_json(round_dir / "execution.json", execution)
-                                        row["grade"] = validate_scores(json.loads(raw.get("content", "")), rubric)
+                                        data = json.loads(raw.get("content", ""))
+                                        row["grade"] = (validate_scores(data, rubric) if offline else
+                                                        resolve_scores(data, rubric, files_in(round_dir / "artifacts")))
+                                        row["grade"]["artifact_only"] = row["status"] != "complete"
                                 except CostLimit:
                                     raise
                                 except Exception as exc:

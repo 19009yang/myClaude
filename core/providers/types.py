@@ -9,13 +9,18 @@ class ProviderConfigError(ValueError):
 
 
 class ProviderError(RuntimeError):
-    """稳定错误分类；不包含服务端原文、请求内容或密钥。"""
+    """稳定错误字符串；可附带响应诊断、用量及脱敏证据，不附请求或请求头。"""
 
-    def __init__(self, provider, kind, *, status_code=None, retryable=False):
+    def __init__(self, provider, kind, *, status_code=None, retryable=False,
+                 diagnostics=None, usage=None, response_evidence=None):
         self.provider = provider
         self.kind = kind
         self.status_code = status_code
         self.retryable = retryable
+        self.diagnostics = diagnostics or {}
+        self.usage = usage or {}
+        # Optional response-only evidence; never included in str(error).
+        self.response_evidence = response_evidence
         suffix = f" (HTTP {status_code})" if status_code else ""
         super().__init__(f"{provider}: {kind}{suffix}")
 

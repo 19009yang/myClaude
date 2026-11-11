@@ -1,0 +1,158 @@
+{
+  "date": "2026-11-11",
+  "status": "offline_regressions_passed",
+  "tests": {
+    "benchmark": {
+      "passed": 38,
+      "skipped": 0
+    },
+    "lamemory": {
+      "passed": 118,
+      "skipped": 0
+    },
+    "providers": {
+      "passed": 20,
+      "skipped": 0
+    }
+  },
+  "test_execution": "临时目录、临时数据库、假模型和 MockTransport；在已授权沙箱外运行本地 HTTP 与 Seatbelt 完整回归。",
+  "closeout": {
+    "shared_by_all_groups": true,
+    "max_model_calls_unchanged": 8,
+    "max_tool_calls_unchanged": 24,
+    "tested_none_user_rounds": 3,
+    "calls_per_round": 8,
+    "last_call_tools": [],
+    "over_budget_parallel_tool_calls": "明确未执行，补齐错误工具消息，再进入文本收尾；不伪造成功"
+  },
+  "context_evidence": {
+    "max_user_turns": 3,
+    "max_references": "service.config.top_k",
+    "stores_body": false,
+    "tested": [
+      "fresh 未命中仍保留",
+      "更正与删除",
+      "跨连接删除",
+      "同 ID generation 变化",
+      "项目范围变化",
+      "用户与会话隔离",
+      "过期",
+      "共同上下文预算裁剪"
+    ]
+  },
+  "gift_scoring_policy": {
+    "version": "birthday-gift-note-v1",
+    "task_id": "01_parents_birthday",
+    "item_id": "gift-note",
+    "rubric_sha256": "e0bb1c2beaf9db53c4426fbe0cc503066434fb49f5e46906c5eba972f2950b1e",
+    "tiers": {
+      "explicit_pending_in_reminder_notes": 15,
+      "device_plan_without_clear_note_or_status": 10,
+      "generic_or_missing_gift_note": 5,
+      "contradicts_pending_with_purchase_claim": 0
+    },
+    "interpretation": "满分要求提醒备注明确保留给父亲购买颈椎按摩仪的待办/未购买状态；仅提及计划、放在待确认或正文建议给10分；泛化礼物备注或无礼物备注给5分（原项15分、无备注扣10分）；与来源相反地声称已经购买给0分。"
+  },
+  "source_run": ".myclaude/benchmarks/run-20261111-130241-066797",
+  "source_sha256": {
+    ".myclaude/benchmarks/run-20261111-130241-066797/report.json": "28a879003104be80663aad22cdcb80069f78a10b189aaaada8da7d0365dd3850",
+    ".myclaude/benchmarks/run-20261111-130241-066797/usage.jsonl": "06e974eb736ab110601013d9d639da881ae027f372620fa7c8a5045565eff5a8",
+    ".myclaude/benchmarks/run-20261111-130241-066797/runs/01_parents_birthday/repeat-1/lamemory/round-1/artifacts/birthday_reminders.md": "6ebdcb5fe0fda262b85d314a188351cf75243202bab57ab1f82a444d38d0540a",
+    ".myclaude/benchmarks/run-20261111-130241-066797/runs/01_parents_birthday/repeat-1/lamemory/round-2/artifacts/birthday_reminders.md": "a824ff2439f6c5a60474900d4ac5b8e6eb40a3e2a58340b48799b2a9264b1209",
+    ".myclaude/benchmarks/run-20261111-130241-066797/runs/01_parents_birthday/repeat-1/lamemory/round-3/artifacts/birthday_reminders.md": "4d5e1ee7392b5d148f91a812f4a4128260936c39e76a00ee03763a02223b662a"
+  },
+  "gift_scoring_replay": [
+    {
+      "round": 1,
+      "total_with_host_policy": 95,
+      "item_id": "gift-note",
+      "policy": "birthday-gift-note-v1",
+      "rule": "device_plan_without_clear_note_or_status",
+      "model_score": 12,
+      "resolved_score": 10,
+      "evidence": "爸妈生日提醒（每年重复） / 事件 1：爸爸生日\n- **⚠️ 待注意（待确认）**：2025-03-20 的生日已过去 6 天，本年度已错过。请确认今年是否已送过礼物/是否需补送；若需补送，可考虑与「4 月初给爸妈买颈椎按摩仪并寄回石家庄」的计划合并（见 memory_id: lam_ad7f396c51984eba9dbf0afadc4c4565）。",
+      "evidence_sha256": "f2b0185afa444bfa8fd5d0dca3005eac553b691cdcb2781f149de7fc3f05f721"
+    },
+    {
+      "round": 2,
+      "total_with_host_policy": 95,
+      "item_id": "gift-note",
+      "policy": "birthday-gift-note-v1",
+      "rule": "device_plan_without_clear_note_or_status",
+      "model_score": 10,
+      "resolved_score": 10,
+      "evidence": "爸妈生日提醒（每年重复） / 2. 事件详情 / 事件 1：爸爸生日 · 沈建国（礼物提前买）\n- **⚠️ 待确认**：2025-03-20 已过去 6 天，本年度这个提醒窗口已错过。今年是否已送过/是否需要补送？如需补送，可与\"4 月初给爸妈买颈椎按摩仪寄回石家庄\"的计划合并（该条来自历史记忆，待你确认是否仍执行）。",
+      "evidence_sha256": "63cb782940e5f6fdeec5a18765b25974b17b3dd52598877cb7ef935904f7ec5d"
+    },
+    {
+      "round": 3,
+      "total_with_host_policy": 95,
+      "item_id": "gift-note",
+      "policy": "birthday-gift-note-v1",
+      "rule": "device_plan_without_clear_note_or_status",
+      "model_score": 15,
+      "resolved_score": 10,
+      "evidence": "爸妈生日提醒（每年重复） / 2. 事件详情 / 事件 1：爸爸生日 · 沈建国（礼物提前买）\n- **⚠️ 待确认**：2025-03-20 已过去 6 天，本年度这个提醒窗口已错过。今年是否已送过/是否需要补送？如需补送，可与\"4 月初给爸妈买颈椎按摩仪寄回石家庄\"的计划合并（该条来自历史记忆，待你确认是否仍执行）。",
+      "evidence_sha256": "63cb782940e5f6fdeec5a18765b25974b17b3dd52598877cb7ef935904f7ec5d"
+    }
+  ],
+  "round_2_and_3_gift_evidence_identical": true,
+  "original_run_unchanged": true,
+  "frozen_task_validation": {
+    "status": "passed",
+    "tasks": 8,
+    "seed_user_messages": 44,
+    "seed_sessions": 21,
+    "assets": 3,
+    "reference_diff_changes": 16,
+    "frozen_files": 33,
+    "score_dimensions": {
+      "01_parents_birthday": {
+        "memory": 90,
+        "mixed": 0,
+        "general": 10
+      },
+      "02_therapy_schedule": {
+        "memory": 85,
+        "mixed": 15,
+        "general": 0
+      },
+      "03_sql_study_blocks": {
+        "memory": 85,
+        "mixed": 15,
+        "general": 0
+      },
+      "04_project_risk_kanban": {
+        "memory": 45,
+        "mixed": 40,
+        "general": 15
+      },
+      "05_quarter_learning_plan": {
+        "memory": 50,
+        "mixed": 15,
+        "general": 35
+      },
+      "06_finance_review": {
+        "memory": 35,
+        "mixed": 45,
+        "general": 20
+      },
+      "07_json_config_diff": {
+        "memory": 0,
+        "mixed": 0,
+        "general": 100
+      },
+      "08_buggy_code_review": {
+        "memory": 0,
+        "mixed": 0,
+        "general": 100
+      }
+    }
+  },
+  "real_model_requests": 0,
+  "limitations": [
+    "回放仅用于核对统一评分口径，不修改旧报告，也不代表真实模型已完成新的三轮运行。",
+    "收尾与证据保留经过离线行为验证；真实任务效果需重新试跑。",
+    "宿主确定性规则仅覆盖生日题 gift-note；其他评分项仍由模型独立判断，低温不保证完全确定。"
+  ]
+}

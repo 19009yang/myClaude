@@ -153,7 +153,7 @@ model.close()
 
 原始历史不会被协议转换改写。工具 ID 必须在调用与结果间一致，发送时对不合法 ID 做确定性映射；未知结果、缺失结果、重复 ID、非法参数和不支持的非文本输入会在网络请求前报错。返回的非法或截断工具调用不会交给执行器。推理文本和原生签名/隐藏思考块在原文及工作上下文中保留，仅向相同供应商、模型、协议和端点重放必要字段，切换来源时过滤，且不会作为用户事实提取。
 
-ProviderConfigError 表示配置或输入不兼容；ProviderError 提供 provider、kind、status_code 和 retryable。kind 包括 authentication、rate_limit、timeout、connection、http、invalid_response。错误消息不包含服务端原文、请求内容或密钥。usage 统一为 prompt_tokens/completion_tokens/total_tokens，并在可获得时保留缓存读写；缓存用量口径按协议转换，不估算价格。
+ProviderConfigError 表示配置或输入不兼容；ProviderError 提供 provider、kind、status_code 和 retryable。kind 包括 authentication、rate_limit、timeout、connection、http、invalid_response、output_truncated。错误字符串不包含服务端原文、请求内容或密钥。Chat Completions 解析失败时附带 diagnostics（稳定原因码与 finish_reason）、实际 usage 及 response_evidence（已知响应字段，剔除配置中的密钥和自定义请求头值，不附请求或响应头），由宿主决定是否保存；benchmark 会保存独立证据并按实际 usage 计费。ChatRunner 仅对尚未提交的 invalid_response 做有界重试，不执行非法或截断工具参数。usage 统一为 prompt_tokens/completion_tokens/total_tokens，并在可获得时保留缓存读写；缓存用量口径按协议转换，不估算价格。
 
 ```bash
 python -m unittest discover -s tests/providers -p 'test_*.py'

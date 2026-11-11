@@ -29,7 +29,12 @@ class Settings:
     repeats: int = 3
     tasks: tuple[str, ...] = ()
     context_window: int = 32768
-    max_output_tokens: int = 4096
+    max_output_tokens: int = 8192
+    judge_context_window: int | None = None
+    judge_temperature: float | None = 0.0
+    judge_reasoning_effort: str | None = None
+    response_retries: int = 1
+    retrieval_top_k: int = 10
     memory_token_budget: int = 2048
     max_model_calls: int = 8
     max_tool_calls: int = 24
@@ -38,6 +43,10 @@ class Settings:
     job_attempts: int = 3
     hierarchy: bool = True
     retrieval_mode: str = "hybrid"
+    retrieval_query_mode: str = "request"
+    seed_source: str | None = None
+    legacy_preflight_compression: bool = True
+    legacy_compress_trigger_ratio: float = 0.85
     sandbox: str = "seatbelt"
     docker_image: str = "python:3.13-slim"
     expected_calls_per_round: int = 3
@@ -47,8 +56,33 @@ class Settings:
     max_cost: float | None = None
 
     def __post_init__(self):
+        if type(self.legacy_preflight_compression) is not bool:
+            raise ValueError('legacy_preflight_compression 必须为布尔值')
+        if (isinstance(self.legacy_compress_trigger_ratio, bool) or
+                not isinstance(self.legacy_compress_trigger_ratio, (int, float)) or
+                not math.isfinite(self.legacy_compress_trigger_ratio) or
+                not 0 < self.legacy_compress_trigger_ratio <= 1):
+            raise ValueError('legacy_compress_trigger_ratio 必须在 (0,1] 内')
+        if self.judge_reasoning_effort not in {None, 'off', 'none', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max'}:
+            raise ValueError('judge_reasoning_effort 不受支持')
+        if self.judge_temperature is not None and (isinstance(self.judge_temperature, bool) or
+            not isinstance(self.judge_temperature, (int, float)) or not math.isfinite(self.judge_temperature) or
+            not 0 <= self.judge_temperature <= 2):
+            raise ValueError("judge_temperature 必须为 0 到 2 或 null")
+        if self.judge_context_window is not None and (type(self.judge_context_window) is not int or self.judge_input_budget <= 0):
+            raise ValueError("judge_context_window 必须为大于输出预留的正整数")
+        if type(self.response_retries) is not int or not 0 <= self.response_retries <= 3:
+            raise ValueError("response_retries 必须为 0 到 3")
+        if type(self.retrieval_top_k) is not int or not 1 <= self.retrieval_top_k <= 100:
+            raise ValueError("retrieval_top_k 必须为 1 到 100")
         if self.retrieval_mode not in {"keyword", "hybrid"}:
             raise ValueError("retrieval_mode 必须为 keyword/hybrid")
+        if self.retrieval_query_mode not in {"request", "facts"}:
+            raise ValueError("retrieval_query_mode 必须为 request/facts")
+        if self.retrieval_query_mode == "facts" and self.retrieval_mode != "hybrid":
+            raise ValueError("方案 C（facts）需要 hybrid 检索")
+        if self.seed_source is not None and (not isinstance(self.seed_source, str) or not self.seed_source.strip()):
+            raise ValueError('seed_source 需要为已有运行目录路径')
         if not self.groups or len(set(self.groups)) != len(self.groups) or set(self.groups) - {"none", "legacy", "lamemory"}:
             raise ValueError("groups 必须是 none/legacy/lamemory 的非空无重复子集")
         for key in ("repeats", "context_window", "max_output_tokens", "max_model_calls", "max_tool_calls",
@@ -72,6 +106,10 @@ class Settings:
     @property
     def input_budget(self):
         return self.context_window - self.max_output_tokens - 512
+
+    @property
+    def judge_input_budget(self):
+        return (self.judge_context_window or self.context_window) - self.max_output_tokens - 512
 
     def public(self):
         return asdict(self)

@@ -10,6 +10,10 @@ from .messages import arguments, as_dict, field, safe_call_id, same_origin, usag
 from .types import ProviderConfigError, ProviderError
 
 
+class ResponseParseError(ValueError):
+    pass
+
+
 class OpenAIChatProvider:
     def __init__(self, config, spec, *, client=None):
         self.config = config
@@ -97,8 +101,38 @@ class OpenAIChatProvider:
                 response = client.chat.completions.create(**params)
                 try:
                     return self._parse(response, options.model or self.config.model)
-                except (ValueError, TypeError, KeyError, IndexError, AttributeError):
-                    raise ProviderError(self.config.provider, "invalid_response") from None
+                except (ValueError, TypeError, KeyError, IndexError, AttributeError) as exc:
+                    reason = str(exc) if isinstance(exc, ResponseParseError) else "invalid_response_shape"
+                    truncated = reason == "output_truncated"
+                    raw_usage = field(response, "usage")
+                    usage = {k: usage_value(raw_usage, k) for k in ("prompt_tokens", "completion_tokens", "total_tokens")}
+                    usage["cache_read_tokens"] = usage_value(field(raw_usage, "prompt_tokens_details"), "cached_tokens")
+                    choices = field(response, "choices")
+                    choice = choices[0] if isinstance(choices, list) and choices else None
+                    message = field(choice, "message")
+                    evidence = {"finish_reason": field(choice, "finish_reason"),
+                                "message": {k: field(message, k) for k in ("role", "content", "reasoning_content")}}
+                    calls = field(message, "tool_calls")
+                    if isinstance(calls, list):
+                        evidence["message"]["tool_calls"] = [
+                            {"id": field(c, "id"), "type": field(c, "type"), "function": {
+                                "name": field(field(c, "function"), "name"),
+                                "arguments": field(field(c, "function"), "arguments")}} for c in calls]
+                    def redact(value):
+                        if isinstance(value, str):
+                            for secret in (self.config.api_key, *self.config.headers.values()):
+                                if secret:
+                                    value = value.replace(secret, "[REDACTED]")
+                        elif isinstance(value, dict):
+                            return {key: redact(item) for key, item in value.items()}
+                        elif isinstance(value, list):
+                            return [redact(item) for item in value]
+                        return value
+                    encoded = json.dumps(redact(evidence), ensure_ascii=False, default=lambda _: "[unsupported field]")
+                    raise ProviderError(self.config.provider, "output_truncated" if truncated else "invalid_response",
+                                        retryable=not truncated, diagnostics={"reason": reason,
+                                        "finish_reason": field(choice, "finish_reason")}, usage=usage,
+                                        response_evidence=json.loads(encoded)) from None
             except (APITimeoutError, httpx.TimeoutException):
                 error = ProviderError(self.config.provider, "timeout", retryable=True)
             except APIStatusError as exc:
@@ -115,14 +149,16 @@ class OpenAIChatProvider:
     def _parse(self, response, model):
         choices = field(response, "choices")
         if not isinstance(choices, list) or not choices:
-            raise ValueError("没有回复")
+            raise ResponseParseError("missing_choices")
         choice = choices[0]
         message = field(choice, "message")
         if message is None:
-            raise ValueError("缺少 assistant 消息")
+            raise ResponseParseError("missing_assistant_message")
         content = field(message, "content") or field(message, "refusal") or ""
         if not isinstance(content, str):
-            raise ValueError("不支持的响应内容")
+            raise ResponseParseError("invalid_content_type")
+        if field(choice, "finish_reason") == "length":
+            raise ResponseParseError("output_truncated")
         raw_usage = field(response, "usage")
         prompt = usage_value(raw_usage, "prompt_tokens")
         completion = usage_value(raw_usage, "completion_tokens")
@@ -138,21 +174,28 @@ class OpenAIChatProvider:
             result["reasoning_content"] = reasoning
         calls = field(message, "tool_calls")
         if calls:
-            if result["finish_reason"] == "length":
-                raise ValueError("工具调用被截断")
+            if not isinstance(calls, list):
+                raise ResponseParseError("invalid_tool_calls_type")
             result["tool_calls"] = []
             seen = set()
             for value in calls:
                 call = as_dict(value)
-                safe_call_id(call.get("id"))
+                if not isinstance(call.get("id"), str) or not call["id"]:
+                    raise ResponseParseError("missing_tool_call_id")
                 if call["id"] in seen:
-                    raise ValueError("响应的工具 ID 重复")
+                    raise ResponseParseError("duplicate_tool_call_id")
                 seen.add(call["id"])
-                function = call["function"]
+                function = call.get("function")
+                if not isinstance(function, dict):
+                    raise ResponseParseError("invalid_tool_function")
                 if not function.get("name"):
-                    raise ValueError("工具缺少名称")
+                    raise ResponseParseError("missing_tool_name")
+                try:
+                    parsed_arguments = arguments(function.get("arguments", {}))
+                except ProviderConfigError:
+                    raise ResponseParseError("invalid_tool_arguments") from None
                 result["tool_calls"].append({"id": call["id"], "type": "function", "function": {
-                    "name": function["name"], "arguments": json.dumps(arguments(function.get("arguments", {})), ensure_ascii=False)}})
+                    "name": function["name"], "arguments": json.dumps(parsed_arguments, ensure_ascii=False)}})
         return result
 
     def close(self):

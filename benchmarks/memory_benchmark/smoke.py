@@ -7,8 +7,8 @@ from core.lamemory.embedding.space import EmbeddingDescriptor
 
 class FakeEmbedding:
     """确定性假向量，只覆盖索引/查询协议，不表示真实语义质量。"""
-    def __init__(self):
-        self.descriptor = EmbeddingDescriptor("offline-fake-embedding", 8, "offline", "protocol-smoke")
+    def __init__(self, query_prefix=''):
+        self.descriptor = EmbeddingDescriptor("offline-fake-embedding", 8, "offline", "protocol-smoke", query_prefix=query_prefix)
         self.usage_events = []
 
     def embed_documents(self, texts, *, timeout):
@@ -16,7 +16,7 @@ class FakeEmbedding:
         return [[b + 1 for b in hashlib.sha256(t.encode()).digest()[:8]] for t in texts]
 
     def embed_query(self, text, *, timeout):
-        return self.embed_documents([text], timeout=timeout)[0]
+        return self.embed_documents([self.descriptor.query_prefix + text], timeout=timeout)[0]
 
     def close(self):
         pass
@@ -41,6 +41,8 @@ class FakeModel:
             content = {"criteria": [{"item_id": c["item_id"], "score": 0,
                                        "reason": "离线 smoke 假模型占位，不是实际效果评分。"}
                                       for c in data["rubric"]["criteria"]]}
+        elif '请压缩以上对话历史' in messages[-1].get('content', ''):
+            content = {'summary': '历史任务、文件操作及待确认事项的离线摘要占位。', 'memory_update': []}
         elif "memory_update" in messages[-1].get("content", ""):
             content = {"memory_update": [m["content"] for m in messages[:-1] if m["role"] == "user"]}
         elif "sources" in messages[-1].get("content", "") and "跨会话摘要" in messages[0]["content"]:

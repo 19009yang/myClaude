@@ -5,7 +5,7 @@ import math
 import time
 
 from core.lamemory.integration.context import estimate_tokens
-from .settings import digest, load_json
+from .settings import digest, load_json, save_json
 
 
 class CostLimit(RuntimeError):
@@ -65,6 +65,7 @@ class Ledger:
     def __init__(self, path, prices, *, max_cost=None, input_budget=None):
         self.path, self.prices, self.max_cost = path, prices, max_cost
         self.input_budget = input_budget
+        self.role_input_budgets = {}
         self.cost_exhausted = False
         self.events = []
         self.tags = {}
@@ -87,7 +88,8 @@ class Ledger:
                                           ("跨会话摘要" in first or "将历史对话概括为" in first)
                                           or "请压缩以上对话历史" in last) else "extraction"
             prompt_estimate = estimate_tokens(messages) + (estimate_tokens(tools) if tools else 0)
-            if self.input_budget is not None and prompt_estimate > self.input_budget:
+            input_budget = self.role_input_budgets.get(role, self.input_budget)
+            if input_budget is not None and prompt_estimate > input_budget:
                 raise ValueError("模型请求超过共同输入预算；未发送")
             max_output = kwargs.get("max_tokens") or chat.config.max_tokens
             reservation = self.prices.cost(role, {"input": prompt_estimate, "output": max_output})
@@ -112,6 +114,24 @@ class Ledger:
                 event["error_type"] = type(exc).__name__
                 event["usage_mode"] = "reserved_estimate_failed_request"
                 tokens = {"input": prompt_estimate, "output": max_output}
+                if getattr(exc, "diagnostics", None):
+                    event["diagnostics"] = exc.diagnostics
+                if getattr(exc, "response_evidence", None) is not None:
+                    directory = self.path.parent / "provider_errors"
+                    directory.mkdir(exist_ok=True)
+                    evidence_path = directory / f"response-{len(self.events) + 1:06d}.json"
+                    save_json(evidence_path, exc.response_evidence)
+                    event["response_evidence"] = str(evidence_path.relative_to(self.path.parent))
+                error_usage = getattr(exc, "usage", {})
+                try:
+                    actual = normalized_usage(error_usage)
+                except ValueError:
+                    actual = None
+                    event["invalid_error_usage"] = True
+                if actual is not None:
+                    event["raw_usage"] = error_usage
+                    tokens = actual
+                    event["usage_mode"] = "provider_usage"
                 raise
             finally:
                 event["tokens"] = tokens

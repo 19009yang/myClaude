@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "strategy": "manual-public-request-facts-with-instruction-v1",
+  "method": "人工仅根据公开任务请求固定需要检索的事实类型；不读取rubric、种子答案或评测产物。两道通用编程题仅保留公开技术要求。",
+  "queries": {
+    "01_parents_birthday": {
+      "prompt_sha256": "249fb9181c0bb5b3abcdfff9217557477bc43d62c7cdd48549fc933b666ad252",
+      "query": "父亲和母亲的姓名、生日日期、生日提醒偏好，以及相关礼物待办"
+    },
+    "02_therapy_schedule": {
+      "prompt_sha256": "8d2722aa4f6218543016661544192b46730a1e10cd44b805201cceebe99f8abf",
+      "query": "用户每周理疗的固定日期、时间、地点、提醒偏好，以及相关日程和通勤情况"
+    },
+    "03_sql_study_blocks": {
+      "prompt_sha256": "a47561ee16b12e948b524024740e46cd47e14d7b41820159f073923f122f0ef0",
+      "query": "用户的SQL学习进度、学习目标、可用学习时间、固定日程、休息与笔记习惯"
+    },
+    "04_project_risk_kanban": {
+      "prompt_sha256": "14e2993b91230f422aae0f5777676321a001561ecea273ff5e05a2e82b48b0a7",
+      "query": "用户当前项目的背景、风险、依赖事项、相关人员及Notion看板组织偏好"
+    },
+    "05_quarter_learning_plan": {
+      "prompt_sha256": "af82859810fab91a4522155f69d277ccfe2890d82f6dd38e227d156cad08a4ea",
+      "query": "用户的学习方向、当前能力与学习进度、工作目标、可用时间、固定日程和学习习惯"
+    },
+    "06_finance_review": {
+      "prompt_sha256": "3a0f68376cae9bbfaa3e82a859cd529238f3f039d92d8750c9aa3ea3a8f6488b",
+      "query": "用户的财务复盘习惯、收入与支出情况、当前储蓄、存钱目标和记录工具偏好"
+    },
+    "07_json_config_diff": {
+      "prompt_sha256": "b7e06d4bdcec7a5c44afdecde8b99b62273d02007170da4e7f64c94e83ff9afd",
+      "query": "JSON配置递归比较的规则、数组差异处理方式、类型变化判断及变更报告要求"
+    },
+    "08_buggy_code_review": {
+      "prompt_sha256": "18b588c9d4d98061e1bda5a158192ebb4237f0024e64e07c02985cda3584d047",
+      "query": "Python代码评审的公开接口约束、输入验证、异常处理、排序截取和并发安全要求"
+    }
+  }
+}

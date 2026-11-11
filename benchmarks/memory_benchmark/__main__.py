@@ -18,12 +18,18 @@ def main(argv=None):
     parser.add_argument("--tasks", nargs="+")
     parser.add_argument("--repeats", type=int)
     parser.add_argument("--retrieval-mode", choices=("keyword", "hybrid"), help="LaMemory 检索模式，默认 hybrid")
+    parser.add_argument("--query-mode", choices=("request", "facts"), help="request 为方案 A；facts 为方案 C")
+    parser.add_argument('--seed-from', help='复用已有运行的冻结种子快照，不重新提取历史')
+    parser.add_argument('--legacy-compression', action=argparse.BooleanOptionalAction, default=None,
+                        help='旧系统在发送前按输入预算触发原摘要算法（默认开启）')
     parser.add_argument("--max-cost", type=float, help="费用预算，币种与 prices 一致；按请求预留估算限制")
     parser.add_argument("--output", type=Path, help="estimate 是 JSON 文件；smoke/run 是新建的运行目录")
     args = parser.parse_args(argv)
     try:
         settings = read_settings(args.config, groups=args.groups, tasks=args.tasks, repeats=args.repeats,
-                                 max_cost=args.max_cost, retrieval_mode=args.retrieval_mode)
+                                 max_cost=args.max_cost, retrieval_mode=args.retrieval_mode,
+                                 retrieval_query_mode=args.query_mode, seed_source=args.seed_from,
+                                 legacy_preflight_compression=args.legacy_compression)
         prices = Prices(args.prices)
         if args.mode == "estimate":
             from .run import validate_bundle

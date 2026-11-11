@@ -7,10 +7,12 @@ from pathlib import Path
 import time
 
 from core.lamemory import LaMemoryConfig, LaMemoryService
-from core.lamemory.integration.context import estimate_tokens, MESSAGE_KEYS, valid_chain
+from core.lamemory.integration.context import estimate_tokens, MESSAGE_KEYS, valid_chain, conversation_query
 from core.lamemory.models import BudgetError, ContextResult
 from core.lamemory.generation.providers import ChatMemoryProvider
+from .queries import FACTS_QUERY_STRATEGY, QUERY_STRATEGY, retrieval_text
 from .settings import save_json
+from .legacy_compression import LegacyCompression
 
 FROZEN = Path(__file__).parent / "frozen/legacy.py"
 LEGACY_COMMIT = "72fa6ee96492f92ea60887cef6d3681bc549bbd8"
@@ -60,12 +62,13 @@ def memory_config(directory, settings):
                           context_window=settings.context_window, reserved_output=settings.max_output_tokens,
                           memory_token_budget=settings.memory_token_budget,
                           retrieval_mode=settings.retrieval_mode, allow_keyword_fallback=False,
+                          top_k=settings.retrieval_top_k,
                           provider_timeout_seconds=settings.memory_timeout,
                           job_max_attempts=settings.job_attempts, auto_learn_experiences=False)
 
 
 class LaMemory:
-    def __init__(self, directory, session, settings, chat, *, memory_factory=None):
+    def __init__(self, directory, session, settings, chat, *, memory_factory=None, task_query=None):
         self.settings = settings
         self.config = memory_config(directory, settings)
         self.provider = ChatMemoryProvider(chat=chat)
@@ -73,16 +76,37 @@ class LaMemory:
         self.service = factory(self.config, user_id="memory-benchmark-user", session_id=session,
                                provider=self.provider)
         self.config = self.service.config
+        self.query_history = []
+        self.task_query = task_query
 
     def append_message(self, message):
-        return self.service.append_message(message)
+        mid = self.service.append_message(message)
+        if message["role"] == "user":
+            self.query_history.append(retrieval_text(message.get("content") or ""))
+        return mid
 
     def build_context(self, *args, **kwargs):
         if self.config.retrieval_mode == "hybrid":
             status = self.service.embedding_status()
             if status["missing"] or status["invalid_vectors"] or status["failed"]:
                 raise RuntimeError("LaMemory 向量索引不完整；不能作为 hybrid 任务继续运行")
-        return self.service.build_context(*args, **kwargs)
+        truncated = False
+        query_strategy = 'explicit'
+        if "retrieval_query" not in kwargs:
+            if self.settings.retrieval_query_mode == 'facts':
+                if not isinstance(self.task_query, str) or not self.task_query.strip():
+                    raise ValueError('方案 C 需要公开任务对应的固定事实查询，不能静默回退到原请求')
+                kwargs['retrieval_query'] = self.task_query
+                query_strategy = FACTS_QUERY_STRATEGY
+            else:
+                query_strategy = QUERY_STRATEGY
+                if self.query_history:
+                    kwargs["retrieval_query"], truncated = conversation_query(self.query_history, self.config.max_content_chars)
+        context = self.service.build_context(*args, **kwargs)
+        context.diagnostics["retrieval_query_truncated"] |= truncated
+        context.diagnostics["retrieval_query_strategy"] = query_strategy
+        context.diagnostics["retrieval_query_mode"] = self.settings.retrieval_query_mode
+        return context
 
     def commit_turn(self):
         self.service.commit_turn()
@@ -116,6 +140,7 @@ class Legacy(NoMemory):
         module.LONG_TERM_MEMORY_FILEPATH = directory / "MEMORY.md"
         module.MAX_CONTEXT_LENGTH = settings.context_window
         self.flush_deadline = None
+        self.next_context_deadline = None
 
         def checked_call(**kwargs):
             remaining = min(settings.memory_timeout, self.flush_deadline - time.monotonic())
@@ -123,32 +148,65 @@ class Legacy(NoMemory):
                 raise TimeoutError("legacy 记忆处理超时")
             response = chat(**kwargs, timeout=remaining,
                             max_tokens=settings.max_output_tokens, max_retries=0)
+            if time.monotonic() > self.flush_deadline:
+                raise TimeoutError('legacy 记忆模型响应超过共享期限')
             data = json.loads(response.get("content", ""))
+            if not isinstance(data, dict):
+                raise ValueError('legacy 记忆模型必须返回 JSON 对象')
+            if '请压缩以上对话历史' in kwargs['messages'][-1].get('content', '') and 'summary' not in data:
+                raise ValueError('legacy 压缩响应缺少 summary')
             updates = data.get("memory_update")
             if not isinstance(updates, list) or not all(isinstance(item, str) for item in updates):
                 raise ValueError("legacy memory_update 必须为字符串数组")
             # The historical compression path tried to concatenate a list to a string.
             if "summary" in data:
-                if not isinstance(data["summary"], str):
-                    raise ValueError("legacy summary 必须为字符串")
+                if not isinstance(data["summary"], str) or not data['summary'].strip():
+                    raise ValueError("legacy summary 必须为非空字符串")
                 data["memory_update"] = "\n".join("- " + s for s in updates)
                 response = {**response, "content": json.dumps(data, ensure_ascii=False)}
             return response
 
         module.call_llm = checked_call
+        self.raw_path = directory / f'{session}.raw.jsonl'
+        directory.mkdir(parents=True, exist_ok=True)
+        if not self.raw_path.exists():
+            self.raw_path.write_bytes(module.MEMORY_FILEPATH.read_bytes() if module.MEMORY_FILEPATH.exists() else b'')
         self.legacy = module.Memory()
+        self.compression = LegacyCompression(self.legacy, module, directory, session, self.config, settings)
         self.last_tokens = 0
         self.pending = False
 
     def append_message(self, message):
         self.last_tokens = message.get("usage", {}).get("total_tokens", 0)
+        with self.raw_path.open('a', encoding='utf-8') as stream:
+            stream.write(json.dumps(message, ensure_ascii=False) + '\n')
         # Explicit commit_turn triggers extraction even when usage is absent (seed ACKs).
         self.legacy.add_message({k: copy.deepcopy(v) for k, v in message.items() if k in MESSAGE_KEYS})
         self.messages = self.legacy.messages
         return f"{self.session}:{len(self.messages)}"
 
     def build_context(self, system_prompt="", budget=None, *, tools=None):
-        return bounded_context(self.legacy.build_context(system_prompt), tools, self.config, "legacy", budget)
+        diagnostics = None
+        if self.settings.legacy_preflight_compression:
+            if budget is not None and (type(budget) is not int or budget <= 0):
+                raise BudgetError('输入预算必须为正整数')
+            limit = min(self.config.input_budget, budget or self.config.input_budget)
+            previous = self.flush_deadline
+            self.flush_deadline = min(time.monotonic() + self.settings.memory_timeout,
+                                      self.next_context_deadline or float('inf'))
+            self.next_context_deadline = None
+            try:
+                diagnostics = self.compression.prepare(system_prompt, tools, limit)
+            finally:
+                self.flush_deadline = previous
+                self.messages = self.legacy.messages
+        context = bounded_context(self.legacy.build_context(system_prompt), tools, self.config, 'legacy', budget)
+        if diagnostics is not None:
+            context.diagnostics['legacy_compression'] = diagnostics
+        return context
+
+    def set_context_deadline(self, deadline):
+        self.next_context_deadline = deadline
 
     def commit_turn(self):
         if not valid_chain(self.legacy.get_last_turn_messages(), complete=True):
@@ -166,7 +224,9 @@ class Legacy(NoMemory):
                 self.legacy.extract_memory_update(self.legacy.get_last_turn_messages())
                 self.pending = False
                 # Extraction is not repeated if optional compression fails.
-                self.legacy.compress(self.last_tokens)
+                if not self.settings.legacy_preflight_compression:
+                    self.legacy.compress(self.last_tokens)
+                self.messages = self.legacy.messages
                 return {"status": "complete", "attempts": attempt + 1, "errors": errors}
             except Exception as exc:
                 errors.append({"error_type": type(exc).__name__, "message": str(exc)[:500]})

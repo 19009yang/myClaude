@@ -3,12 +3,15 @@ from dataclasses import asdict
 
 from core.lamemory.embedding.provider import EmbeddingConfig, OpenAIEmbeddingProvider
 from core.lamemory.integration.runtime import boolean, create_memory
+from .queries import FACTS_PREFIX
 
 
 class RetrievalRuntime:
     def __init__(self, settings, env, ledger, *, offline=False):
         self.settings = settings
         self.env = {} if offline else dict(env)
+        if settings.retrieval_query_mode == 'facts':
+            self.env['LAMEMORY_EMBEDDING_QUERY_PREFIX'] = FACTS_PREFIX
         # 评测不允许由环境变量开启降级或未计费的重排。
         self.env.pop("LAMEMORY_ALLOW_KEYWORD_FALLBACK", None)
         self.provider = None
@@ -20,7 +23,7 @@ class RetrievalRuntime:
             return
         if offline:
             from .smoke import FakeEmbedding
-            self.provider = FakeEmbedding()
+            self.provider = FakeEmbedding(query_prefix=FACTS_PREFIX if settings.retrieval_query_mode == 'facts' else '')
         else:
             p = "LAMEMORY_EMBEDDING_"
             if any(not self.env.get(p + key) for key in ("MODEL", "BASE_URL", "DIMENSIONS", "NAMESPACE")):

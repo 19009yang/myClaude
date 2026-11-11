@@ -1,0 +1,66 @@
+{
+  "date": "2026-11-11",
+  "status": "offline_regressions_passed",
+  "tests": {
+    "benchmark": {
+      "passed": 30,
+      "skipped": 0
+    },
+    "lamemory": {
+      "passed": 110,
+      "skipped": 0
+    },
+    "providers": {
+      "passed": 20,
+      "skipped": 0
+    }
+  },
+  "test_execution": "临时目录/数据库、假模型与 MockTransport；最终完整回归经授权在沙箱外验证本地 HTTP 与 Seatbelt。",
+  "source_run": ".myclaude/benchmarks/run-20261111-102624-121539",
+  "source_report_sha256": "a43e9e9524d3ab7a6282dd4892a2f2d3a9145c35d6c46b1462f448f384328081",
+  "judge_replay": {
+    "task": "01_parents_birthday",
+    "group": "none",
+    "round": 2,
+    "source_trace_sha256": "7998c42ffb27ab24464cb0ef7e8e87a5138dc07724f365facebd979f3ebc8c5b",
+    "before_estimated_tokens": 35681,
+    "after_estimated_tokens": 23691,
+    "input_budget": 24064,
+    "original_trace_unchanged": true,
+    "artifact_contents_truncated": false
+  },
+  "defaults": {
+    "groups": [
+      "none",
+      "legacy",
+      "lamemory"
+    ],
+    "repeats": 3,
+    "tasks": [],
+    "context_window": 32768,
+    "max_output_tokens": 8192,
+    "judge_context_window": null,
+    "response_retries": 1,
+    "retrieval_top_k": 10,
+    "memory_token_budget": 2048,
+    "max_model_calls": 8,
+    "max_tool_calls": 24,
+    "memory_timeout": 60,
+    "judge_timeout": 120,
+    "job_attempts": 3,
+    "hierarchy": true,
+    "retrieval_mode": "hybrid",
+    "sandbox": "seatbelt",
+    "docker_image": "python:3.13-slim",
+    "expected_calls_per_round": 3,
+    "expected_output_tokens": 900,
+    "expected_artifact_tokens": 2400,
+    "seed_memory_tokens_per_message": 80,
+    "max_cost": null
+  },
+  "real_model_requests": 0,
+  "limitations": [
+    "旧试跑未保存解析失败的原始响应，无法追溯其确切格式错误。新运行会记录脱敏证据、原因码、finish_reason 和实际 usage。",
+    "原始运行目录与冻结任务资产未修改。查询组合、top_k 与上下文预算优先级的真实检索收益尚待重新试跑验证。"
+  ]
+}

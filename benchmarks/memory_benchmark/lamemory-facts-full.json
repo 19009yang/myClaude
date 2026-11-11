@@ -1,0 +1,10 @@
+{
+  "groups": ["none", "legacy", "lamemory"],
+  "tasks": [],
+  "repeats": 1,
+  "retrieval_mode": "hybrid",
+  "retrieval_query_mode": "facts",
+  "retrieval_top_k": 10,
+  "memory_token_budget": 2048,
+  "max_cost": 10.0
+}

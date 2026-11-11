@@ -6,7 +6,8 @@ import uuid
 from collections import OrderedDict
 
 from .config import LaMemoryConfig
-from .integration.context import build_context, valid_chain
+from .integration.context import build_context, valid_chain, conversation_query
+from .integration.evidence import ContextEvidence
 from .generation.extraction import normalize_time, validate_batch, validate_candidate
 from .models import FlushResult, MemoryItem, SearchHit, WriteResult
 from .retrieval.keyword import normalized, rank
@@ -44,6 +45,7 @@ class LaMemoryService:
             self.db.close()
             raise
         self.last_context = None
+        self._context_evidence = ContextEvidence()
         self._query_embedding_cache = OrderedDict()
         self._retrieval_cache = None
         self._processing = False
@@ -426,19 +428,26 @@ class LaMemoryService:
         from .generation.consolidation import consolidate
         return consolidate(self, max_jobs=max_jobs)
 
-    def build_context(self, system_prompt="", budget=None, *, tools=None):
+    def build_context(self, system_prompt="", budget=None, *, tools=None, retrieval_query=None):
         rows = self.history()
-        query = next((r["payload"].get("content", "") for r in reversed(rows) if r["role"] == "user"), "")
-        query = query or ""
-        query_truncated = len(query) > self.config.max_content_chars
-        query = query[:self.config.max_content_chars]
+        if retrieval_query is not None and not isinstance(retrieval_query, str):
+            raise ValueError("retrieval_query 必须为字符串")
+        if retrieval_query is None:
+            query, query_truncated = conversation_query(
+                [r["payload"].get("content", "") for r in rows if r["role"] == "user"], self.config.max_content_chars)
+        else:
+            query = retrieval_query[:self.config.max_content_chars]
+            query_truncated = len(retrieval_query) > self.config.max_content_chars
         bundle = self.retrieve(query)
+        candidates, current_turn, authoritative = self._context_evidence.merge(self, rows, bundle.items)
         view = self.db.one("SELECT * FROM lamemory_working_views WHERE user_id=? AND session_id=?", (self.user_id, self.session_id))
-        self.last_context = build_context(rows, bundle.items, system_prompt, self.config,
+        self.last_context = build_context(rows, candidates, system_prompt, self.config,
                                           budget=budget, tools=tools, working_view=view,
                                           summaries=bundle.summaries, experiences=bundle.experiences,
                                           retrieval_diagnostics=bundle.diagnostics)
         self.last_context.diagnostics["retrieval_query_truncated"] = query_truncated
+        self.last_context.diagnostics["retrieval_query"] = query
+        self._context_evidence.remember(self, self.last_context, current_turn, authoritative)
         return self.last_context
 
     def jobs(self):

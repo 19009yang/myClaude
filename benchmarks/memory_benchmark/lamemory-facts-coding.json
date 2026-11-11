@@ -1,0 +1,11 @@
+{
+  "groups": ["none", "legacy", "lamemory"],
+  "tasks": ["07_json_config_diff", "08_buggy_code_review"],
+  "repeats": 1,
+  "retrieval_mode": "hybrid",
+  "retrieval_query_mode": "facts",
+  "seed_source": ".myclaude/benchmarks/lamemory-c-full-20261111",
+  "judge_context_window": 65536,
+  "judge_reasoning_effort": "off",
+  "max_cost": 5.0
+}

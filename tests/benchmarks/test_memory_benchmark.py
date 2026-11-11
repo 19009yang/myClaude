@@ -161,12 +161,16 @@ class ProtocolTests(unittest.TestCase):
             fake = FakeModel("agent", settings)
             def double(**kwargs):
                 response = fake(**kwargs)
-                response["tool_calls"].append(copy.deepcopy(response["tool_calls"][0]))
-                response["tool_calls"][-1]["id"] += "b"
+                if response.get("tool_calls"):
+                    response["tool_calls"].append(copy.deepcopy(response["tool_calls"][0]))
+                    response["tool_calls"][-1]["id"] += "b"
                 return response
             runner = ChatRunner(memory, chat=double, tools=common_tools(root, OfflineSandbox()), memory_tools=False)
-            with self.assertRaisesRegex(RuntimeError, "工具调用达到次数上限"):
-                runner.send("write", max_tool_calls=1)
+            events = []
+            response = runner.send("write", max_tool_calls=1, on_event=lambda name, data: events.append((name, data)))
+            self.assertEqual(response["completion_reason"], "budget_closeout")
+            self.assertEqual(sum(name == "tool_start" for name, _ in events), 1)
+            self.assertTrue(any(name == "tool_end" and data.get("executed") is False for name, data in events))
             runner.close()
 
     def test_judge_schema_and_blind_paths(self):

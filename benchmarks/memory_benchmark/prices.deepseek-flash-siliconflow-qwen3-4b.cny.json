@@ -1,0 +1,16 @@
+{
+  "currency": "CNY",
+  "checked_at": "2026-11-11",
+  "source": "https://api-docs.deepseek.com/zh-cn/quick_start/pricing/",
+  "embedding_source": {
+    "kind": "user_provided",
+    "service": "SiliconFlow",
+    "api_reference": "https://api-docs.siliconflow.cn/docs/api/embeddings-post",
+    "input_price_cny_per_million_tokens": 0.14
+  },
+  "note": "全部单价为人民币/百万 token。聊天三个角色按 DeepSeek 官方直连 deepseek-flash 高峰价快照核算：未命中输入2元、输出8元、命中输入0.04元；cache_write 按未命中输入单价预留。空闲时段聊天费率为其一半，本表不自动按时段切价。embedding 使用用户提供的 SiliconFlow Qwen/Qwen3-Embedding-4B 输入单价0.14元，不进行美元换算。--max-cost 单位随本表为人民币；网关或其他模型需另填实际价格。",
+  "agent": {"provider": "deepseek", "model": "deepseek-flash", "input": 2, "output": 8, "cache_read": 0.04, "cache_write": 2},
+  "memory": {"provider": "deepseek", "model": "deepseek-flash", "input": 2, "output": 8, "cache_read": 0.04, "cache_write": 2},
+  "judge": {"provider": "deepseek", "model": "deepseek-flash", "input": 2, "output": 8, "cache_read": 0.04, "cache_write": 2},
+  "embedding": {"provider": "openai-compatible", "model": "Qwen/Qwen3-Embedding-4B", "input": 0.14}
+}

@@ -2,6 +2,7 @@
 import contextlib
 import io
 import json
+from dataclasses import replace
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
@@ -13,9 +14,46 @@ from core.llm import call_llm
 from core.providers import ModelConfig
 from tools.builtins.tool_def import Tool
 from tools.executor import ToolCall, ToolExecutor
+from core.lamemory.integration.context import build_context, conversation_query, estimate_tokens
 
 
 class ChatCases(MemoryTestCase):
+    def test_followup_retrieval_retains_recent_user_task_without_assistant_text(self):
+        self.memory.store("父亲生日是3月20日")
+        self.memory.append_message({"role": "user", "content": "整理父亲生日提醒"})
+        self.memory.append_message({"role": "assistant", "content": "assistant text must not become a query"})
+        self.memory.append_message({"role": "user", "content": "请检查交付物，修正遗漏"})
+        context = self.memory.build_context()
+        query = context.diagnostics["retrieval_query"]
+        self.assertIn("父亲生日", query)
+        self.assertIn("修正遗漏", query)
+        self.assertNotIn("assistant text", query)
+        self.assertTrue(any("3月20日" in h["item"]["content"] for h in context.diagnostics["retrieved"]))
+        query, truncated = conversation_query(["old unrelated task", "生日" * 100, "请检查", "最后确认"], 60)
+        self.assertLessEqual(len(query), 60)
+        self.assertNotIn("old unrelated task", query)
+        self.assertIn("请检查", query)
+        self.assertIn("最后确认", query)
+        self.assertTrue(truncated)
+
+    def test_retrieved_fact_gets_budget_before_large_background_profile(self):
+        saved = self.memory.store("给父亲买颈椎按摩仪仍是待办，尚未购买")
+        hits = self.memory.search("按摩仪")
+        row = {"kind": "profile", "summary_id": "profile", "revision": 1,
+               "content": "background " * 100, "sources": []}
+        layer = {"layer": "profile", "summary_id": "profile", "revision": 1,
+                 "content": row["content"], "sources": [], "source_count": 0}
+        budget = estimate_tokens([layer]) + 5
+        context = build_context([], hits, "system", replace(self.memory.config, memory_token_budget=budget), summaries=[row])
+        self.assertEqual(context.diagnostics["retrieved"][0]["item"]["memory_id"], saved.item.memory_id)
+        self.assertEqual(context.diagnostics["summaries"], [])
+        self.assertIn("尚未购买", context.messages[0]["content"])
+        roomy = replace(self.memory.config, memory_token_budget=10000)
+        minimum = build_context([], hits, "system", roomy).diagnostics["estimated_tokens"]
+        context = build_context([], hits, "system", roomy, budget=minimum + 10, summaries=[row])
+        self.assertTrue(context.diagnostics["retrieved"])
+        self.assertEqual(context.diagnostics["summaries"], [])
+
     def test_tool_loop_uses_bound_tools_and_raw_sources(self):
         outputs = [
             {"role": "assistant", "content": "", "tool_calls": [{"id": "save", "type": "function", "function": {

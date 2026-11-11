@@ -5,10 +5,12 @@ from core.lamemory.integration.context import estimate_tokens
 from .judging import JUDGE_PROMPT
 from .sandbox import common_tools
 from .settings import SUITE, load_json, selected_tasks
+from .queries import public_fact_queries
 
 
 def estimate(settings, prices):
     manifest, tasks = selected_tasks(settings)
+    query_plan = public_fact_queries(tasks) if settings.retrieval_query_mode == 'facts' else None
     sessions = load_json(SUITE / manifest["seed"])["sessions"]
     seeds = [m for s in sessions for m in s["messages"]]
     nseed = len(seeds)
@@ -33,7 +35,7 @@ def estimate(settings, prices):
         calls = settings.max_model_calls if ceiling else (2 if scenario == "low" else settings.expected_calls_per_round)
         calls = min(calls, settings.max_model_calls)
         for group in settings.groups:
-            if group != "none":
+            if group != "none" and not settings.seed_source:
                 for i, seed in enumerate(seeds):
                     inp = estimate_tokens(seed["content"]) + 500
                     if group == "legacy":
@@ -73,8 +75,10 @@ def estimate(settings, prices):
                         agent_input * settings.repeats, output * calls * settings.repeats)
                     if group == "lamemory" and settings.retrieval_mode == "hybrid":
                         queries = calls if ceiling else 1  # 正常同一用户轮次复用查询向量。
+                        embedding_text = (query_plan['embedding_query_prefix'] + query_plan['queries'][task['task_id']]
+                                          if query_plan else public)
                         add("online", group, "embedding_query", "embedding", queries * settings.repeats,
-                            estimate_tokens(public) * queries * settings.repeats, 0)
+                            estimate_tokens(embedding_text) * queries * settings.repeats, 0)
                         documents = (16 if ceiling else (1 if scenario == "low" else 2))
                         attempts = settings.job_attempts if ceiling else 1
                         add("online", group, "embedding_documents", "embedding", attempts * settings.repeats,
@@ -85,21 +89,24 @@ def estimate(settings, prices):
                         add("online", group, "extraction", "memory", retries * settings.repeats,
                             inp * retries * settings.repeats,
                             (settings.max_output_tokens if ceiling else 160) * retries * settings.repeats)
-                        if group == "legacy" and ceiling:
-                            add("online", group, "summary", "memory", settings.repeats,
-                                settings.input_budget * settings.repeats,
-                                settings.max_output_tokens * settings.repeats)
+                        if group == "legacy":
+                            summaries = ((calls * settings.job_attempts if ceiling else (0 if scenario == 'low' else 1))
+                                         if settings.legacy_preflight_compression else (1 if ceiling else 0))
+                            if summaries:
+                                add("online", group, "summary", "memory", summaries * settings.repeats,
+                                    settings.input_budget * summaries * settings.repeats,
+                                    (settings.max_output_tokens if ceiling else 300) * summaries * settings.repeats)
                         if group == "lamemory" and settings.hierarchy:
                             add("online", group, "summary", "memory", retries * settings.repeats,
                                 (nseed * settings.seed_memory_tokens_per_message + 1000 + 3 * artifact)
                                 * retries * settings.repeats,
                                 (settings.max_output_tokens if ceiling else 600) * retries * settings.repeats)
-                    judge_input = settings.input_budget if ceiling else (
+                    judge_input = settings.judge_input_budget if ceiling else (
                         estimate_tokens(rubric) + estimate_tokens(JUDGE_PROMPT) + 1200 +
                         # Tool writes and file snapshots both appear in judge input.
                         2 * artifact + output + asset)
                     add("judge", group, "judge", "judge", settings.repeats,
-                        min(settings.input_budget, judge_input) * settings.repeats,
+                        min(settings.judge_input_budget, judge_input) * settings.repeats,
                         (settings.max_output_tokens if ceiling else 1200) * settings.repeats)
         scenarios[scenario] = {"calls": sum(b["calls"] for b in buckets.values()),
                                "input_tokens": sum(b["input"] for b in buckets.values()),
