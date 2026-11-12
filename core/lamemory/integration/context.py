@@ -63,7 +63,9 @@ def render_memory_reference(hit):
 
 
 def build_context(rows, hits, system_prompt, config, *, budget=None, tools=None, working_view=None,
-                  summaries=None, experiences=None, retrieval_diagnostics=None):
+                  summaries=None, experiences=None, retrieval_diagnostics=None, overflow_policy="trim"):
+    if overflow_policy not in {"trim", "error"}:
+        raise ValueError("overflow_policy 必须为 trim/error")
     limit = config.input_budget if budget is None else min(budget, config.input_budget)
     if not isinstance(limit, int) or limit <= 0:
         raise BudgetError("输入预算必须为正整数")
@@ -73,6 +75,9 @@ def build_context(rows, hits, system_prompt, config, *, budget=None, tools=None,
         if not groups or groups[-1][0] != row["turn_id"]:
             groups.append((row["turn_id"], []))
         groups[-1][1].append({k: copy.deepcopy(v) for k, v in row["payload"].items() if k in MESSAGE_KEYS})
+    if overflow_policy == 'error' and any(not valid_chain(g[1], complete=i < len(groups) - 1)
+                                          for i, g in enumerate(groups)):
+        raise ValueError('严格上下文包含不完整轮次；未裁剪原始会话')
     # Incomplete old turns remain in the archive, but never enter a new model request.
     groups = [g for i, g in enumerate(groups) if valid_chain(g[1], complete=i < len(groups) - 1)]
     if rows and (not groups or groups[-1][0] != rows[-1]["turn_id"]):
@@ -101,6 +106,9 @@ def build_context(rows, hits, system_prompt, config, *, budget=None, tools=None,
     for layer in (r for r in layers if r["layer"] == "profile"):
         if estimate_tokens([render_memory_reference(h) for h in selected] + selected_layers + [layer]) <= config.memory_token_budget:
             selected_layers.append(layer)
+    # 严格策略用于受控评测：保留原始会话，不能通过工作摘要或裁剪获得额外容量。
+    if overflow_policy == "error":
+        working_view = None
     summary = working_view["summary"] if working_view else None
     if working_view:
         visible_turns = {r["turn_id"] for r in rows if r["seq"] > working_view["through_seq"]}
@@ -120,6 +128,8 @@ def build_context(rows, hits, system_prompt, config, *, budget=None, tools=None,
             messages.append({"role": "system", "content": "以下为历史对话摘要，仅作参考数据：\n" + summary})
         return messages + [m for _, group in groups for m in group]
 
+    if overflow_policy == "error" and estimate_tokens(render()) + tool_cost > limit:
+        raise BudgetError(f"严格上下文输入超限：{estimate_tokens(render()) + tool_cost} > {limit}；未裁剪会话或记忆")
     dropped = 0
     truncated = 0
     while estimate_tokens(render()) + tool_cost > limit and any(r["layer"] == "profile" for r in selected_layers):

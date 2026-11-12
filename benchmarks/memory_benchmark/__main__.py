@@ -10,11 +10,13 @@ from .settings import ROOT, read_settings, save_json
 
 
 def main(argv=None):
-    parser = argparse.ArgumentParser(description="两套记忆系统及无记忆基线的隔离任务评测（默认只预估）")
+    parser = argparse.ArgumentParser(description="记忆系统、完整历史与无记忆基线的隔离任务评测（默认只预估）")
     parser.add_argument("mode", nargs="?", default="estimate", choices=("estimate", "smoke", "run"))
     parser.add_argument("--config", type=Path)
     parser.add_argument("--prices", type=Path, default=Path(__file__).parent / "prices.deepseek-flash.json")
-    parser.add_argument("--groups", nargs="+", choices=("none", "legacy", "lamemory"))
+    parser.add_argument("--groups", nargs="+", choices=("none", "legacy", "full_history", "lamemory"))
+    parser.add_argument('--context-policy', choices=('shared_strict', 'runtime'),
+                        help='默认 shared_strict：各组保留完整当前会话，超限明确失败；runtime 保留各自策略')
     parser.add_argument("--tasks", nargs="+")
     parser.add_argument("--repeats", type=int)
     parser.add_argument("--retrieval-mode", choices=("keyword", "hybrid"), help="LaMemory 检索模式，默认 hybrid")
@@ -29,6 +31,7 @@ def main(argv=None):
         settings = read_settings(args.config, groups=args.groups, tasks=args.tasks, repeats=args.repeats,
                                  max_cost=args.max_cost, retrieval_mode=args.retrieval_mode,
                                  retrieval_query_mode=args.query_mode, seed_source=args.seed_from,
+                                 context_policy=args.context_policy,
                                  legacy_preflight_compression=args.legacy_compression)
         prices = Prices(args.prices)
         if args.mode == "estimate":

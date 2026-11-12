@@ -1,0 +1,25 @@
+﻿task_id,task,group,completed,passed,score
+01_parents_birthday,父母生日,none,True,False,20
+02_therapy_schedule,理疗安排,none,True,False,15
+03_sql_study_blocks,SQL 学习,none,True,False,28
+04_project_risk_kanban,项目风险,none,True,False,44
+05_quarter_learning_plan,季度计划,none,False,False,
+06_finance_review,财务复盘,none,True,True,79
+01_parents_birthday,父母生日,legacy,True,True,95
+02_therapy_schedule,理疗安排,legacy,True,True,93
+03_sql_study_blocks,SQL 学习,legacy,True,True,100
+04_project_risk_kanban,项目风险,legacy,True,True,98
+05_quarter_learning_plan,季度计划,legacy,False,False,
+06_finance_review,财务复盘,legacy,True,True,100
+01_parents_birthday,父母生日,full_history,True,True,100
+02_therapy_schedule,理疗安排,full_history,True,True,85
+03_sql_study_blocks,SQL 学习,full_history,True,True,100
+04_project_risk_kanban,项目风险,full_history,True,True,100
+05_quarter_learning_plan,季度计划,full_history,False,False,
+06_finance_review,财务复盘,full_history,True,True,100
+01_parents_birthday,父母生日,lamemory,True,True,90
+02_therapy_schedule,理疗安排,lamemory,True,True,100
+03_sql_study_blocks,SQL 学习,lamemory,True,True,100
+04_project_risk_kanban,项目风险,lamemory,True,True,100
+05_quarter_learning_plan,季度计划,lamemory,True,True,94
+06_finance_review,财务复盘,lamemory,True,True,92

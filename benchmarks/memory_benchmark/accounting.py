@@ -98,6 +98,7 @@ class Ledger:
             event = {**self.tags, "role": role, "purpose": purpose,
                      "request_sha256": digest({"messages": messages, "tools": tools}),
                      "model": chat.config.model, "provider": chat.config.provider}
+            response = None
             try:
                 response = chat(messages=messages, tools=tools, **kwargs)
                 event["raw_usage"] = response.get("usage", {})
@@ -108,6 +109,28 @@ class Ledger:
                     event["usage_mode"] = "reserved_estimate_missing_usage"
                 else:
                     event["usage_mode"] = "provider_usage"
+                if role == 'memory':
+                    # 在 JSON 解析和来源校验之前保存模型正文，失败的逻辑尝试也可追溯。
+                    directory = self.path.parent / 'memory_responses'
+                    directory.mkdir(exist_ok=True)
+                    evidence_path = directory / f'response-{len(self.events) + 1:06d}.json'
+                    secret = getattr(chat.config, 'api_key', None)
+
+                    def redact(value):
+                        if isinstance(value, str):
+                            return value.replace(secret, '[REDACTED]') if secret else value
+                        if isinstance(value, dict):
+                            return {redact(k): redact(v) for k, v in value.items()}
+                        if isinstance(value, list):
+                            return [redact(v) for v in value]
+                        return value
+
+                    evidence = redact({'purpose': purpose, 'request': {'messages': messages, 'tools': tools},
+                                       'response': {k: response[k] for k in ('role', 'content', 'usage') if k in response}})
+                    with evidence_path.open('x', encoding='utf-8') as stream:
+                        json.dump(evidence, stream, ensure_ascii=False, indent=2, allow_nan=False)
+                        stream.write('\n')
+                    event['memory_response'] = str(evidence_path.relative_to(self.path.parent))
                 return response
             except BaseException as exc:
                 event["status"] = "error"
@@ -122,7 +145,7 @@ class Ledger:
                     evidence_path = directory / f"response-{len(self.events) + 1:06d}.json"
                     save_json(evidence_path, exc.response_evidence)
                     event["response_evidence"] = str(evidence_path.relative_to(self.path.parent))
-                error_usage = getattr(exc, "usage", {})
+                error_usage = getattr(exc, "usage", (response or {}).get('usage', {}))
                 try:
                     actual = normalized_usage(error_usage)
                 except ValueError:

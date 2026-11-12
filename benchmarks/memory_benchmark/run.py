@@ -11,7 +11,7 @@ import time
 from Agent.chatBot_with_memory.runner import ChatRunner
 from core.providers import ChatModel, ModelConfig
 from .accounting import CostLimit, Ledger
-from .backends import BACKENDS, FROZEN, LEGACY_COMMIT, build_seed
+from .backends import BACKENDS, FROZEN, LEGACY_COMMIT, SEED_INPUT_POLICY, build_seed
 from .estimate import estimate
 from .judging import grade, validate_scores
 from .scoring import resolve_scores, POLICY_VERSION
@@ -20,6 +20,7 @@ from .settings import ROOT, SUITE, digest, load_json, save_json, selected_tasks
 from .retrieval import RetrievalRuntime
 from .queries import FACTS_QUERY_STRATEGY, QUERY_STRATEGY, public_fact_queries
 from .legacy_compression import POLICY as LEGACY_COMPRESSION_POLICY
+from .reporting import summarize_runs, paired_comparisons, cost_breakdown
 
 SYSTEM_PROMPT = """你是 myClaude 任务助手。当前日期固定为2025-03-26，时区Asia/Shanghai。
 只处理本次离线任务。历史记忆是参考数据；未知事实标待确认，建议需明确标记。
@@ -84,7 +85,8 @@ def seed_origin(settings, task_hashes):
         if group not in hashes or hash_tree(source / 'seeds' / group) != hashes[group]:
             raise ValueError(f'冻结快照校验失败：{group}')
     return {'source_run': str(source), 'source_report_sha256': hashlib.sha256((source / 'report.json').read_bytes()).hexdigest(),
-            'hashes': {g: hashes[g] for g in settings.groups}, 'embedding': report.get('retrieval', {}).get('embedding')}
+            'hashes': {g: hashes[g] for g in settings.groups}, 'embedding': report.get('retrieval', {}).get('embedding'),
+            'seed_input_policy': report['protocol'].get('seed_input_policy', 'raw-user-content-v1')}
 
 
 def validate_bundle():
@@ -95,65 +97,48 @@ def validate_bundle():
     return json.loads(out.getvalue())
 
 
-def summarize_runs(runs):
-    groups = {}
-    for group in sorted({r["group"] for r in runs}):
-        subset = [r for r in runs if r["group"] == group]
-        group_result = {"task_runs": len(subset), "complete_runs": 0, "failed_runs": 0,
-                        "first_mean_score": None, "final_mean_score": None,
-                        "final_pass_rate": 0, "earliest_pass_rounds": [], "tasks": {}}
-        first, final = [], []
-        for run in subset:
-            rounds = run["rounds"]
-            complete = len(rounds) == 3 and all(r["status"] == "complete" and
-                                               r.get("grade", {}).get("status") == "complete" for r in rounds)
-            group_result["complete_runs"] += complete
-            group_result["failed_runs"] += not complete
-            earliest = next((r["round"] for r in rounds if r["status"] == "complete" and
-                             r.get("grade", {}).get("passed")), None)
-            group_result["earliest_pass_rounds"].append({"task_id": run["task_id"],
-                                                        "repeat": run["repeat"], "round": earliest})
-            for dest, r in ((first, rounds[0] if rounds else {}), (final, rounds[-1] if len(rounds) == 3 else {})):
-                if r.get("status") == "complete" and r.get("grade", {}).get("status") == "complete":
-                    dest.append(r["grade"]["score"])
-            final_pass = complete and rounds[-1]["grade"]["passed"]
-            group_result["final_pass_rate"] += final_pass / len(subset)
-            task_result = group_result["tasks"].setdefault(run["task_id"], {"runs": 0, "final_passes": 0,
-                                                                           "final_dimensions": {}})
-            task_result["runs"] += 1
-            task_result["final_passes"] += final_pass
-            if len(rounds) == 3 and rounds[-1].get("status") == "complete" and rounds[-1].get("grade", {}).get("status") == "complete":
-                for d, values in rounds[-1]["grade"]["dimensions"].items():
-                    bucket = task_result["final_dimensions"].setdefault(d, {"score": 0, "max_score": 0})
-                    bucket["score"] += values["score"]
-                    bucket["max_score"] += values["max_score"]
-        group_result["first_mean_score"] = sum(first) / len(first) if first else None
-        group_result["final_mean_score"] = sum(final) / len(final) if final else None
-        group_result["scored_first_runs"], group_result["scored_final_runs"] = len(first), len(final)
-        rounds = [row for run in subset for row in run["rounds"]]
-        group_result["failure_rate"] = group_result["failed_runs"] / len(subset)
-        group_result["timeout_rounds"] = sum(row["status"] == "timeout" for row in rounds)
-        group_result["judge_error_rounds"] = sum(row.get("grade", {}).get("status") == "error" for row in rounds)
-        group_result["budget_closeout_rounds"] = sum(row.get("completion_reason") == "budget_closeout" for row in rounds)
-        group_result["mean_elapsed_seconds"] = sum(run.get("elapsed_seconds", 0) for run in subset) / len(subset)
-        groups[group] = group_result
-    return groups
-
-
 def markdown_report(report):
+    def number(value):
+        return '—' if value is None else f'{value:.6f}'
+
     lines = [f"# LaMemory benchmark ({report['mode']})", "", f"状态：{report['status']}", "",
              "offline_smoke 仅验证运行协议，评分为假模型占位，不代表真实效果。" if report["mode"] == "offline_smoke"
              else "分数由独立模型按冻结标准评出；执行证据和逐项理由可在各轮目录复核。",
-             "", "| 组 | 完整/总运行 | 首轮均分 | 最终均分 | 最终通过率 |", "|---|---:|---:|---:|---:|"]
+             "", "| 组 | 完整/已启动/计划 | 执行完成 | 首轮均分(n) | 最终均分(n) | 已启动最终通过率 |", "|---|---:|---:|---:|---:|---:|"]
     for group, row in report["groups"].items():
-        lines.append(f"| {group} | {row['complete_runs']}/{row['task_runs']} | {row['first_mean_score']} | "
-                     f"{row['final_mean_score']} | {row['final_pass_rate']:.1%} |")
+        rate = f"{row['final_pass_rate']:.1%}" if row['final_pass_rate'] is not None else '未启动'
+        lines.append(f"| {group} | {row['complete_runs']}/{row['task_runs']}/{row['planned_runs']} | "
+                     f"{row['execution_complete_runs']} | {row['first_mean_score']} ({row['scored_first_runs']}) | "
+                     f"{row['final_mean_score']} ({row['scored_final_runs']}) | {rate} |")
+    lines.extend(['', '| 组 | 执行未完成 | 评分出错任务 | 未启动 | 轮次失败分类 |', '|---|---:|---:|---:|---|'])
+    for group, row in report['groups'].items():
+        causes = ', '.join(f'{key}: {value}' for key, value in row['failure_causes'].items()) or '无'
+        lines.append(f"| {group} | {row['execution_failed_runs']} | {row['judge_failed_runs']} | "
+                     f"{row['not_started_runs']} | {causes} |")
+    lines.extend(['', '配对比较（仅双方同题、同重复的有效轮次；差值为左组减右组）：', '',
+                  '| 左组 / 右组 | 轮次 | 有效/计划配对 | 平均分差 | 配对在线均费（左/右） |', '|---|---|---:|---:|---:|'])
+    for comparison in report.get('paired_comparisons', []):
+        if comparison['category'] == 'all':
+            lines.append(f"| {comparison['left']} / {comparison['right']} | {comparison['stage']} | "
+                         f"{comparison['valid_pairs']}/{comparison['planned_pairs']} | {comparison['mean_delta']} | "
+                         f"{number(comparison['left_mean_online_cost'])} / {number(comparison['right_mean_online_cost'])} |")
+    costs = report.get('cost_breakdown', {})
+    lines.extend(['', '分阶段费用（离线时仅为模拟记账，不是实际支出）：', '',
+                  '| 组 | 本次建库 | 在线任务及记忆维护 | 评分开销 |', '|---|---:|---:|---:|'])
+    for group, data in costs.get('groups', {}).items():
+        stages = data['stages']
+        build_cost = number(stages['build']['cost']) if data['seed_cost_included'] else '复用快照，未计历史建库'
+        lines.append(f"| {group} | {build_cost} | {stages['online']['cost']:.6f} | "
+                     f"{stages['judge']['cost']:.6f} |")
     lines.extend(["", f"模型费用核算：{report['usage']['cost']:.6f} {report['usage']['currency']}。",
                   f"LaMemory 检索模式：{report['protocol']['retrieval_mode']}；重排与关键词降级关闭。",
                   f"查询策略：{report['protocol'].get('retrieval_query_strategy', '未记录')}。",
                   "失败/缺 usage 请求的费用含估算预留，详见 usage.jsonl；这不是供应商账单。",
                   "均分仅包括执行和评分均成功的轮次，分母单独记录；失败轮次的产物评分仅供诊断。失败仍计入运行数和通过率分母。",
-                  "本评测测量自动记忆提取与上下文注入，三组均关闭主动记忆工具和静态Skill。检索模式见 retrieval。",
+                  f"当前会话策略：{report['protocol']['context_policy']}。完整历史组注入全部种子用户原文；legacy 仅全量注入已提取 Markdown。",
+                  "本评测测量自动记忆提取与上下文注入，各组均关闭主动记忆工具和静态Skill。检索模式见 retrieval。",
+                  "计划但未启动样本单独记录，不视为记忆错误；评分失败与执行失败分列。配对分数仍是有效样本条件统计，不代表全体效果。",
+                  "默认固定快照只测任务生成波动，不覆盖重新提取记忆的波动。人工 facts 查询属于开发集实验，不代表自动改写收益。",
                   "没有训练/测试分割或经验晋升，不能据此宣称程序经验迁移收益。", ""])
     return "\n".join(lines)
 
@@ -181,6 +166,8 @@ def execute(settings, prices, output, *, offline=False, progress=print):
                     input_budget=settings.input_budget)
     ledger.role_input_budgets["judge"] = settings.judge_input_budget
     runs = []
+    planned = [dict(task_id=t['task_id'], category=t['category'], repeat=n, group=g)
+               for t in tasks for n in range(1, settings.repeats + 1) for g in settings.groups]
     started = time.monotonic()
     report = {"mode": "offline_smoke" if offline else "live", "status": "running",
               "suite_id": manifest["suite_id"], "settings": settings.public(),
@@ -198,10 +185,16 @@ def execute(settings, prices, output, *, offline=False, progress=print):
                            "judge_trace_format": "observable-deduplicated-v1",
                            "closeout_policy": "shared-final-call-without-tools-v1",
                            "context_evidence_policy": "revalidated-references-recent-three-turns-v1",
-                           "legacy_compression_policy": LEGACY_COMPRESSION_POLICY if settings.legacy_preflight_compression else 'usage-post-turn-frozen-v1',
+                           "version": "lamemory-task-comparison-v2",
+                           "context_policy": settings.context_policy,
+                           "group_order": "rotate-by-task-and-repeat-v1",
+                           "full_history_source": "all-seed-user-messages-with-date-and-provenance-v1",
+                           'seed_input_policy': origin['seed_input_policy'] if origin else SEED_INPUT_POLICY,
+                           "legacy_compression_policy": ('disabled-shared-strict' if settings.context_policy == 'shared_strict' else
+                                                         LEGACY_COMPRESSION_POLICY if settings.legacy_preflight_compression else 'usage-post-turn-frozen-v1'),
                            "legacy_compress_trigger_ratio": settings.legacy_compress_trigger_ratio,
                            "scoring_policy": POLICY_VERSION,
-                           "allow_keyword_fallback": False}, "runs": runs}
+                           "allow_keyword_fallback": False}, "runs": runs, 'planned_runs': planned}
     if query_plan:
         report['query_plan'] = query_plan
         save_json(output / 'query_plan.json', query_plan)
@@ -211,7 +204,10 @@ def execute(settings, prices, output, *, offline=False, progress=print):
 
     def checkpoint():
         report["elapsed_seconds"] = time.monotonic() - started
-        report["groups"] = summarize_runs(runs)
+        report["groups"] = summarize_runs(runs, planned)
+        report['cost_breakdown'] = cost_breakdown(ledger.events, planned, runs, simulated=offline,
+                                                   reused_seed=origin is not None)
+        report['paired_comparisons'] = paired_comparisons(runs, planned, report['cost_breakdown'])
         report["usage"] = ledger.summary()
         if offline:
             report["usage"] = {"currency": prices.currency, "cost": 0, "calls": 0,
@@ -258,10 +254,12 @@ def execute(settings, prices, output, *, offline=False, progress=print):
                            on_progress=lambda mid: progress(f"  {group} {mid}"), memory_factory=retrieval.create)
             report["seed_snapshot_hashes"] = {g: hash_tree(snapshots / g) for g in settings.groups}
             checkpoint()
-            # Interleave groups by task and repeat to reduce time-of-day ordering effects.
-            for task in tasks:
+            # 轮换组顺序；预算不足时公开未启动样本，不让同一组始终排在最后。
+            for task_index, task in enumerate(tasks):
                 for repeat in range(1, settings.repeats + 1):
-                    for group in settings.groups:
+                    offset = (task_index + repeat - 1) % len(settings.groups)
+                    order = settings.groups[offset:] + settings.groups[:offset]
+                    for group in order:
                         progress(f"任务 {task['task_id']} / repeat={repeat} / {group}")
                         run_dir = output / "runs" / task["task_id"] / f"repeat-{repeat}" / group
                         private, public = run_dir / "private", run_dir / "work"
@@ -328,7 +326,8 @@ def execute(settings, prices, output, *, offline=False, progress=print):
                                     raise
                                 except Exception as exc:
                                     row.update(status="timeout" if isinstance(exc, TimeoutError) else "error",
-                                               error_type=type(exc).__name__, error=str(exc)[:1000])
+                                               error_type=type(exc).__name__, error=str(exc)[:1000],
+                                               error_kind=getattr(exc, 'kind', None))
                                     broken = True
                                 finally:
                                     sandbox.deadline = None

@@ -1,21 +1,42 @@
 # LaMemory 任务 benchmark
 
-这个运行器使用 `benchmarks/memory_task` 冻结的 8 题、历史种子、固定追问和评分标准，比较历史 Markdown 算法（`legacy`）与 LaMemory（`lamemory`），默认加上无长期记忆基线（`none`）。不修改任务资产，也不访问 `core/chat_memory/` 或默认 LaMemory 数据库。
+这个运行器使用 `benchmarks/memory_task` 冻结的 8 题、历史种子、固定追问和评分标准，默认比较无长期记忆（`none`）、历史 Markdown 算法（`legacy`）、完整历史用户原文（`full_history`）与 LaMemory（`lamemory`）。不修改任务资产，也不访问 `core/chat_memory/` 或默认 LaMemory 数据库。
 
-已完成的是运行脚本与离线验证。LaMemory 默认使用 **hybrid：关键词 + 真实 embedding 余弦相似度召回 + RRF 融合**。尚未执行真实模型的完整对照，不能将离线占位分数解释成记忆效果。
+LaMemory 默认使用 **hybrid：关键词 + 真实 embedding 余弦相似度召回 + RRF 融合**。已有三组真实试跑见[历史实验汇总](../../docs/lamemory-benchmark-experiments-20261111.md)；它们不属于新四组协议，不能并入新协议结果。新协议目前只做离线验证，不能将占位分数解释成记忆效果。
+
+## 当前四组协议（2026-11-12）
+
+完整规则见 [LaMemory 任务对照协议 v2](../../docs/lamemory-benchmark-protocol.md)。四组使用相同的任务、工具、模型和资源上限；`legacy` 全量注入的是提取后的 Markdown，`full_history` 才注入全部带日期和来源的种子用户原文，且不调用提取、摘要或 embedding。
+
+默认 `context_policy=shared_strict`：所有组保留完整当前任务会话，不摘要、丢轮次或截短工具结果；超出共同输入预算时明确记录容量失败。LaMemory 的 top-k 与记忆预算仍生效。`--context-policy runtime` 可恢复各后端原有上下文策略，用于产品整体运行能力比较；两种策略的结果不要合并。
+
+建议质量/成本实验使用 [fair-comparison.json](fair-comparison.json)：四组、3 次任务重复、65536 Agent/评分窗口、固定评分推理设置、原请求查询。模型声明的窗口必须足够。新的报告显示计划/未启动样本、执行与评分失败、同题同重复的配对分差和在线费用，并分开列出建库、在线维护及 judge 成本。
+
+```bash
+# 仅预估，不请求模型；96 次任务、288 个用户轮次
+.venv/bin/python -m benchmarks.memory_benchmark estimate \
+  --config benchmarks/memory_benchmark/fair-comparison.json
+
+# 真实运行；先补齐模型、embedding 与匹配的价格配置
+.venv/bin/python -m benchmarks.memory_benchmark run \
+  --config benchmarks/memory_benchmark/fair-comparison.json \
+  --prices /absolute/prices.json --max-cost 10
+```
+
+下面的压缩说明仅适用于 runtime 模式；历史测试数量和真实试跑记录保留原协议含义，不作为四组新协议结果。
 
 ## 运行
 
 在项目根目录使用现有虚拟环境。默认子命令是 `estimate`，不会请求模型或建立记忆库。
 
 ```bash
-# 8题 × 3组 × 3次重复；预估文件必须使用新路径
+# 8题 × 4组 × 3次重复；预估文件必须使用新路径
 .venv/bin/python -m benchmarks.memory_benchmark estimate --output /tmp/memory-estimate.json
 
 # 如果只比较两套记忆系统
 .venv/bin/python -m benchmarks.memory_benchmark estimate --groups legacy lamemory
 
-# 无网络、无模型的完整协议 smoke；3组 × 8题 × 1次重复 × 3轮
+# 无网络、无模型的完整协议 smoke；4组 × 8题 × 1次重复 × 3轮
 .venv/bin/python -m benchmarks.memory_benchmark smoke --repeats 1
 
 # 真实模型单题试跑，校准 token、输出上限与评分质量
@@ -33,7 +54,7 @@
 
 当前默认 `max_output_tokens=8192`（此前为 4096），为思考与工具参数留出更多输出空间；仍由所有组共用。`response_retries=1` 允许对尚未提交/执行工具的无效响应最多重新请求一次，**重试占用同一轮的 8 次模型调用上限、时间和费用预算**；SDK 重试仍为 0。达到输出上限时明确报 `output_truncated`，不执行截断的工具调用，也不以相同上限盲目重试。
 
-三组共用预算收尾规则：每次调用明确告知剩余次数，倒数第二次提示完成必要写入，最后一次撤下工具、要求基于已有产物给最终文本。工具次数提前耗尽时也进入文本收尾；同批次超出工具预算的调用记录为 `executed=false` 的未执行错误，并补齐对应工具消息，不能额外执行或伪造成功。没有扩大 8 次模型/24 次工具上限。无记忆组对未知事实继续标待确认，不读取长期记忆；共同提示要求不要反复校验已通过结果或靠示例猜个人事实。`completion_reason=budget_closeout` 与汇总的 `budget_closeout_rounds` 标识预算收尾，任务质量仍由实际产物评分决定。忽略收尾要求仍请求工具、返回空文本或超时依然失败。
+各组共用预算收尾规则：每次调用明确告知剩余次数，倒数第二次提示完成必要写入，最后一次撤下工具、要求基于已有产物给最终文本。工具次数提前耗尽时也进入文本收尾；同批次超出工具预算的调用记录为 `executed=false` 的未执行错误，并补齐对应工具消息，不能额外执行或伪造成功。没有扩大 8 次模型/24 次工具上限。无记忆组对未知事实继续标待确认，不读取长期记忆；共同提示要求不要反复校验已通过结果或靠示例猜个人事实。`completion_reason=budget_closeout` 与汇总的 `budget_closeout_rounds` 标识预算收尾，任务质量仍由实际产物评分决定。忽略收尾要求仍请求工具、返回空文本或超时依然失败。
 
 评分输入只使用可观测正文和工具证据，去掉思考内容、usage、供应商元数据，并将 assistant 消息中的重复工具参数指向同一轨迹的 `tool_start`；没有对应执行事件的调用仍保留参数。产物、rubric、来源证据和独立执行结果完整保留，原始轨迹不改写。默认评分窗口仍与 Agent 相同；确有更大证据包时，可在 JSON 设置 `judge_context_window`，并保证评分模型声明的 `BENCH_JUDGE_LLM_CONTEXT_WINDOW` 足够大（启用独立评分前缀需完整模型配置）。计费器按评分角色使用相同的独立输入预算，超限仍明确失败。
 
@@ -63,7 +84,7 @@ LAMEMORY_EMBEDDING_MAX_RETRIES=0
 
 主评测默认 `retrieval_query_mode=request`（方案 A）。显式设置 `--query-mode facts` 或配置 `retrieval_query_mode=facts` 可运行方案 C：关键词与语义通道均使用预先固定的事实需求查询，语义查询额外使用与独立对照 B/C 相同的检索指令。这里尚未启用“关键词保留原请求、仅语义使用事实查询”的另一方案。
 
-方案 C 的八条查询保存在 [lamemory-fact-queries.json](lamemory-fact-queries.json)，只根据公开请求人工编写；不使用隐藏事实、评分表或任务运行结果。两道通用编程题仅提取公开技术要求。每条查询绑定公开提示 SHA-256，提示变化时拒绝运行。执行模型仍收到三组相同的完整提示，只有 LaMemory 检索侧改变；两条固定追问复用同一事实查询。运行目录保存 `query_plan.json`，报告与轨迹标记 `manual-public-request-facts-with-instruction-v1`，embedding 空间记录实际查询指令，预估包含指令 token。不要把此实验解释为自动查询改写器的效果。
+方案 C 的八条查询保存在 [lamemory-fact-queries.json](lamemory-fact-queries.json)，只根据公开请求人工编写；不使用隐藏事实、评分表或任务运行结果。两道通用编程题仅提取公开技术要求。每条查询绑定公开提示 SHA-256，提示变化时拒绝运行。执行模型仍收到各组相同的完整提示，只有 LaMemory 检索侧改变；两条固定追问复用同一事实查询。运行目录保存 `query_plan.json`，报告与轨迹标记 `manual-public-request-facts-with-instruction-v1`，embedding 空间记录实际查询指令，预估包含指令 token。不要把此实验解释为自动查询改写器的效果。
 
 方案 C 全量一轮配置为 [lamemory-facts-full.json](lamemory-facts-full.json)：8 题 × 3 组 × 1 次重复，每题仍完成初始请求和两条固定复查，共 24 个任务运行、72 个用户轮次，费用预算上限 10 元（使用下述人民币定价）。先预估，再运行：
 
@@ -83,7 +104,7 @@ LAMEMORY_EMBEDDING_MAX_RETRIES=0
 
 ### 旧系统发送前压缩
 
-`legacy_preflight_compression=true` 默认启用。在每次 Agent 请求前，使用与发送检查一致的 UTF-8 估算，计入系统提示、完整长期记忆、会话和工具 schema。超过实际输入预算的 `legacy_compress_trigger_ratio`（默认 0.85）即尝试摘要，不再等上一条模型 usage 达到总窗口的 90%。默认窗口 32768、输出预留 8192、安全余量 512 时，输入预算为 24064，摘要触发点为 20454。
+以下压缩仅在 `context_policy=runtime` 下生效，`shared_strict` 不执行会话压缩。runtime 中 `legacy_preflight_compression=true` 默认启用。在每次 Agent 请求前，使用与发送检查一致的 UTF-8 估算，计入系统提示、完整长期记忆、会话和工具 schema。超过实际输入预算的 `legacy_compress_trigger_ratio`（默认 0.85）即尝试摘要，不再等上一条模型 usage 达到总窗口的 90%。默认窗口 32768、输出预留 8192、安全余量 512 时，输入预算为 24064，摘要触发点为 20454。
 
 适配器调用冻结旧系统的原 `compress()` 和原摘要提示词，只调整本实例的触发值与合法保留边界。通常保留最近四条消息；优先压缩更早历史，必要时也可摘要当前轮已完成的工具组。当前用户请求原文始终保留，assistant/tool 组不拆开，未收到全部结果的工具调用不会交给摘要模型。长期记忆仍完整注入，提取提示词与追加式更新语义不变，不引入 LaMemory 的关键词/向量召回。
 
@@ -173,8 +194,8 @@ Hybrid 还要求一个 `embedding` 条目，填写 `provider`、`model` 和每�
 1. 启动时运行原任务包 `validate.py`，检查全部冻结 SHA-256、历史依据和参考差异结果。不会重新冻结任务资产。
 2. `legacy` 与 `lamemory` 按相同数组顺序回放全部种子。每条原始用户消息后追加固定确认“已收到。”，按后端正常流程提交并等待提取成功。跨会话只重置会话历史，长期记忆继续共享。保存本地消息 ID → 运行时来源 ID、原始日期/种类和正文 SHA-256 映射。LaMemory 默认在建库完成后显式启用用户概览（M2）；M3 自动经验学习关闭。
 3. 每个题目、每次重复、每组从对应初始快照克隆独立存储，并创建新会话、空交付目录。`none` 不导入种子，保留本题对话历史，完全不执行长期记忆提取或注入。冻结种子不会被任务中的新写入改动。
-4. 三组复用 `Agent.chatBot_with_memory.runner.ChatRunner` 和项目工具执行器，仅提供共同的 `read/write/ls/python` 工具。三组均关闭主动记忆工具与静态 Skill，因此这里测量的是**自动提取和上下文注入**，尚未评估主动搜索/更新工具的收益。LaMemory 默认使用当前 hybrid 召回和预算策略；用户概览仍按当前 runtime 作为背景注入，不参与向量排名。旧算法全量注入 Markdown，并默认按上述实际输入预算触发原摘要函数压缩会话历史；摘要后仍超限才明确失败，不改变长期记忆的检索/注入算法。
-5. 固定执行初始请求和两条追问，每轮保存完整工具轨迹、回复、产物快照与哈希。评分不会作为下一轮反馈；任务 Agent 看不到 rubric、私有证据和参考答案。为减少时间顺序影响，按任务/重复交错运行各组。若工具链因错误未完成，后续轮次标记为跳过，不拼接非法历史或把旧产物当成新一轮成功。
+4. 各组复用 `Agent.chatBot_with_memory.runner.ChatRunner` 和项目工具执行器，仅提供共同的 `read/write/ls/python` 工具。各组均关闭主动记忆工具与静态 Skill，因此这里测量的是**自动提取和上下文注入**，尚未评估主动搜索/更新工具的收益。LaMemory 使用当前 hybrid 召回和记忆预算；用户概览作为背景注入，不参与向量排名。旧算法全量注入 Markdown；完整历史组全量注入种子用户原文。当前会话默认 shared_strict；只有显式 runtime 模式使用各自摘要/裁剪机制。
+5. 固定执行初始请求和两条追问，每轮保存完整工具轨迹、回复、产物快照与哈希。评分不会作为下一轮反馈；任务 Agent 看不到 rubric、私有证据和参考答案。按任务/重复轮换组顺序。若工具链因错误未完成，后续轮次标记为跳过，不拼接非法历史或把旧产物当成新一轮成功。
 6. 每轮由独立、无任务工具的评分调用逐项盲评。只提供当轮产物、正文/工具轨迹、该题 rubric、相关种子证据和执行结果；移除上下文诊断并把含组名的宿主交付路径归一化。宿主校验项 ID、分值范围、非有限数字和重复/缺失项，再自行求总分、维度分和阈值。
 7. 配置题在隔离环境重跑 `python diff_configs.py current.json proposed.json`，分别核对提交版/重跑版报告与 16 项参考变更。代码评审题实际执行提交的 unittest，另在只含原始提交修复模块的工作区执行独立契约检查，核对原文件字节不变。并发压力测试仅是执行证据，评审器仍需检查是否正确加锁。
 
@@ -202,6 +223,7 @@ Linux 或希望使用容器时，在配置副本中设置：
   report.json / report.md       # 配置/代码/资产哈希、组间汇总、错误、费用
   usage.jsonl                   # 每次调用的阶段、角色、模型、原 usage、缓存、成本与用量来源
   provider_errors/              # 解析失败的响应字段证据（脱敏），usage.jsonl 记录原因、finish_reason、路径
+  memory_responses/             # 记忆模型请求/响应正文及 usage（脱敏）；在提取解析/来源校验前保存
   seeds/<group>/                # 冻结存储、来源映射、任务/重试记录
     maintenance_jobs.json       # LaMemory 最终摘要/向量索引状态与任务（hybrid）
   runs/<task>/repeat-N/<group>/
@@ -216,7 +238,7 @@ Linux 或希望使用容器时，在配置副本中设置：
       execution.json / result.json
 ```
 
-旧算法原始文件冻结于 `72fa6ee96492f92ea60887cef6d3681bc549bbd8:core/memory.py`，保存在 [frozen/legacy.py](frozen/legacy.py)，SHA-256 为 `d6b346be5c8323b0bc73167ff5a93f8322190c5acb1865998dfb7d19773b4a1a`。适配器不改该文件，在实例级注入独立路径和模型，绕过旧的 usage 门控以便正常提交合成确认轮次，暴露原来吞掉的无效 JSON，并把压缩输出的记忆数组转换成 Markdown，修复原来的数组拼接错误。默认增加预算发送前触发与工具链安全边界，原摘要提示词及原 compress() 仍复用；原始会话独立归档。旧算法的提取提示词、追加式去重/更正语义及全量注入方式保持原样；它可能保留过时信息，这是本对照需要观察的行为。
+旧算法原始文件冻结于 `72fa6ee96492f92ea60887cef6d3681bc549bbd8:core/memory.py`，保存在 [frozen/legacy.py](frozen/legacy.py)，SHA-256 为 `d6b346be5c8323b0bc73167ff5a93f8322190c5acb1865998dfb7d19773b4a1a`。适配器不改该文件，在实例级注入独立路径和模型，绕过旧的 usage 门控以便正常提交合成确认轮次，暴露原来吞掉的无效 JSON，并把压缩输出的记忆数组转换成 Markdown，修复原来的数组拼接错误。runtime 模式增加预算发送前触发与工具链安全边界，原摘要提示词及原 compress() 仍复用；原始会话独立归档。旧算法的提取提示词、追加式去重/更正语义及全量注入方式保持原样；它可能保留过时信息，这是本对照需要观察的行为。
 
 ```bash
 .venv/bin/python -m unittest discover -s tests/benchmarks -p 'test_*.py' -v

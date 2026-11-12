@@ -25,7 +25,7 @@ def save_json(path, value):
 
 @dataclass(frozen=True)
 class Settings:
-    groups: tuple[str, ...] = ("none", "legacy", "lamemory")
+    groups: tuple[str, ...] = ("none", "legacy", "full_history", "lamemory")
     repeats: int = 3
     tasks: tuple[str, ...] = ()
     context_window: int = 32768
@@ -45,6 +45,7 @@ class Settings:
     retrieval_mode: str = "hybrid"
     retrieval_query_mode: str = "request"
     seed_source: str | None = None
+    context_policy: str = "shared_strict"
     legacy_preflight_compression: bool = True
     legacy_compress_trigger_ratio: float = 0.85
     sandbox: str = "seatbelt"
@@ -56,6 +57,8 @@ class Settings:
     max_cost: float | None = None
 
     def __post_init__(self):
+        if self.context_policy not in {"shared_strict", "runtime"}:
+            raise ValueError('context_policy 必须为 shared_strict/runtime')
         if type(self.legacy_preflight_compression) is not bool:
             raise ValueError('legacy_preflight_compression 必须为布尔值')
         if (isinstance(self.legacy_compress_trigger_ratio, bool) or
@@ -83,8 +86,8 @@ class Settings:
             raise ValueError("方案 C（facts）需要 hybrid 检索")
         if self.seed_source is not None and (not isinstance(self.seed_source, str) or not self.seed_source.strip()):
             raise ValueError('seed_source 需要为已有运行目录路径')
-        if not self.groups or len(set(self.groups)) != len(self.groups) or set(self.groups) - {"none", "legacy", "lamemory"}:
-            raise ValueError("groups 必须是 none/legacy/lamemory 的非空无重复子集")
+        if not self.groups or len(set(self.groups)) != len(self.groups) or set(self.groups) - {"none", "legacy", "full_history", "lamemory"}:
+            raise ValueError("groups 必须是 none/legacy/full_history/lamemory 的非空无重复子集")
         for key in ("repeats", "context_window", "max_output_tokens", "max_model_calls", "max_tool_calls",
                     "job_attempts", "expected_calls_per_round", "expected_output_tokens",
                     "expected_artifact_tokens", "seed_memory_tokens_per_message"):

@@ -428,7 +428,10 @@ class LaMemoryService:
         from .generation.consolidation import consolidate
         return consolidate(self, max_jobs=max_jobs)
 
-    def build_context(self, system_prompt="", budget=None, *, tools=None, retrieval_query=None):
+    def build_context(self, system_prompt="", budget=None, *, tools=None, retrieval_query=None,
+                      overflow_policy="trim"):
+        if overflow_policy not in {'trim', 'error'}:
+            raise ValueError('overflow_policy 必须为 trim/error')
         rows = self.history()
         if retrieval_query is not None and not isinstance(retrieval_query, str):
             raise ValueError("retrieval_query 必须为字符串")
@@ -444,7 +447,7 @@ class LaMemoryService:
         self.last_context = build_context(rows, candidates, system_prompt, self.config,
                                           budget=budget, tools=tools, working_view=view,
                                           summaries=bundle.summaries, experiences=bundle.experiences,
-                                          retrieval_diagnostics=bundle.diagnostics)
+                                          retrieval_diagnostics=bundle.diagnostics, overflow_policy=overflow_policy)
         self.last_context.diagnostics["retrieval_query_truncated"] = query_truncated
         self.last_context.diagnostics["retrieval_query"] = query
         self._context_evidence.remember(self, self.last_context, current_turn, authoritative)

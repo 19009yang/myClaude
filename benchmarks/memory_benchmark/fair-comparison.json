@@ -1,0 +1,12 @@
+{
+  "groups": ["none", "legacy", "full_history", "lamemory"],
+  "context_policy": "shared_strict",
+  "repeats": 3,
+  "context_window": 65536,
+  "judge_context_window": 65536,
+  "judge_reasoning_effort": "off",
+  "retrieval_mode": "hybrid",
+  "retrieval_query_mode": "request",
+  "retrieval_top_k": 10,
+  "memory_token_budget": 2048
+}

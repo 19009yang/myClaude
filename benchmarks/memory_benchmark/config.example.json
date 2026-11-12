@@ -1,5 +1,6 @@
 {
-  "groups": ["none", "legacy", "lamemory"],
+  "groups": ["none", "legacy", "full_history", "lamemory"],
+  "context_policy": "shared_strict",
   "repeats": 3,
   "context_window": 32768,
   "max_output_tokens": 8192,

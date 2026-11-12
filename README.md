@@ -7,7 +7,37 @@
 - **执行闭环**：构造上下文 → 调用模型 → 执行工具 → 回传结果 → 继续推理，直到生成最终回复。
 - **记忆闭环**：保存原始证据 → 提取结构化记录 → 聚合分层摘要 → 按需召回 → 根据更正、遗忘和反馈更新状态。
 
-记忆系统命名为 **Layered Aggregated Memory（LaMemory）**。当前已实现 M0–M3 的单机运行时，使用 SQLite 持久化，默认关键词检索，可显式配置混合召回与可选重排；真实向量模型验证尚未执行。验证范围与后续规划见文末。
+记忆系统命名为 **Layered Aggregated Memory（LaMemory）**。当前已实现 M0–M3 的单机运行时，使用 SQLite 持久化，默认关键词检索，可显式配置混合召回与可选重排。已完成真实聊天模型与 embedding 服务参与的记忆任务对照，结果如下。
+
+## 记忆任务评测
+
+2026-11-12，使用 DeepSeek `deepseek-flash` 与 `Qwen/Qwen3-Embedding-4B`，在生日提醒、理疗安排、SQL 学习、项目风险、季度计划、财务复盘六个任务上比较四种方法：无长期记忆（`none`）、全量注入提取后 Markdown 的旧系统（`legacy`）、完整历史用户原文（`full_history`）和 **LaMemory**。每题一次独立重复、三轮固定对话，使用相同模型、工具和预算。
+
+- **完整通过六题（6/6，100%）**，是本轮唯一全部通过的方法；六题最终有效均分为 **96.0**。
+- 在四组共同完成的五题上，相比 legacy，在线 **Token 减少 23.2%**、**费用降低 35.3%**，原评分均分为 **96.4 对 97.2**。
+- 六题首轮第一次请求的平均上下文相比完整历史 **减少 42.2%**；此项为运行器估算，不能直接等同于整项任务的 Token 或费用节省。
+
+### 完整交付与通过率
+
+![六个记忆任务的通过率与端到端交付得分](docs/lamemory-memory-task-results-20261112/figures/02_delivery.png)
+
+通过要求三轮执行与评分全部成功，且最终达到该题阈值。图中的端到端有效得分以六题为分母，未完成任务按 0 计，是交付指标，不表示其已有产物或记忆质量得分为零。
+
+### 六个任务的实际得分
+
+![四种方法在六个记忆任务上的最终有效得分](docs/lamemory-memory-task-results-20261112/figures/01_task_scores.png)
+
+LaMemory 在理疗、SQL、项目风险三题取得 100 分，并完成了其他三组因输出截断而未完成的季度计划。图中保留原始评分；理疗题存在通勤缓冲的评分争议，具体产物与敏感性分析见完整报告。
+
+### Token 消耗与资源效率
+
+![共同完成五题及六题全部尝试的在线 Token 对比](docs/lamemory-memory-task-results-20261112/figures/03_tokens.png)
+
+左图只比较四组共同完成的同一五题，统计 Agent 与在线记忆维护的输入、输出 Token，包含缓存读写，排除建库与评分；右图保留六题全部尝试的消耗。LaMemory 完成了更多任务，不能把其他组失败早停的低消耗视为效率优势。完整历史组在配对五题上的费用仍更低，当前结果不表示 LaMemory 在所有指标上均最优。
+
+本次仅汇总六个记忆任务，不包含通用编程任务。每题只有一次独立重复，三轮复查不等于三个独立样本，尚不能据此宣称统计显著优势或经验迁移收益。
+
+[完整报告、费用与全部图表](docs/lamemory-memory-task-results-20261112/README.md) · [评测协议](docs/lamemory-benchmark-protocol.md) · [运行与复现](benchmarks/memory_benchmark/README.md)
 
 ## 整体结构
 
@@ -98,9 +128,9 @@ SQLite 是当前持久化存储，数据表使用 `lamemory_` 前缀。默认数
 
 完整的数据表关系、记忆生成、更正、遗忘与召回链路见 [LaMemory 存储结构与记忆生命周期](docs/lamemory-storage-and-lifecycle.md)。
 
-关键词与语义向量双路召回、RRF 融合及可选重排序的待实施方案见 [LaMemory 混合召回代码构建方案](docs/lamemory-hybrid-retrieval-plan.md)。
+关键词与语义向量双路召回、RRF 融合及可选重排序的设计见 [LaMemory 混合召回代码构建方案](docs/lamemory-hybrid-retrieval-plan.md)。
 
-上述方案现已完成本地实现与离线集成；启动、回填、模型示例、真实 smoke blocked 状态及回退方式见 [混合召回实施与验证](docs/lamemory-hybrid-retrieval.md)。原方案保留为实施前设计。
+上述方案已完成本地实现与离线集成，真实 hybrid 任务验证见上方评测。启动、回填、模型示例、早期验证状态及回退方式见 [混合召回实施与验证](docs/lamemory-hybrid-retrieval.md)。原方案保留为实施前设计。
 
 ### 写入：完整轮次驱动，显式操作即时返回
 
@@ -225,28 +255,7 @@ myClaude/
 └── docs/                       # 架构、开发指南和使用说明
 ```
 
-建议从 `runner.py → tools/executor.py → core/lamemory/service.py → integration/context.py` 阅读执行与记忆闭环，再看 `generation/hierarchy.py / generation/procedural.py` 的派生数据管理。LaMemory 的功能分组与文件说明见 [模块导航](core/lamemory/README.md)。
 
-仓库另保留搜索摘要工作流（`Agent/workflow/`）和论文研究助手（`Agent/ResearchAssistant/`）作为组合示例。文件读写、搜索、命令执行等内置工具和 Markdown Skill 加载器为这些入口提供扩展能力。
 
-## 验证与实现边界
 
-离线回归使用临时目录、临时数据库和替代模型，避免改写真实会话数据：
 
-```bash
-uv run python -m unittest discover -s tests/lamemory -p 'test_*.py'
-uv run python -m unittest discover -s tests/providers -p 'test_*.py'
-uv run python -m benchmarks.lamemory.smoke --output /tmp/lamemory-fake-smoke.json
-```
-
-最新[验证记录](benchmarks/lamemory/README.md)包含 69 项 LaMemory 行为回归、20 项 provider 测试，以及 DeepSeek `deepseek-flash` 的 M2/M3 在线交付 smoke：M2 9 项、M3 15 项检查通过，覆盖真实摘要、来源变更、经验提取、独立执行反馈晋升、跨会话召回和撤销。16 次模型调用共记录 13,891 tokens；原始证据与复现命令见验证记录。这是合成场景的功能验证，真实摘要质量的系统评估与复杂任务的经验迁移收益仍待验证。
-
-```bash
-# 在线 M2/M3 smoke：读取项目已配置的 DeepSeek 模型，使用临时数据库
-# output 使用新路径，避免覆盖既有证据
-uv run python -m benchmarks.lamemory.live_m2_m3 --output /tmp/lamemory-m2-m3-live-new.json
-```
-
-当前运行方式为单机、串行任务消费。Embedding / 混合检索、自动主题聚类、并发后台 worker、跨机器同步和自动 Skill 生成尚未实现；完整任务对照基准也尚未运行，现有结果只支持对应范围内的行为验证。
-
-进一步阅读：[LaMemory 架构与实施方案](docs/lamemory-design.md) · [LaMemory 开发指南](docs/lamemory-development-guide.md) · [模型协议验证记录](benchmarks/providers/README.md)。

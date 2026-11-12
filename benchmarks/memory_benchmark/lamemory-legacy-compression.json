@@ -1,5 +1,6 @@
 {
   "groups": ["legacy"],
+  "context_policy": "runtime",
   "tasks": [],
   "repeats": 1,
   "retrieval_mode": "hybrid",

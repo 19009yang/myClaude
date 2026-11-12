@@ -6,6 +6,7 @@ from .judging import JUDGE_PROMPT
 from .sandbox import common_tools
 from .settings import SUITE, load_json, selected_tasks
 from .queries import public_fact_queries
+from .backends import seed_records, seed_input, seed_content
 
 
 def estimate(settings, prices):
@@ -13,6 +14,8 @@ def estimate(settings, prices):
     query_plan = public_fact_queries(tasks) if settings.retrieval_query_mode == 'facts' else None
     sessions = load_json(SUITE / manifest["seed"])["sessions"]
     seeds = [m for s in sessions for m in s["messages"]]
+    raw_history = [seed_content(record) for record in seed_records(sessions)]
+    replay_inputs = [seed_input(s, m) for s in sessions for m in s['messages']]
     nseed = len(seeds)
     tools = [t.to_llm_format() for t in common_tools(SUITE, None)]
     scenarios = {}
@@ -35,9 +38,9 @@ def estimate(settings, prices):
         calls = settings.max_model_calls if ceiling else (2 if scenario == "low" else settings.expected_calls_per_round)
         calls = min(calls, settings.max_model_calls)
         for group in settings.groups:
-            if group != "none" and not settings.seed_source:
+            if group in {"legacy", "lamemory"} and not settings.seed_source:
                 for i, seed in enumerate(seeds):
-                    inp = estimate_tokens(seed["content"]) + 500
+                    inp = estimate_tokens(replay_inputs[i]) + 500
                     if group == "legacy":
                         inp += i * settings.seed_memory_tokens_per_message
                     add("build", group, "extraction", "memory", settings.job_attempts if ceiling else 1,
@@ -57,8 +60,9 @@ def estimate(settings, prices):
                     attempts = settings.job_attempts if ceiling else 1
                     add("build", group, "embedding_documents", "embedding",
                         math.ceil(documents / 16) * attempts, documents * document_tokens * attempts, 0)
-            memory = 0 if group == "none" else (nseed * settings.seed_memory_tokens_per_message
-                                               if group == "legacy" else settings.memory_token_budget)
+            memory = (0 if group == "none" else estimate_tokens(raw_history) if group == 'full_history'
+                      else nseed * settings.seed_memory_tokens_per_message if group == "legacy"
+                      else settings.memory_token_budget)
             for task in tasks:
                 public = (SUITE / task["prompt"]).read_text(encoding="utf-8").replace("{{output_dir}}", "/isolated/output")
                 asset = sum(estimate_tokens((SUITE / a["path"]).read_text(encoding="utf-8")) for a in task["assets"])
@@ -83,13 +87,13 @@ def estimate(settings, prices):
                         attempts = settings.job_attempts if ceiling else 1
                         add("online", group, "embedding_documents", "embedding", attempts * settings.repeats,
                             documents * (4000 if ceiling else 300) * attempts * settings.repeats, 0)
-                    if group != "none":
+                    if group in {"legacy", "lamemory"}:
                         retries = settings.job_attempts if ceiling else 1
                         inp = base + history + artifact + output if group == "legacy" else estimate_tokens(public) + 600
                         add("online", group, "extraction", "memory", retries * settings.repeats,
                             inp * retries * settings.repeats,
                             (settings.max_output_tokens if ceiling else 160) * retries * settings.repeats)
-                        if group == "legacy":
+                        if group == "legacy" and settings.context_policy == 'runtime':
                             summaries = ((calls * settings.job_attempts if ceiling else (0 if scenario == 'low' else 1))
                                          if settings.legacy_preflight_compression else (1 if ceiling else 0))
                             if summaries:
@@ -124,6 +128,8 @@ def estimate(settings, prices):
                                "lamemory" in settings.groups and "embedding" not in prices.data else []),
             "scenarios": scenarios,
             "assumptions": ["UTF-8/3 粗估，非精确 tokenizer；所有输入按缓存未命中计价。",
+                            "full_history 注入全部带日期和来源的种子用户原文，不产生提取、摘要或向量费用。",
+                            "shared_strict 禁止各组当前会话的摘要与裁剪；预估不保证能容纳所有轮次。",
                             "每组仅建库一次；每题/重复克隆同一冻结快照。固定3轮，每轮独立评分。",
                             "low/expected 使用配置中的产物/输出假设，并计入历史与工具结果重发。",
                             "configured_ceiling 按调用/输出上限和记忆重试估算；摘要源大小随模型输出变化，非账单保证上限。",

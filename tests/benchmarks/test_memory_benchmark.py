@@ -81,8 +81,8 @@ class AccountingTests(unittest.TestCase):
     def test_estimate_counts_and_scaling(self):
         one = estimate(Settings(repeats=1), self.prices)
         three = estimate(Settings(), self.prices)
-        self.assertEqual(one["task_runs"], 24)
-        self.assertEqual(three["task_runs"], 72)
+        self.assertEqual(one["task_runs"], 32)
+        self.assertEqual(three["task_runs"], 96)
         self.assertEqual(one["seed_user_messages_per_backend"], 44)
         for name in one["scenarios"]:
             a, b = one["scenarios"][name], three["scenarios"][name]
@@ -216,8 +216,8 @@ class ProtocolTests(unittest.TestCase):
             output = Path(tmp) / "run"
             report = execute(Settings(repeats=1), Prices(PRICES), output, offline=True, progress=lambda *a: None)
             self.assertEqual(report["status"], "complete", report.get("error"))
-            self.assertEqual(len(report["runs"]), 24)
-            self.assertEqual(sum(len(r["rounds"]) for r in report["runs"]), 72)
+            self.assertEqual(len(report["runs"]), 32)
+            self.assertEqual(sum(len(r["rounds"]) for r in report["runs"]), 96)
             self.assertEqual(report["mode"], "offline_smoke")
             self.assertEqual(report["retrieval"]["mode"], "hybrid")
             self.assertTrue(report["retrieval"]["simulated"])

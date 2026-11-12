@@ -1,0 +1,1390 @@
+{
+  "run_id": "run-20261112-160947-805693",
+  "currency": "CNY",
+  "protocol": {
+    "active_memory_tools": false,
+    "static_skills": false,
+    "fixed_user_rounds": 3,
+    "build_once_per_backend": true,
+    "snapshot_per_task_repeat": true,
+    "hierarchy": true,
+    "auto_learn_experiences": false,
+    "retrieval_mode": "hybrid",
+    "rerank": false,
+    "retrieval_top_k": 10,
+    "response_retries": 1,
+    "retrieval_query_mode": "request",
+    "retrieval_query_strategy": "recent-task-requests-without-structured-delivery-or-fixed-reviews-v2",
+    "judge_trace_format": "observable-deduplicated-v1",
+    "closeout_policy": "shared-final-call-without-tools-v1",
+    "context_evidence_policy": "revalidated-references-recent-three-turns-v1",
+    "version": "lamemory-task-comparison-v2",
+    "context_policy": "shared_strict",
+    "group_order": "rotate-by-task-and-repeat-v1",
+    "full_history_source": "all-seed-user-messages-with-date-and-provenance-v1",
+    "seed_input_policy": "dated-user-content-v2",
+    "legacy_compression_policy": "disabled-shared-strict",
+    "legacy_compress_trigger_ratio": 0.85,
+    "scoring_policy": "birthday-gift-note-v1",
+    "allow_keyword_fallback": false
+  },
+  "settings": {
+    "groups": [
+      "none",
+      "legacy",
+      "full_history",
+      "lamemory"
+    ],
+    "repeats": 1,
+    "tasks": [],
+    "context_window": 65536,
+    "max_output_tokens": 8192,
+    "judge_context_window": 65536,
+    "judge_temperature": 0.0,
+    "judge_reasoning_effort": "off",
+    "response_retries": 1,
+    "retrieval_top_k": 10,
+    "memory_token_budget": 2048,
+    "max_model_calls": 8,
+    "max_tool_calls": 24,
+    "memory_timeout": 60,
+    "judge_timeout": 120,
+    "job_attempts": 3,
+    "hierarchy": true,
+    "retrieval_mode": "hybrid",
+    "retrieval_query_mode": "request",
+    "seed_source": null,
+    "context_policy": "shared_strict",
+    "legacy_preflight_compression": true,
+    "legacy_compress_trigger_ratio": 0.85,
+    "sandbox": "seatbelt",
+    "docker_image": "python:3.13-slim",
+    "expected_calls_per_round": 3,
+    "expected_output_tokens": 900,
+    "expected_artifact_tokens": 2400,
+    "seed_memory_tokens_per_message": 80,
+    "max_cost": 30.0
+  },
+  "source_hashes": {
+    "report.json": "b9d5859aca4913666d2654ed50ece76e6d90df12d422d2125fc853aba6171f7e",
+    "usage.jsonl": "62f47a8f67b05410bac5a13d74f9128dd793b4a9e2f3122b430d33f352c81426"
+  },
+  "tasks": {
+    "01_parents_birthday": "父母生日",
+    "02_therapy_schedule": "理疗安排",
+    "03_sql_study_blocks": "SQL 学习",
+    "04_project_risk_kanban": "项目风险",
+    "05_quarter_learning_plan": "季度计划",
+    "06_finance_review": "财务复盘"
+  },
+  "common_tasks": [
+    "01_parents_birthday",
+    "02_therapy_schedule",
+    "03_sql_study_blocks",
+    "04_project_risk_kanban",
+    "06_finance_review"
+  ],
+  "groups": {
+    "none": {
+      "completed": 5,
+      "passed": 1,
+      "success_rate": 0.16666666666666666,
+      "valid_final_mean": 37.2,
+      "delivery_score": 31.0,
+      "common_mean": 37.2,
+      "online_six": {
+        "input_tokens": 1089678,
+        "output_tokens": 102527,
+        "total_tokens": 1192205,
+        "cost": 2.2444232,
+        "calls": 80,
+        "agent_calls": 80,
+        "agent_input": 1089678,
+        "agent_output": 102527,
+        "maintenance_tokens": 0,
+        "maintenance_cost": 0
+      },
+      "online_common": {
+        "input_tokens": 1051531,
+        "output_tokens": 87247,
+        "total_tokens": 1138778,
+        "cost": 2.0559244,
+        "calls": 73,
+        "agent_calls": 73,
+        "agent_input": 1051531,
+        "agent_output": 87247,
+        "maintenance_tokens": 0,
+        "maintenance_cost": 0
+      },
+      "build": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "cost": 0,
+        "calls": 0,
+        "agent_calls": 0,
+        "agent_input": 0,
+        "agent_output": 0,
+        "maintenance_tokens": 0,
+        "maintenance_cost": 0
+      },
+      "judge_six": {
+        "input_tokens": 212608,
+        "output_tokens": 9212,
+        "total_tokens": 221820,
+        "cost": 0.4474816,
+        "calls": 17,
+        "agent_calls": 0,
+        "agent_input": 0,
+        "agent_output": 0,
+        "maintenance_tokens": 221820,
+        "maintenance_cost": 0.4474816
+      },
+      "first_context_mean": 1040.3333333333333,
+      "first_context_tokens": [
+        1039,
+        1024,
+        1051,
+        1045,
+        1040,
+        1043
+      ]
+    },
+    "legacy": {
+      "completed": 5,
+      "passed": 5,
+      "success_rate": 0.8333333333333334,
+      "valid_final_mean": 97.2,
+      "delivery_score": 81.0,
+      "common_mean": 97.2,
+      "online_six": {
+        "input_tokens": 1176247,
+        "output_tokens": 127120,
+        "total_tokens": 1303367,
+        "cost": 3.02900984,
+        "calls": 99,
+        "agent_calls": 83,
+        "agent_input": 1034368,
+        "agent_output": 113521,
+        "maintenance_tokens": 155478,
+        "maintenance_cost": 0.39255
+      },
+      "online_common": {
+        "input_tokens": 1072142,
+        "output_tokens": 98991,
+        "total_tokens": 1171133,
+        "cost": 2.63942096,
+        "calls": 88,
+        "agent_calls": 73,
+        "agent_input": 939451,
+        "agent_output": 86853,
+        "maintenance_tokens": 144829,
+        "maintenance_cost": 0.362486
+      },
+      "build": {
+        "input_tokens": 40553,
+        "output_tokens": 24659,
+        "total_tokens": 65212,
+        "cost": 0.278378,
+        "calls": 44,
+        "agent_calls": 0,
+        "agent_input": 0,
+        "agent_output": 0,
+        "maintenance_tokens": 65212,
+        "maintenance_cost": 0.278378
+      },
+      "judge_six": {
+        "input_tokens": 213452,
+        "output_tokens": 8995,
+        "total_tokens": 222447,
+        "cost": 0.44969152,
+        "calls": 17,
+        "agent_calls": 0,
+        "agent_input": 0,
+        "agent_output": 0,
+        "maintenance_tokens": 222447,
+        "maintenance_cost": 0.44969152
+      },
+      "first_context_mean": 3545.3333333333335,
+      "first_context_tokens": [
+        3544,
+        3529,
+        3556,
+        3550,
+        3545,
+        3548
+      ]
+    },
+    "full_history": {
+      "completed": 5,
+      "passed": 5,
+      "success_rate": 0.8333333333333334,
+      "valid_final_mean": 97,
+      "delivery_score": 80.83333333333333,
+      "common_mean": 97,
+      "online_six": {
+        "input_tokens": 846905,
+        "output_tokens": 78686,
+        "total_tokens": 925591,
+        "cost": 1.56212808,
+        "calls": 61,
+        "agent_calls": 61,
+        "agent_input": 846905,
+        "agent_output": 78686,
+        "maintenance_tokens": 0,
+        "maintenance_cost": 0
+      },
+      "online_common": {
+        "input_tokens": 838516,
+        "output_tokens": 70433,
+        "total_tokens": 908949,
+        "cost": 1.49437888,
+        "calls": 59,
+        "agent_calls": 59,
+        "agent_input": 838516,
+        "agent_output": 70433,
+        "maintenance_tokens": 0,
+        "maintenance_cost": 0
+      },
+      "build": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "cost": 0,
+        "calls": 0,
+        "agent_calls": 0,
+        "agent_input": 0,
+        "agent_output": 0,
+        "maintenance_tokens": 0,
+        "maintenance_cost": 0
+      },
+      "judge_six": {
+        "input_tokens": 148636,
+        "output_tokens": 7347,
+        "total_tokens": 155983,
+        "cost": 0.31766336,
+        "calls": 16,
+        "agent_calls": 0,
+        "agent_input": 0,
+        "agent_output": 0,
+        "maintenance_tokens": 155983,
+        "maintenance_cost": 0.31766336
+      },
+      "first_context_mean": 5267.333333333333,
+      "first_context_tokens": [
+        5266,
+        5251,
+        5278,
+        5272,
+        5267,
+        5270
+      ]
+    },
+    "lamemory": {
+      "completed": 6,
+      "passed": 6,
+      "success_rate": 1.0,
+      "valid_final_mean": 96,
+      "delivery_score": 96.0,
+      "common_mean": 96.4,
+      "online_six": {
+        "input_tokens": 1181434,
+        "output_tokens": 109638,
+        "total_tokens": 1291072,
+        "cost": 2.40690488,
+        "calls": 113,
+        "agent_calls": 79,
+        "agent_input": 1097626,
+        "agent_output": 98249,
+        "maintenance_tokens": 95197,
+        "maintenance_cost": 0.18356936000000001
+      },
+      "online_common": {
+        "input_tokens": 818567,
+        "output_tokens": 80944,
+        "total_tokens": 899511,
+        "cost": 1.7085944,
+        "calls": 89,
+        "agent_calls": 61,
+        "agent_input": 751155,
+        "agent_output": 71894,
+        "maintenance_tokens": 76462,
+        "maintenance_cost": 0.15998744
+      },
+      "build": {
+        "input_tokens": 31677,
+        "output_tokens": 45819,
+        "total_tokens": 77496,
+        "cost": 0.42599442,
+        "calls": 55,
+        "agent_calls": 0,
+        "agent_input": 0,
+        "agent_output": 0,
+        "maintenance_tokens": 77496,
+        "maintenance_cost": 0.42599442
+      },
+      "judge_six": {
+        "input_tokens": 204182,
+        "output_tokens": 8726,
+        "total_tokens": 212908,
+        "cost": 0.43451888,
+        "calls": 18,
+        "agent_calls": 0,
+        "agent_input": 0,
+        "agent_output": 0,
+        "maintenance_tokens": 212908,
+        "maintenance_cost": 0.43451888
+      },
+      "first_context_mean": 3046.1666666666665,
+      "first_context_tokens": [
+        3031,
+        3028,
+        3020,
+        3083,
+        3040,
+        3075
+      ]
+    }
+  },
+  "scores": [
+    {
+      "task_id": "01_parents_birthday",
+      "task": "父母生日",
+      "group": "none",
+      "completed": true,
+      "passed": false,
+      "score": 20,
+      "online": {
+        "input_tokens": 68624,
+        "output_tokens": 8952,
+        "total_tokens": 77576,
+        "cost": 0.15141248000000002,
+        "calls": 10,
+        "agent_calls": 10,
+        "agent_input": 68624,
+        "agent_output": 8952,
+        "maintenance_tokens": 0,
+        "maintenance_cost": 0
+      },
+      "rounds": [
+        {
+          "round": 1,
+          "status": "complete",
+          "score": 20,
+          "error_kind": null,
+          "error": null
+        },
+        {
+          "round": 2,
+          "status": "complete",
+          "score": 19,
+          "error_kind": null,
+          "error": null
+        },
+        {
+          "round": 3,
+          "status": "complete",
+          "score": 20,
+          "error_kind": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "task_id": "02_therapy_schedule",
+      "task": "理疗安排",
+      "group": "none",
+      "completed": true,
+      "passed": false,
+      "score": 15,
+      "online": {
+        "input_tokens": 181456,
+        "output_tokens": 16400,
+        "total_tokens": 197856,
+        "cost": 0.34333312,
+        "calls": 15,
+        "agent_calls": 15,
+        "agent_input": 181456,
+        "agent_output": 16400,
+        "maintenance_tokens": 0,
+        "maintenance_cost": 0
+      },
+      "rounds": [
+        {
+          "round": 1,
+          "status": "complete",
+          "score": 15,
+          "error_kind": null,
+          "error": null
+        },
+        {
+          "round": 2,
+          "status": "complete",
+          "score": 15,
+          "error_kind": null,
+          "error": null
+        },
+        {
+          "round": 3,
+          "status": "complete",
+          "score": 15,
+          "error_kind": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "task_id": "03_sql_study_blocks",
+      "task": "SQL 学习",
+      "group": "none",
+      "completed": true,
+      "passed": false,
+      "score": 28,
+      "online": {
+        "input_tokens": 147268,
+        "output_tokens": 16023,
+        "total_tokens": 163291,
+        "cost": 0.3712896,
+        "calls": 14,
+        "agent_calls": 14,
+        "agent_input": 147268,
+        "agent_output": 16023,
+        "maintenance_tokens": 0,
+        "maintenance_cost": 0
+      },
+      "rounds": [
+        {
+          "round": 1,
+          "status": "complete",
+          "score": 28,
+          "error_kind": null,
+          "error": null
+        },
+        {
+          "round": 2,
+          "status": "complete",
+          "score": 20,
+          "error_kind": null,
+          "error": null
+        },
+        {
+          "round": 3,
+          "status": "complete",
+          "score": 28,
+          "error_kind": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "task_id": "04_project_risk_kanban",
+      "task": "项目风险",
+      "group": "none",
+      "completed": true,
+      "passed": false,
+      "score": 44,
+      "online": {
+        "input_tokens": 286090,
+        "output_tokens": 17293,
+        "total_tokens": 303383,
+        "cost": 0.51283056,
+        "calls": 18,
+        "agent_calls": 18,
+        "agent_input": 286090,
+        "agent_output": 17293,
+        "maintenance_tokens": 0,
+        "maintenance_cost": 0
+      },
+      "rounds": [
+        {
+          "round": 1,
+          "status": "complete",
+          "score": 36,
+          "error_kind": null,
+          "error": null
+        },
+        {
+          "round": 2,
+          "status": "complete",
+          "score": 36,
+          "error_kind": null,
+          "error": null
+        },
+        {
+          "round": 3,
+          "status": "complete",
+          "score": 44,
+          "error_kind": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "task_id": "05_quarter_learning_plan",
+      "task": "季度计划",
+      "group": "none",
+      "completed": false,
+      "passed": false,
+      "score": null,
+      "online": {
+        "input_tokens": 38147,
+        "output_tokens": 15280,
+        "total_tokens": 53427,
+        "cost": 0.1884988,
+        "calls": 7,
+        "agent_calls": 7,
+        "agent_input": 38147,
+        "agent_output": 15280,
+        "maintenance_tokens": 0,
+        "maintenance_cost": 0
+      },
+      "rounds": [
+        {
+          "round": 1,
+          "status": "complete",
+          "score": 34,
+          "error_kind": null,
+          "error": null
+        },
+        {
+          "round": 2,
+          "status": "error",
+          "score": null,
+          "error_kind": "output_truncated",
+          "error": "deepseek: output_truncated"
+        },
+        {
+          "round": 3,
+          "status": "skipped_after_incomplete_turn",
+          "score": null,
+          "error_kind": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "task_id": "06_finance_review",
+      "task": "财务复盘",
+      "group": "none",
+      "completed": true,
+      "passed": true,
+      "score": 79,
+      "online": {
+        "input_tokens": 368093,
+        "output_tokens": 28579,
+        "total_tokens": 396672,
+        "cost": 0.67705864,
+        "calls": 16,
+        "agent_calls": 16,
+        "agent_input": 368093,
+        "agent_output": 28579,
+        "maintenance_tokens": 0,
+        "maintenance_cost": 0
+      },
+      "rounds": [
+        {
+          "round": 1,
+          "status": "complete",
+          "score": 65,
+          "error_kind": null,
+          "error": null
+        },
+        {
+          "round": 2,
+          "status": "complete",
+          "score": 65,
+          "error_kind": null,
+          "error": null
+        },
+        {
+          "round": 3,
+          "status": "complete",
+          "score": 79,
+          "error_kind": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "task_id": "01_parents_birthday",
+      "task": "父母生日",
+      "group": "legacy",
+      "completed": true,
+      "passed": true,
+      "score": 95,
+      "online": {
+        "input_tokens": 189749,
+        "output_tokens": 14742,
+        "total_tokens": 204491,
+        "cost": 0.47334952,
+        "calls": 19,
+        "agent_calls": 16,
+        "agent_input": 165605,
+        "agent_output": 12975,
+        "maintenance_tokens": 25911,
+        "maintenance_cost": 0.062424
+      },
+      "rounds": [
+        {
+          "round": 1,
+          "status": "complete",
+          "score": 95,
+          "error_kind": null,
+          "error": null
+        },
+        {
+          "round": 2,
+          "status": "complete",
+          "score": 95,
+          "error_kind": null,
+          "error": null
+        },
+        {
+          "round": 3,
+          "status": "complete",
+          "score": 95,
+          "error_kind": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "task_id": "02_therapy_schedule",
+      "task": "理疗安排",
+      "group": "legacy",
+      "completed": true,
+      "passed": true,
+      "score": 93,
+      "online": {
+        "input_tokens": 119255,
+        "output_tokens": 16410,
+        "total_tokens": 135665,
+        "cost": 0.31660344,
+        "calls": 15,
+        "agent_calls": 12,
+        "agent_input": 101022,
+        "agent_output": 14092,
+        "maintenance_tokens": 20551,
+        "maintenance_cost": 0.055009999999999996
+      },
+      "rounds": [
+        {
+          "round": 1,
+          "status": "complete",
+          "score": 100,
+          "error_kind": null,
+          "error": null
+        },
+        {
+          "round": 2,
+          "status": "complete",
+          "score": 93,
+          "error_kind": null,
+          "error": null
+        },
+        {
+          "round": 3,
+          "status": "complete",
+          "score": 93,
+          "error_kind": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "task_id": "03_sql_study_blocks",
+      "task": "SQL 学习",
+      "group": "legacy",
+      "completed": true,
+      "passed": true,
+      "score": 100,
+      "online": {
+        "input_tokens": 137331,
+        "output_tokens": 20499,
+        "total_tokens": 157830,
+        "cost": 0.39424823999999997,
+        "calls": 14,
+        "agent_calls": 11,
+        "agent_input": 114266,
+        "agent_output": 16413,
+        "maintenance_tokens": 27151,
+        "maintenance_cost": 0.078818
+      },
+      "rounds": [
+        {
+          "round": 1,
+          "status": "complete",
+          "score": 100,
+          "error_kind": null,
+          "error": null
+        },
+        {
+          "round": 2,
+          "status": "complete",
+          "score": 100,
+          "error_kind": null,
+          "error": null
+        },
+        {
+          "round": 3,
+          "status": "complete",
+          "score": 100,
+          "error_kind": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "task_id": "04_project_risk_kanban",
+      "task": "项目风险",
+      "group": "legacy",
+      "completed": true,
+      "passed": true,
+      "score": 98,
+      "online": {
+        "input_tokens": 342868,
+        "output_tokens": 24022,
+        "total_tokens": 366890,
+        "cost": 0.79035488,
+        "calls": 22,
+        "agent_calls": 19,
+        "agent_input": 308882,
+        "agent_output": 21933,
+        "maintenance_tokens": 36075,
+        "maintenance_cost": 0.08468400000000001
+      },
+      "rounds": [
+        {
+          "round": 1,
+          "status": "complete",
+          "score": 85,
+          "error_kind": null,
+          "error": null
+        },
+        {
+          "round": 2,
+          "status": "complete",
+          "score": 100,
+          "error_kind": null,
+          "error": null
+        },
+        {
+          "round": 3,
+          "status": "complete",
+          "score": 98,
+          "error_kind": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "task_id": "05_quarter_learning_plan",
+      "task": "季度计划",
+      "group": "legacy",
+      "completed": false,
+      "passed": false,
+      "score": null,
+      "online": {
+        "input_tokens": 104105,
+        "output_tokens": 28129,
+        "total_tokens": 132234,
+        "cost": 0.38958888,
+        "calls": 11,
+        "agent_calls": 10,
+        "agent_input": 94917,
+        "agent_output": 26668,
+        "maintenance_tokens": 10649,
+        "maintenance_cost": 0.030064
+      },
+      "rounds": [
+        {
+          "round": 1,
+          "status": "complete",
+          "score": 83,
+          "error_kind": null,
+          "error": null
+        },
+        {
+          "round": 2,
+          "status": "error",
+          "score": null,
+          "error_kind": "output_truncated",
+          "error": "deepseek: output_truncated"
+        },
+        {
+          "round": 3,
+          "status": "skipped_after_incomplete_turn",
+          "score": null,
+          "error_kind": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "task_id": "06_finance_review",
+      "task": "财务复盘",
+      "group": "legacy",
+      "completed": true,
+      "passed": true,
+      "score": 100,
+      "online": {
+        "input_tokens": 282939,
+        "output_tokens": 23318,
+        "total_tokens": 306257,
+        "cost": 0.66486488,
+        "calls": 18,
+        "agent_calls": 15,
+        "agent_input": 249676,
+        "agent_output": 21440,
+        "maintenance_tokens": 35141,
+        "maintenance_cost": 0.08155
+      },
+      "rounds": [
+        {
+          "round": 1,
+          "status": "complete",
+          "score": 100,
+          "error_kind": null,
+          "error": null
+        },
+        {
+          "round": 2,
+          "status": "complete",
+          "score": 100,
+          "error_kind": null,
+          "error": null
+        },
+        {
+          "round": 3,
+          "status": "complete",
+          "score": 100,
+          "error_kind": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "task_id": "01_parents_birthday",
+      "task": "父母生日",
+      "group": "full_history",
+      "completed": true,
+      "passed": true,
+      "score": 100,
+      "online": {
+        "input_tokens": 68843,
+        "output_tokens": 6974,
+        "total_tokens": 75817,
+        "cost": 0.15358808000000002,
+        "calls": 9,
+        "agent_calls": 9,
+        "agent_input": 68843,
+        "agent_output": 6974,
+        "maintenance_tokens": 0,
+        "maintenance_cost": 0
+      },
+      "rounds": [
+        {
+          "round": 1,
+          "status": "complete",
+          "score": 100,
+          "error_kind": null,
+          "error": null
+        },
+        {
+          "round": 2,
+          "status": "complete",
+          "score": 100,
+          "error_kind": null,
+          "error": null
+        },
+        {
+          "round": 3,
+          "status": "complete",
+          "score": 100,
+          "error_kind": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "task_id": "02_therapy_schedule",
+      "task": "理疗安排",
+      "group": "full_history",
+      "completed": true,
+      "passed": true,
+      "score": 85,
+      "online": {
+        "input_tokens": 107403,
+        "output_tokens": 12241,
+        "total_tokens": 119644,
+        "cost": 0.18503608,
+        "calls": 11,
+        "agent_calls": 11,
+        "agent_input": 107403,
+        "agent_output": 12241,
+        "maintenance_tokens": 0,
+        "maintenance_cost": 0
+      },
+      "rounds": [
+        {
+          "round": 1,
+          "status": "complete",
+          "score": 100,
+          "error_kind": null,
+          "error": null
+        },
+        {
+          "round": 2,
+          "status": "complete",
+          "score": 85,
+          "error_kind": null,
+          "error": null
+        },
+        {
+          "round": 3,
+          "status": "complete",
+          "score": 85,
+          "error_kind": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "task_id": "03_sql_study_blocks",
+      "task": "SQL 学习",
+      "group": "full_history",
+      "completed": true,
+      "passed": true,
+      "score": 100,
+      "online": {
+        "input_tokens": 206584,
+        "output_tokens": 15936,
+        "total_tokens": 222520,
+        "cost": 0.30382528,
+        "calls": 13,
+        "agent_calls": 13,
+        "agent_input": 206584,
+        "agent_output": 15936,
+        "maintenance_tokens": 0,
+        "maintenance_cost": 0
+      },
+      "rounds": [
+        {
+          "round": 1,
+          "status": "complete",
+          "score": 100,
+          "error_kind": null,
+          "error": null
+        },
+        {
+          "round": 2,
+          "status": "complete",
+          "score": 100,
+          "error_kind": null,
+          "error": null
+        },
+        {
+          "round": 3,
+          "status": "complete",
+          "score": 100,
+          "error_kind": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "task_id": "04_project_risk_kanban",
+      "task": "项目风险",
+      "group": "full_history",
+      "completed": true,
+      "passed": true,
+      "score": 100,
+      "online": {
+        "input_tokens": 205631,
+        "output_tokens": 16433,
+        "total_tokens": 222064,
+        "cost": 0.33349208,
+        "calls": 12,
+        "agent_calls": 12,
+        "agent_input": 205631,
+        "agent_output": 16433,
+        "maintenance_tokens": 0,
+        "maintenance_cost": 0
+      },
+      "rounds": [
+        {
+          "round": 1,
+          "status": "complete",
+          "score": 100,
+          "error_kind": null,
+          "error": null
+        },
+        {
+          "round": 2,
+          "status": "complete",
+          "score": 100,
+          "error_kind": null,
+          "error": null
+        },
+        {
+          "round": 3,
+          "status": "complete",
+          "score": 100,
+          "error_kind": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "task_id": "05_quarter_learning_plan",
+      "task": "季度计划",
+      "group": "full_history",
+      "completed": false,
+      "passed": false,
+      "score": null,
+      "online": {
+        "input_tokens": 8389,
+        "output_tokens": 8253,
+        "total_tokens": 16642,
+        "cost": 0.06774920000000001,
+        "calls": 2,
+        "agent_calls": 2,
+        "agent_input": 8389,
+        "agent_output": 8253,
+        "maintenance_tokens": 0,
+        "maintenance_cost": 0
+      },
+      "rounds": [
+        {
+          "round": 1,
+          "status": "error",
+          "score": null,
+          "error_kind": "output_truncated",
+          "error": "deepseek: output_truncated"
+        },
+        {
+          "round": 2,
+          "status": "skipped_after_incomplete_turn",
+          "score": null,
+          "error_kind": null,
+          "error": null
+        },
+        {
+          "round": 3,
+          "status": "skipped_after_incomplete_turn",
+          "score": null,
+          "error_kind": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "task_id": "06_finance_review",
+      "task": "财务复盘",
+      "group": "full_history",
+      "completed": true,
+      "passed": true,
+      "score": 100,
+      "online": {
+        "input_tokens": 250055,
+        "output_tokens": 18849,
+        "total_tokens": 268904,
+        "cost": 0.51843736,
+        "calls": 14,
+        "agent_calls": 14,
+        "agent_input": 250055,
+        "agent_output": 18849,
+        "maintenance_tokens": 0,
+        "maintenance_cost": 0
+      },
+      "rounds": [
+        {
+          "round": 1,
+          "status": "complete",
+          "score": 100,
+          "error_kind": null,
+          "error": null
+        },
+        {
+          "round": 2,
+          "status": "complete",
+          "score": 100,
+          "error_kind": null,
+          "error": null
+        },
+        {
+          "round": 3,
+          "status": "complete",
+          "score": 100,
+          "error_kind": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "task_id": "01_parents_birthday",
+      "task": "父母生日",
+      "group": "lamemory",
+      "completed": true,
+      "passed": true,
+      "score": 90,
+      "online": {
+        "input_tokens": 89392,
+        "output_tokens": 8844,
+        "total_tokens": 98236,
+        "cost": 0.197758,
+        "calls": 16,
+        "agent_calls": 10,
+        "agent_input": 72881,
+        "agent_output": 7008,
+        "maintenance_tokens": 18347,
+        "maintenance_cost": 0.04008688
+      },
+      "rounds": [
+        {
+          "round": 1,
+          "status": "complete",
+          "score": 90,
+          "error_kind": null,
+          "error": null
+        },
+        {
+          "round": 2,
+          "status": "complete",
+          "score": 90,
+          "error_kind": null,
+          "error": null
+        },
+        {
+          "round": 3,
+          "status": "complete",
+          "score": 90,
+          "error_kind": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "task_id": "02_therapy_schedule",
+      "task": "理疗安排",
+      "group": "lamemory",
+      "completed": true,
+      "passed": true,
+      "score": 100,
+      "online": {
+        "input_tokens": 200623,
+        "output_tokens": 13403,
+        "total_tokens": 214026,
+        "cost": 0.35283512,
+        "calls": 22,
+        "agent_calls": 16,
+        "agent_input": 184126,
+        "agent_output": 10923,
+        "maintenance_tokens": 18977,
+        "maintenance_cost": 0.030667279999999998
+      },
+      "rounds": [
+        {
+          "round": 1,
+          "status": "complete",
+          "score": 85,
+          "error_kind": null,
+          "error": null
+        },
+        {
+          "round": 2,
+          "status": "complete",
+          "score": 100,
+          "error_kind": null,
+          "error": null
+        },
+        {
+          "round": 3,
+          "status": "complete",
+          "score": 100,
+          "error_kind": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "task_id": "03_sql_study_blocks",
+      "task": "SQL 学习",
+      "group": "lamemory",
+      "completed": true,
+      "passed": true,
+      "score": 100,
+      "online": {
+        "input_tokens": 167440,
+        "output_tokens": 21868,
+        "total_tokens": 189308,
+        "cost": 0.39978232,
+        "calls": 17,
+        "agent_calls": 11,
+        "agent_input": 150732,
+        "agent_output": 19931,
+        "maintenance_tokens": 18645,
+        "maintenance_cost": 0.04047672
+      },
+      "rounds": [
+        {
+          "round": 1,
+          "status": "complete",
+          "score": 100,
+          "error_kind": null,
+          "error": null
+        },
+        {
+          "round": 2,
+          "status": "complete",
+          "score": 100,
+          "error_kind": null,
+          "error": null
+        },
+        {
+          "round": 3,
+          "status": "complete",
+          "score": 100,
+          "error_kind": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "task_id": "04_project_risk_kanban",
+      "task": "项目风险",
+      "group": "lamemory",
+      "completed": true,
+      "passed": true,
+      "score": 100,
+      "online": {
+        "input_tokens": 154970,
+        "output_tokens": 16435,
+        "total_tokens": 171405,
+        "cost": 0.33576604,
+        "calls": 16,
+        "agent_calls": 12,
+        "agent_input": 153995,
+        "agent_output": 16039,
+        "maintenance_tokens": 1371,
+        "maintenance_cost": 0.00483364
+      },
+      "rounds": [
+        {
+          "round": 1,
+          "status": "complete",
+          "score": 96,
+          "error_kind": null,
+          "error": null
+        },
+        {
+          "round": 2,
+          "status": "complete",
+          "score": 100,
+          "error_kind": null,
+          "error": null
+        },
+        {
+          "round": 3,
+          "status": "complete",
+          "score": 100,
+          "error_kind": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "task_id": "05_quarter_learning_plan",
+      "task": "季度计划",
+      "group": "lamemory",
+      "completed": true,
+      "passed": true,
+      "score": 94,
+      "online": {
+        "input_tokens": 362867,
+        "output_tokens": 28694,
+        "total_tokens": 391561,
+        "cost": 0.69831048,
+        "calls": 24,
+        "agent_calls": 18,
+        "agent_input": 346471,
+        "agent_output": 26355,
+        "maintenance_tokens": 18735,
+        "maintenance_cost": 0.02358192
+      },
+      "rounds": [
+        {
+          "round": 1,
+          "status": "complete",
+          "score": 94,
+          "error_kind": null,
+          "error": null
+        },
+        {
+          "round": 2,
+          "status": "complete",
+          "score": 92,
+          "error_kind": null,
+          "error": null
+        },
+        {
+          "round": 3,
+          "status": "complete",
+          "score": 94,
+          "error_kind": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "task_id": "06_finance_review",
+      "task": "财务复盘",
+      "group": "lamemory",
+      "completed": true,
+      "passed": true,
+      "score": 92,
+      "online": {
+        "input_tokens": 206142,
+        "output_tokens": 20394,
+        "total_tokens": 226536,
+        "cost": 0.42245292,
+        "calls": 18,
+        "agent_calls": 12,
+        "agent_input": 189421,
+        "agent_output": 17993,
+        "maintenance_tokens": 19122,
+        "maintenance_cost": 0.043922920000000004
+      },
+      "rounds": [
+        {
+          "round": 1,
+          "status": "complete",
+          "score": 92,
+          "error_kind": null,
+          "error": null
+        },
+        {
+          "round": 2,
+          "status": "complete",
+          "score": 92,
+          "error_kind": null,
+          "error": null
+        },
+        {
+          "round": 3,
+          "status": "complete",
+          "score": 92,
+          "error_kind": null,
+          "error": null
+        }
+      ]
+    }
+  ],
+  "definitions": {
+    "delivery_score": "六题最终有效分之和/6；未完成按0计，仅表示端到端交付，不是记忆正确率",
+    "success": "三轮执行和评分全部成功且最终达到原 rubric 阈值",
+    "tokens": "输入含缓存读/写，仅计 online 的 Agent+记忆维护；输出按供应商 usage",
+    "common": "所有四组完成的同一组题，不要求每组均达标",
+    "audit": "理疗通勤评分争议保留原分，文档单列敏感性分析"
+  }
+}

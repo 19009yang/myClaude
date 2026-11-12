@@ -24,7 +24,7 @@ class LegacyCompressionTests(unittest.TestCase):
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
         self.root = Path(self.tmp.name)
-        self.settings = Settings(context_window=6000, max_output_tokens=1024)
+        self.settings = Settings(context_window=6000, max_output_tokens=1024, context_policy='runtime')
         self.model = FakeModel('memory', self.settings)
         self.ledger = Ledger(self.root / 'usage.jsonl', Prices(PRICES), input_budget=self.settings.input_budget)
 
